@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const instruments = [
   { value: "guitar", label: "กีต้าร์" },
@@ -22,9 +23,17 @@ const provinces = [
   "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
 ];
 
-const SearchForm = ({ onBack, onAddJob }: { onBack: () => void; onAddJob: (job: any) => void }) => {
+interface SearchFormProps {
+  onBack: () => void;
+  onAddJob: (job: any) => Promise<void>;
+  userId: string | null;
+}
+
+const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
   const { toast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(true);
 
   const [formData, setFormData] = useState({
     instrument: "",
@@ -36,35 +45,111 @@ const SearchForm = ({ onBack, onAddJob }: { onBack: () => void; onAddJob: (job: 
     lineId: "", 
     phone: ""   
   });
-// ... (ส่วนบนคงเดิม)
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSearching(true);
-  
-  try {
-    // ส่งข้อมูลโดยใช้ชื่อคอลัมน์ที่ตรงกับฐานข้อมูลของคุณเป๊ะๆ
-    const jobData = {
-      instrument: formData.instrument,
-      date: formData.date,
-      location: formData.location,
-      province: formData.province,
-      duration: formData.duration,
-      budget: formData.budget,
-      lineId: formData.lineId, // สะกด lineId ตามรูป 23.36.25.png
-      phone: formData.phone,   // สะกด phone ตามรูป 23.36.25.png
-      createdAt: new Date().toISOString()
+
+  // โหลดข้อมูลเครดิต
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (!userId) {
+        setLoadingCredits(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await (supabase as any)
+          .from("profiles")
+          .select("credits")
+          .eq("id", userId)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching credits:", error);
+        } else if (data) {
+          setCredits(data.credits || 0);
+        } else {
+          setCredits(25); // Default value
+        }
+      } catch (err) {
+        console.error("System Error:", err);
+      } finally {
+        setLoadingCredits(false);
+      }
     };
 
-    await onAddJob(jobData);
-    toast({ title: "ประกาศงานสำเร็จ!", description: "ข้อมูลติดต่อถูกบันทึกแล้ว" });
-    onBack();
-  } catch (error) {
-    console.error("Error submitting job:", error);
-    toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
-  } finally {
-    setIsSearching(false);
-  }
-};
+    fetchCredits();
+
+    // Subscribe to real-time changes
+    if (userId) {
+      const channel = supabase
+        .channel(`profile:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "profiles",
+            filter: `id=eq.${userId}`,
+          },
+          (payload) => {
+            if (payload.new && (payload.new as any).credits !== undefined) {
+              setCredits((payload.new as any).credits);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [userId]);
+
+  const hasEnoughCredits = credits !== null && credits >= 5;
+  const isDisabled = loadingCredits || !hasEnoughCredits || isSearching;
+// ... (ส่วนบนคงเดิม)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // เช็คเครดิตก่อน submit
+    if (!hasEnoughCredits) {
+      toast({ 
+        title: "เครดิตไม่เพียงพอ", 
+        description: "คุณต้องมีเครดิตอย่างน้อย 5 เครดิตเพื่อลงประกาศงาน",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    
+    try {
+      // ส่งข้อมูลโดยใช้ชื่อคอลัมน์ที่ตรงกับฐานข้อมูลของคุณเป๊ะๆ
+      const jobData = {
+        instrument: formData.instrument,
+        date: formData.date,
+        location: formData.location,
+        province: formData.province,
+        duration: formData.duration,
+        budget: formData.budget,
+        lineId: formData.lineId,
+        phone: formData.phone,
+        createdAt: new Date().toISOString()
+      };
+
+      await onAddJob(jobData);
+      toast({ title: "ประกาศงานสำเร็จ!", description: "ข้อมูลติดต่อถูกบันทึกแล้ว และหักเครดิต 5 เครดิต" });
+      onBack();
+    } catch (error: any) {
+      console.error("Error submitting job:", error);
+      const errorMessage = error?.message || "เกิดข้อผิดพลาด";
+      toast({ 
+        title: errorMessage.includes("โควตา") ? "ไม่สามารถลงประกาศได้" : "เกิดข้อผิดพลาด",
+        description: errorMessage,
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 // ... (ส่วน UI ด้านล่างคงเดิมของคุณเป๊ะๆ)
 
   return (
@@ -157,8 +242,28 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold shadow-lg" disabled={isSearching}>
-            {isSearching ? "กำลังประกาศ..." : "ประกาศงานทันที"}
+          {/* แสดงคำเตือนถ้าเครดิตไม่พอ */}
+          {!loadingCredits && !hasEnoughCredits && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>เครดิตไม่เพียงพอ (ต้องการ 5 เครดิต, คุณมี {credits || 0} เครดิต)</span>
+            </div>
+          )}
+
+          <Button 
+            type="submit" 
+            className={`w-full h-14 rounded-2xl text-white text-lg font-bold shadow-lg ${
+              isDisabled 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-orange-500 hover:bg-orange-600"
+            }`}
+            disabled={isDisabled}
+          >
+            {isSearching 
+              ? "กำลังประกาศ..." 
+              : hasEnoughCredits 
+                ? "ประกาศงานทันที (ใช้ 5 เครดิต)" 
+                : "เครดิตไม่เพียงพอ"}
           </Button>
         </form>
       </main>

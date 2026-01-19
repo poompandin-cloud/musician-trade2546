@@ -1,5 +1,6 @@
 import { ArrowLeft, MapPin, Timer, Phone, MessageCircle } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface NearbyGigsProps {
   jobs: any[];
@@ -27,30 +28,59 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
           {jobs.length === 0 ? (
             <p className="text-center text-muted-foreground py-10">ไม่มีประกาศงานในขณะนี้</p>
           ) : (
-            jobs.map((gig) => (
-              <div key={gig.id} className="p-5 rounded-3xl bg-card border border-border shadow-sm">
-                
-                {gig.user_id === currentUserId && (
-                  <div className="flex justify-end mb-2">
-                    <button 
-                      onClick={() => onDeleteJob(gig.id)}
-                      className="text-red-500 text-[10px] font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100"
-                    >
-                      ลบประกาศนี้
-                    </button>
-                  </div>
-                )}
+            jobs.map((gig) => {
+              // ดึงข้อมูลโปรไฟล์จาก join query
+              // รองรับทั้งกรณีที่ profiles เป็น object หรือ array (ถ้า join หลาย row)
+              let profile: { full_name?: string | null; avatar_url?: string | null } = {};
+              if (Array.isArray(gig.profiles)) {
+                profile = gig.profiles[0] || {};
+              } else if (gig.profiles && typeof gig.profiles === 'object') {
+                profile = gig.profiles;
+              }
+              
+              const posterName = profile.full_name || "ผู้ใช้";
+              const posterAvatar = profile.avatar_url || null;
 
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-orange-500">{gig.instrument}</h3>
-                    <p className="font-medium text-gray-700 flex items-center gap-1">📍 {gig.location}</p>
+              return (
+                <div key={gig.id} className="p-5 rounded-3xl bg-card border border-border shadow-sm">
+                  
+                  {gig.user_id === currentUserId && (
+                    <div className="flex justify-end mb-2">
+                      <button 
+                        onClick={() => onDeleteJob(gig.id)}
+                        className="text-red-500 text-[10px] font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100"
+                      >
+                        ลบประกาศนี้
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ส่วนแสดงโปรไฟล์ผู้ประกาศ */}
+                  <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
+                    <Avatar className="w-12 h-12 border-2 border-orange-200">
+                      <AvatarImage src={posterAvatar || undefined} alt={posterName} />
+                      <AvatarFallback className="bg-orange-100 text-orange-600">
+                        {posterName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {posterName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">ผู้ประกาศงาน</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">{gig.budget}</span>
-                    <p className="text-[10px] text-muted-foreground uppercase">งบประมาณ</p>
+
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-orange-500">{gig.instrument}</h3>
+                      <p className="font-medium text-gray-700 flex items-center gap-1 mt-1">📍 {gig.location}</p>
+                    </div>
+                    <div className="text-right ml-4">
+                      <span className="text-xl font-bold text-gray-900">{gig.budget}</span>
+                      <p className="text-[10px] text-muted-foreground uppercase">งบประมาณ</p>
+                    </div>
                   </div>
-                </div>
 
                 <div className="flex flex-wrap gap-6 text-sm text-muted-foreground mb-6">
                   <div className="flex items-center gap-2">
@@ -83,7 +113,8 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
                   รับงานนี้
                 </Button>
               </div>
-            ))
+            );
+          })
           )}
         </div>
       </main>
