@@ -86,7 +86,7 @@ const BookingButton = ({ jobId, jobOwnerId, currentUserId, onBookingSuccess }: B
         description: "เจ้าของงานจะได้รับการแจ้งเตือน กรุณารอการยืนยัน",
       });
 
-      // สร้างการแจ้งเตือนให้เจ้าของงาน
+      // สร้างการแจ้งเตือนให้เจ้าของงาน (ทันที)
       try {
         await (supabase as any)
           .from("notifications")

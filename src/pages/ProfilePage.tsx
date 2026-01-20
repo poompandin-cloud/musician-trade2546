@@ -30,6 +30,8 @@ interface Job {
   duration: string;
   budget: string;
   created_at: string;
+  status?: 'open' | 'closed' | null;
+  confirmed_applicant_id?: string | null;
 }
 
 const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; onDeleteJob: (id: string) => Promise<void> }) => {
@@ -476,6 +478,47 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     } catch (err) {
       console.error("Delete error:", err);
       toast({ title: "ลบไม่สำเร็จ", variant: "destructive" });
+    }
+  };
+
+  // ยืนยันการทำงานสำเร็จ
+  const handleConfirmJobCompletion = async (jobId: string) => {
+    const confirmComplete = window.confirm("คุณต้องการยืนยันว่างานนี้เสร็จแล้วใช่หรือไม่?");
+    if (!confirmComplete) return;
+
+    try {
+      // อัปเดตสถานะงานเป็น closed
+      const { error } = await (supabase as any)
+        .from("jobs")
+        .update({ 
+          status: "closed"
+        })
+        .eq("id", jobId);
+
+      if (error) {
+        console.error("Error updating job status:", error);
+        toast({ 
+          title: "อัปเดตสถานะไม่สำเร็จ", 
+          description: error.message,
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      toast({ 
+        title: "ยืนยันสำเร็จ!", 
+        description: "งานนี้ถูกปิดแล้ว" 
+      });
+
+      // รีเฟรชข้อมูล
+      await fetchMyJobs();
+    } catch (err) {
+      console.error("Confirm completion error:", err);
+      toast({ 
+        title: "เกิดข้อผิดพลาด", 
+        description: "กรุณาลองใหม่",
+        variant: "destructive" 
+      });
     }
   };
 
@@ -947,6 +990,18 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                         </div>
                         <span className="font-semibold text-foreground">งบประมาณ: {job.budget}</span>
                       </div>
+
+                      {/* Confirmation Button - แสดงเมื่อมีผู้สมัครที่ได้รับการยืนยัน */}
+                      {job.status === 'open' && job.confirmed_applicant_id && (
+                        <div className="mb-3">
+                          <Button
+                            onClick={() => handleConfirmJobCompletion(job.id)}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 text-sm"
+                          >
+                            ยืนยันการทำงานสำเร็จ
+                          </Button>
+                        </div>
+                      )}
 
                       {!isActive && (
                         <p className="text-xs text-muted-foreground italic">ประกาศหมดอายุแล้ว</p>
