@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,8 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myJobs, setMyJobs] = useState<Job[]>([]);
+  const [confirmedApplications, setConfirmedApplications] = useState<any[]>([]);
+  const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
@@ -98,6 +100,8 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
       fetchProfile();
       if (isOwner) {
         fetchMyJobs();
+        fetchConfirmedApplications();
+        fetchReceivedReviews();
       }
     }
   }, [profileUserId, isOwner]);
@@ -470,6 +474,70 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     } catch (err) {
       console.error("Delete error:", err);
       toast({ title: "ลบไม่สำเร็จ", variant: "destructive" });
+    }
+  };
+
+  // ดึงข้อมูลคนที่ได้รับการยืนยัน
+  const fetchConfirmedApplications = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('job_applications')
+        .select(`
+          *,
+          jobs (
+            id,
+            instrument,
+            user_id,
+            profiles (
+              full_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('status', 'confirmed')
+        .eq('jobs.user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching confirmed applications:", error);
+        return;
+      }
+
+      setConfirmedApplications(data || []);
+    } catch (error) {
+      console.error("Error in fetchConfirmedApplications:", error);
+    }
+  };
+
+  // ดึงข้อมูลรีวิวที่ได้รับ
+  const fetchReceivedReviews = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('reviews')
+        .select(`
+          *,
+          reviewer_profiles (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('reviewee_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching received reviews:", error);
+        return;
+      }
+
+      // Transform data to include reviewer_profiles
+      const transformedData = data?.map(review => ({
+        ...review,
+        profiles: review.reviewer_profiles
+      })) || [];
+
+      setReceivedReviews(transformedData);
+    } catch (error) {
+      console.error("Error in fetchReceivedReviews:", error);
     }
   };
 
@@ -888,6 +956,97 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
             )}
           </CardContent>
         </Card>
+        )}
+
+        {/* Confirmed Applications Section - แสดงคนที่ได้รับการยืนยัน */}
+        {isOwner && confirmedApplications.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                คนที่ได้รับการยืนยัน ({confirmedApplications.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {confirmedApplications.map((application) => (
+                  <div key={application.id} className="p-3 border rounded-lg bg-green-50 border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{application.jobs?.instrument}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ได้รับการยืนยันเมื่อ {new Date(application.created_at).toLocaleDateString('th-TH')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Button
+                          onClick={() => navigate(`/profile/${application.applicant_id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          ดูโปรไฟล์
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Received Reviews Section - แสดงรีวิวที่ได้รับ */}
+        {isOwner && receivedReviews.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                รีวิวที่ได้รับ ({receivedReviews.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {receivedReviews.map((review) => (
+                  <div key={review.id} className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="font-semibold text-sm">{review.rating}/5</span>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">{review.comment}</p>
+                        <p className="text-xs text-muted-foreground">
+                          จาก {review.profiles?.full_name || 'ผู้ใช้นิรนาม'} • {new Date(review.created_at).toLocaleDateString('th-TH')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Button
+                          onClick={() => navigate(`/profile/${review.reviewer_id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          ดูโปรไฟล์ผู้รีวิว
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Logout Button - แสดงเฉพาะเจ้าของโปรไฟล์ */}

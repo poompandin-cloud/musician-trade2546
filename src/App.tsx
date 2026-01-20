@@ -10,6 +10,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
+import MyApplicationsPage from "./pages/MyApplicationsPage";
 import MusicianSearch from "./pages/MusicianSearch";
 import NearbyGigs from "./components/NearbyGigs";
 import SearchForm from "./components/SearchForm";
@@ -333,6 +334,13 @@ const App = () => {
                 path="/musicians" 
                 element={
                   <MusicianSearch onBack={() => window.history.back()} />
+                } 
+              />
+
+              <Route 
+                path="/my-applications" 
+                element={
+                  <MyApplicationsPage currentUserId={session?.user?.id || null} />
                 } 
               />
 
