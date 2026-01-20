@@ -905,6 +905,32 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                     }
                     return videoUrls.length >= 5;
                   })()}
+                  className={(() => {
+                    let videoUrls: string[] = [];
+                    if (Array.isArray(profile?.video_urls)) {
+                      videoUrls = profile.video_urls;
+                    } else if (profile?.video_urls) {
+                      try {
+                        videoUrls = Array.isArray(profile.video_urls) ? profile.video_urls : [];
+                      } catch {
+                        videoUrls = [];
+                      }
+                    }
+                    return videoUrls.length >= 5 ? "opacity-50 cursor-not-allowed" : "";
+                  })()}
+                  title={(() => {
+                    let videoUrls: string[] = [];
+                    if (Array.isArray(profile?.video_urls)) {
+                      videoUrls = profile.video_urls;
+                    } else if (profile?.video_urls) {
+                      try {
+                        videoUrls = Array.isArray(profile.video_urls) ? profile.video_urls : [];
+                      } catch {
+                        videoUrls = [];
+                      }
+                    }
+                    return videoUrls.length >= 5 ? "เพิ่มได้สูงสุด 5 วิดีโอ" : "เพิ่มวิดีโอ";
+                  })()}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   เพิ่มวิดีโอ ({(() => {
@@ -943,7 +969,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                 <div className="flex gap-2">
                   <Button
                     onClick={handleAddVideo}
-                    disabled={saving || !videoInput.trim()}
+                    disabled={saving}
                     size="sm"
                     className="flex-1"
                   >
