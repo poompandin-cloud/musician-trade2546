@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Search, MapPin, Music, Info } from "lucide-react";
+import { Search, MapPin, Music, Info, Users } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 
 const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }) => {
@@ -53,6 +53,14 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
           onClick={() => navigate("/nearby-gigs")}
           variant="primary"
           className="scale-105 shadow-xl border-2 border-orange-500" 
+        />
+
+        <MenuCard 
+          title="ค้นหานักดนตรี"
+          description="ค้นหาจากชื่อนักดนตรี"
+          icon={<Users className="w-6 h-6 text-orange-500" />}
+          onClick={() => navigate("/musicians")}
+          variant="primary"
         />
 
         <MenuCard 

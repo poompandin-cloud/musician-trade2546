@@ -72,17 +72,17 @@ const CreditWidget = ({ userId }: CreditWidgetProps) => {
   }
 
   return (
-    <div className="fixed bottom-16 right-4 z-40 md:bottom-6 md:right-6 pb-safe">
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-2xl border-2 border-orange-400/30 px-4 py-3 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-300 hover:shadow-orange-500/50 transition-shadow">
-        <div className="flex items-center gap-2.5">
-          <div className="bg-white/20 p-2 rounded-xl flex-shrink-0">
-            <Coins className="w-5 h-5 text-white" />
+    <div className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6 pb-safe">
+      <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-2xl border-2 border-orange-400/30 px-3 py-2.5 sm:px-4 sm:py-3 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-300 hover:shadow-orange-500/50 transition-shadow max-w-[200px]">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="bg-white/20 p-1.5 sm:p-2 rounded-xl flex-shrink-0">
+            <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-medium text-orange-50/90 leading-tight whitespace-nowrap">
+            <span className="text-[10px] sm:text-xs font-medium text-orange-50/90 leading-tight whitespace-nowrap">
               เครดิตของคุณ
             </span>
-            <span className="text-lg font-bold leading-tight whitespace-nowrap">
+            <span className="text-base sm:text-lg font-bold leading-tight whitespace-nowrap">
               {credits !== null ? credits : 0}
             </span>
           </div>

@@ -10,6 +10,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
+import MusicianSearch from "./pages/MusicianSearch";
 import NearbyGigs from "./components/NearbyGigs";
 import SearchForm from "./components/SearchForm";
 import MusicianSignup from "./components/MusicianSignup";
@@ -26,8 +27,11 @@ const App = () => {
 
   const fetchJobs = async () => {
     try {
-      // ลอง join กับ profiles table โดยใช้ foreign key relationship
-      // Supabase จะ join ผ่าน user_id ที่ reference ไปยัง profiles.id
+      // Debug: Log current session
+      console.log("Current session:", session?.user?.id);
+      
+      // ดึงงานทั้งหมด - ไม่มีการกรองใดๆ
+      const userId = session?.user?.id;
       const { data, error } = await (supabase as any)
         .from('jobs')
         .select(`
@@ -39,13 +43,17 @@ const App = () => {
         `)
         .order('created_at', { ascending: false });
       
+      console.log("All jobs query result:", { data, error, userId });
+      
       if (error) {
         console.error("Error fetching jobs with join:", error);
-        // Fallback: ถ้า join ไม่ได้ ให้ดึงข้อมูลแยก (สำหรับกรณีที่ foreign key ยังไม่ได้ตั้งค่า)
+        // Fallback: ดึงงานทั้งหมด - ไม่มีการกรอง
         const { data: jobsData, error: jobsError } = await (supabase as any)
           .from('jobs')
           .select('*')
           .order('created_at', { ascending: false });
+        
+        console.log("Fallback all jobs result:", { jobsData, jobsError });
         
         if (jobsError) {
           console.error("Error fetching jobs:", jobsError);
@@ -265,7 +273,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col overflow-x-hidden">
             <Navbar userId={session?.user?.id || null} />
             <Routes>
               <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
@@ -274,7 +282,17 @@ const App = () => {
                 path="/profile" 
                 element={
                   <ProfilePage 
-                    userId={session.user.id} 
+                    currentUserId={session.user.id} 
+                    onDeleteJob={deleteJob}
+                  />
+                } 
+              />
+              
+              <Route 
+                path="/profile/:id" 
+                element={
+                  <ProfilePage 
+                    currentUserId={session.user.id} 
                     onDeleteJob={deleteJob}
                   />
                 } 
@@ -295,11 +313,11 @@ const App = () => {
               <Route 
                 path="/search" 
                 element={
-                  <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center pt-10">
+                  <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
                     <div className="w-full max-w-md">
                       <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
-                      <h2 className="text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
-                      <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
+                      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
+                      <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
                         <SearchForm 
                           onBack={() => window.history.back()} 
                           onAddJob={addJob}
@@ -308,6 +326,13 @@ const App = () => {
                       </div>
                     </div>
                   </div>
+                } 
+              />
+
+              <Route 
+                path="/musicians" 
+                element={
+                  <MusicianSearch onBack={() => window.history.back()} />
                 } 
               />
 
