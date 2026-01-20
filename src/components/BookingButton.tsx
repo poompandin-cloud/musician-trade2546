@@ -86,11 +86,29 @@ const BookingButton = ({ jobId, jobOwnerId, currentUserId, onBookingSuccess }: B
         description: "เจ้าของงานจะได้รับการแจ้งเตือน กรุณารอการยืนยัน",
       });
 
+      // สร้างการแจ้งเตือนให้เจ้าของงาน
+      try {
+        await (supabase as any)
+          .from("notifications")
+          .insert({
+            user_id: jobOwnerId,
+            type: "job_application",
+            title: "มีผู้สมัครงานใหม่",
+            message: `มีผู้สมัครงานของคุณ`,
+            data: {
+              job_id: jobId,
+              applicant_id: currentUserId
+            },
+            read: false
+          });
+      } catch (notificationError) {
+        console.error("Error creating notification:", notificationError);
+        // ไม่ต้องแสดง error ต่อ user ถ้า notification ล้มเหลว
+      }
+
       if (onBookingSuccess) {
         onBookingSuccess();
       }
-
-      // TODO: ส่งการแจ้งเตือนให้เจ้าของงาน (อาจใช้ Supabase Realtime หรือ Email)
 
     } catch (error) {
       console.error("System error:", error);

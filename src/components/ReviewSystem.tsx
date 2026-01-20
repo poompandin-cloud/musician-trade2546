@@ -103,6 +103,27 @@ const ReviewSystem = ({
         description: message
       });
 
+      // อัปเดต received_tokens ใน profiles table
+      try {
+        const { data: currentProfile } = await (supabase as any)
+          .from("profiles")
+          .select("received_tokens")
+          .eq("id", revieweeId)
+          .single();
+
+        const newTokens = (currentProfile?.received_tokens || 0) + pointsChange;
+        
+        await (supabase as any)
+          .from("profiles")
+          .update({ 
+            received_tokens: newTokens >= 0 ? newTokens : 0 
+          })
+          .eq("id", revieweeId);
+      } catch (tokenError) {
+        console.error("Error updating received_tokens:", tokenError);
+        // ไม่ต้องแสดง error ต่อ user ถ้า token update ล้มเหลว
+      }
+
       // รีเซ็ตฟอร์ม
       setRating(0);
       setComment("");

@@ -105,6 +105,25 @@ const JobApplications = ({ jobId, currentUserId, onApplicationUpdate }: JobAppli
         description: "ได้เลือกผู้สมัครและปิดประกาศงานแล้ว"
       });
 
+      // สร้างการแจ้งเตือนให้ผู้สมัคร
+      try {
+        await (supabase as any)
+          .from("notifications")
+          .insert({
+            user_id: applicantId,
+            type: "job_confirmed",
+            title: "การสมัครงานได้รับการยืนยัน",
+            message: `คุณได้รับการยืนยันให้ทำงาน`,
+            data: {
+              job_id: jobId
+            },
+            read: false
+          });
+      } catch (notificationError) {
+        console.error("Error creating notification:", notificationError);
+        // ไม่ต้องแสดง error ต่อ user ถ้า notification ล้มเหลว
+      }
+
       // รีเฟรชข้อมูล
       await fetchApplications();
       if (onApplicationUpdate) {

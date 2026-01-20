@@ -17,6 +17,7 @@ interface Profile {
   line_id: string | null;
   avatar_url: string | null;
   credits: number;
+  received_tokens?: number;
   prestige_points?: number;
   video_urls?: string[] | null;
 }
@@ -251,10 +252,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
   // ฟังก์ชันสำหรับคำนวณระดับ prestige (1,000 แต้มเต็ม)
   const getPrestigeLevel = (points: number = 100) => {
-    // แบ่งเป็น 4 ระดับ ช่วงละ 250 แต้ม (0-1000)
+    // แบ่งเป็น 4 ระดับ ตามขีดที่กำหนด
     if (points >= 900) return { level: "คุณภาพ", color: "bg-purple-500", textColor: "text-purple-600", progress: (points / 1000) * 100 };
     if (points >= 600) return { level: "ยอดเยี่ยม", color: "bg-blue-500", textColor: "text-blue-600", progress: (points / 1000) * 100 };
     if (points >= 300) return { level: "กลางๆ", color: "bg-green-500", textColor: "text-green-600", progress: (points / 1000) * 100 };
+    if (points >= 100) return { level: "เริ่มต้น", color: "bg-orange-500", textColor: "text-orange-600", progress: (points / 1000) * 100 };
     return { level: "เริ่มต้น", color: "bg-orange-500", textColor: "text-orange-600", progress: (points / 1000) * 100 };
   };
 
@@ -628,15 +630,15 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                     <Star className="w-4 h-4 text-orange-500" />
                     <span className="text-sm font-medium">บารมี</span>
                   </div>
-                  <span className={`text-sm font-bold ${getPrestigeLevel(profile?.prestige_points).textColor}`}>
-                    {getPrestigeLevel(profile?.prestige_points).level}
+                  <span className={`text-sm font-bold ${getPrestigeLevel(profile?.received_tokens || 0).textColor}`}>
+                    {getPrestigeLevel(profile?.received_tokens || 0).level}
                   </span>
                 </div>
                 
                 {/* Progress Bar Container */}
                 <div className="relative">
                   <Progress 
-                    value={getPrestigeLevel(profile?.prestige_points).progress} 
+                    value={getPrestigeLevel(profile?.received_tokens || 0).progress} 
                     className="h-3"
                   />
                   
@@ -661,7 +663,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                   {/* Current Points Display */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-xs font-medium text-white mix-blend-difference drop-shadow-sm">
-                      {profile?.prestige_points || 100} / 1000
+                      {profile?.received_tokens || 0} / 1000
                     </span>
                   </div>
                 </div>
