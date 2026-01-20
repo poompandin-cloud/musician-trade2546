@@ -201,13 +201,17 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
           errorMessage = "ข้อมูลไม่ถูกต้องตามรูปแบบ";
         } else if (error.code === '42501') {
           errorMessage = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+        } else if (error.code === '42703') {
+          errorMessage = "ไม่พบคอลัมน์ 'video_urls' กรุณาติดต่อผู้ดูและรัน migration";
+        } else if (error.message && error.message.includes('column "video_urls" does not exist')) {
+          errorMessage = "ฐานข้อมูลยังไม่พร้อม กรุณารัน migration ใน Supabase";
         } else if (error.message) {
           errorMessage = `เกิดข้อผิดพลาด: ${error.message}`;
         }
         
         toast({ 
           title: errorMessage, 
-          description: "กรุณาตรวจสอบลิงก์วิดีโอและลองใหม่อีกครั้ง",
+          description: error.code === '42703' ? "กรุณาติดต่อผู้ดูและรัน SQL: supabase/add_video_urls_column.sql" : "กรุณาตรวจสอบลิงก์วิดีโอและลองใหม่อีกครั้ง",
           variant: "destructive" 
         });
       } else {
@@ -258,13 +262,17 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
           errorMessage = "ข้อมูลไม่ถูกต้องตามรูปแบบ";
         } else if (error.code === '42501') {
           errorMessage = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+        } else if (error.code === '42703') {
+          errorMessage = "ไม่พบคอลัมน์ 'video_urls' กรุณาติดต่อผู้ดูและรัน migration";
+        } else if (error.message && error.message.includes('column "video_urls" does not exist')) {
+          errorMessage = "ฐานข้อมูลยังไม่พร้อม กรุณารัน migration ใน Supabase";
         } else if (error.message) {
           errorMessage = `เกิดข้อผิดพลาด: ${error.message}`;
         }
         
         toast({ 
           title: errorMessage, 
-          description: "กรุณาลองใหม่อีกครั้ง",
+          description: error.code === '42703' ? "กรุณาติดต่อผู้ดูและรัน SQL: supabase/add_video_urls_column.sql" : "กรุณาลองใหม่อีกครั้ง",
           variant: "destructive" 
         });
       } else {
