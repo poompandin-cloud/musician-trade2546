@@ -164,19 +164,54 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
 // ... (ส่วนบนคงเดิม)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSearching(true);
+
+    // ตรวจสอบความถูกต้องของข้อมูลก่อนส่ง
+    const validationErrors = [];
     
-    // เช็คว่าเลือกเครื่องดนตรีอย่างน้อย 1 ชนิด
-    if (formData.instruments.join(", ").trim().length === 0) {
-      toast({ 
-        title: "กรุณาเลือกเครื่องดนตรี", 
-        description: "ต้องเลือกเครื่องดนตรีอย่างน้อย 1 ชนิด",
-        variant: "destructive" 
+    if (!formData.instruments || formData.instruments.length === 0 || formData.instruments.join("").trim() === "") {
+      validationErrors.push("กรุณาระบุเครื่องดนตรี");
+    }
+    
+    if (!formData.date || formData.date.trim() === "") {
+      validationErrors.push("กรุณาระบุวันที่");
+    }
+    
+    if (!formData.location || formData.location.trim() === "") {
+      validationErrors.push("กรุณาระบุสถานที่");
+    }
+    
+    if (!formData.province || formData.province.trim() === "") {
+      validationErrors.push("กรุณาระบุจังหวัด");
+    }
+    
+    if (!formData.duration || formData.duration.trim() === "") {
+      validationErrors.push("กรุณาระบุเวลาที่เล่น");
+    }
+    
+    if (!formData.budget || formData.budget.trim() === "") {
+      validationErrors.push("กรุณาระบุงบประมาณ");
+    }
+    
+    if (!formData.lineId || formData.lineId.trim() === "") {
+      validationErrors.push("กรุณาระบุ ID Line");
+    }
+    
+    if (!formData.phone || formData.phone.trim() === "") {
+      validationErrors.push("กรุณาระบุเบอร์โทรศัพท์");
+    }
+    
+    // ถ้ามี error ให้แสดงและหยุด
+    if (validationErrors.length > 0) {
+      toast({
+        title: "กรุณากรอกข้อมูลให้ครบ",
+        description: validationErrors.join(", "),
+        variant: "destructive"
       });
+      setIsSearching(false);
       return;
     }
 
-    setIsSearching(true);
-    
     try {
       // ส่งข้อมูลโดยใช้ชื่อคอลัมน์ที่ตรงกับฐานข้อมูลของคุณเป๊ะๆ
       const jobData = {
@@ -192,14 +227,43 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
         createdAt: new Date().toISOString()
       };
 
+      console.log("Submitting job data:", jobData); // Debug log
+
       await onAddJob(jobData);
       toast({ title: "ประกาศงานสำเร็จ!", description: "ข้อมูลติดต่อถูกบันทึกแล้ว และหักเครดิต 5 เครดิต" });
       onBack();
     } catch (error: any) {
       console.error("Error submitting job:", error);
-      const errorMessage = error?.message || "เกิดข้อผิดพลาด";
+      console.error("Full error details:", JSON.stringify(error, null, 2));
+      
+      let errorMessage = "เกิดข้อผิดพลาด";
+      let errorTitle = "เกิดข้อผิดพลาด";
+      
+      // ตรวจสอบประเภทของ error
+      if (error?.message) {
+        errorMessage = error.message;
+        
+        // ตรวจสอบ error จาก Supabase
+        if (error.message.includes("column") || error.message.includes("does not exist")) {
+          errorTitle = "ข้อผิดพลาดฐานข้อมูล";
+          errorMessage = `คอลัมน์ในตารางไม่ถูกต้อง: ${error.message}`;
+        } else if (error.message.includes("permission") || error.message.includes("unauthorized") || error.message.includes("403")) {
+          errorTitle = "ไม่มีสิทธิ์";
+          errorMessage = "คุณไม่มีสิทธิ์ในการเพิ่มงาน กรุณาตรวจสอบ RLS Policy";
+        } else if (error.message.includes("duplicate") || error.message.includes("unique")) {
+          errorTitle = "ข้อมูลซ้ำ";
+          errorMessage = "มีข้อมูลซ้ำในระบบ";
+        } else if (error.message.includes("foreign key")) {
+          errorTitle = "ข้อมูลอ้างอิงไม่ถูกต้อง";
+          errorMessage = "ข้อมูลผู้ใช้ไม่ถูกต้อง";
+        } else if (error.message.includes("โควตา") || error.message.includes("credits")) {
+          errorTitle = "ไม่สามารถลงประกาศได้";
+          errorMessage = error.message;
+        }
+      }
+      
       toast({ 
-        title: errorMessage.includes("โควตา") ? "ไม่สามารถลงประกาศได้" : "เกิดข้อผิดพลาด",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive" 
       });

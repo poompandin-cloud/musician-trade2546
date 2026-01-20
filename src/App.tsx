@@ -175,7 +175,26 @@ const App = () => {
 
       if (insertError) {
         console.error("Error inserting job:", insertError);
-        throw new Error("ไม่สามารถบันทึกงานได้");
+        console.error("Full insert error details:", JSON.stringify(insertError, null, 2));
+        
+        // ส่ง error ที่ละเอียดกลับไปให้ SearchForm แสดง
+        let errorMessage = "ไม่สามารถบันทึกงานได้";
+        
+        if (insertError.message) {
+          if (insertError.message.includes("column") || insertError.message.includes("does not exist")) {
+            errorMessage = `คอลัมน์ในตารางไม่ถูกต้อง: ${insertError.message}`;
+          } else if (insertError.message.includes("permission") || insertError.message.includes("unauthorized") || insertError.message.includes("403")) {
+            errorMessage = "คุณไม่มีสิทธิ์ในการเพิ่มงาน กรุณาตรวจสอบ RLS Policy";
+          } else if (insertError.message.includes("duplicate") || insertError.message.includes("unique")) {
+            errorMessage = "มีข้อมูลซ้ำในระบบ";
+          } else if (insertError.message.includes("foreign key")) {
+            errorMessage = "ข้อมูลผู้ใช้ไม่ถูกต้อง";
+          } else {
+            errorMessage = insertError.message;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       // 4. หักเครดิต 5 เครดิต

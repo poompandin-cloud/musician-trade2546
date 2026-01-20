@@ -80,8 +80,18 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
       filtered = filtered.filter((job) => job.province === selectedProvince);
     }
     
-    // เรียงลำดับ: งานที่เพิ่งประกาศใหม่ล่าสุด (created_at) แสดงอยู่บนสุดเสมอ
+    // ระบบดันโพสต์ตัวเองไว้บนสุด (Owner Priority Sorting)
     filtered.sort((a, b) => {
+      // ถ้าเป็นโพสต์ของตัวเอง ให้แสดงบนสุดเสมอ
+      const isAOwner = a.user_id === currentUserId;
+      const isBOwner = b.user_id === currentUserId;
+      
+      // ถ้า a เป็นของเรา แต่ b ไม่ใช่ -> a อยู่บนสุด
+      if (isAOwner && !isBOwner) return -1;
+      // ถ้า b เป็นของเรา แต่ a ไม่ใช่ -> b อยู่บนสุด
+      if (!isAOwner && isBOwner) return 1;
+      
+      // ถ้าเป็นของคนเดียวกัน (ทั้งคู่เป็นของเรา หรือทั้งคู่เป็นของคนอื่น) -> เรียงตามเวลา
       const dateA = new Date(a.created_at || 0);
       const dateB = new Date(b.created_at || 0);
       return dateB.getTime() - dateA.getTime(); // ใหม่สุดอยู่บนสุด
@@ -155,56 +165,6 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
     }
   };
 
-  const handleToggleJobStatus = async (jobId: string, currentStatus: string) => {
-    // Only allow closing jobs, not reopening
-    if (currentStatus === 'closed') {
-      toast({ 
-        title: "ไม่สามารถเปิดงานอีกครั้ง", 
-        description: "เมื่องานปิดแล้วแล้วไม่สามารถเปิดใหม่อีกครั้ง",
-        variant: "destructive" 
-      });
-      return;
-    }
-    
-    // Add confirmation popup
-    const confirmClose = window.confirm("คุณต้องการปิดรับสมัครงานนี้ใช่หรือไม่?");
-    if (!confirmClose) return;
-    
-    const newStatus = 'closed';
-    
-    try {
-      const { error } = await (supabase as any)
-        .from("jobs")
-        .update({ status: newStatus })
-        .eq("id", jobId);
-
-      if (error) {
-        console.error("Error closing job:", error);
-        toast({ 
-          title: "เกิดข้อผิดพลาด", 
-          description: "ไม่สามารถปิดงานได้",
-          variant: "destructive" 
-        });
-        return;
-      }
-
-      toast({ 
-        title: "ปิดงานสำเร็จ!", 
-        description: "งานนี้ปิดรับสมัครแล้ว และจะแสดงในหน้าหลัก" 
-      });
-
-      // Refresh jobs list to update UI
-      setRefreshKey(prev => prev + 1);
-    } catch (err) {
-      console.error("System error:", err);
-      toast({ 
-        title: "เกิดข้อผิดพลาด", 
-        description: "กรุณาลองใหม่",
-        variant: "destructive" 
-      });
-    }
-  };
-  
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border p-4">
@@ -436,25 +396,17 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
                 {/* Simplified Job Management for Job Owners */}
                 {gig.user_id === currentUserId && (
                   <div className="mt-6 pt-6 border-t border-border">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center mb-4">
                       <h4 className="text-lg font-semibold">จัดการงานของคุณ</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => setShowConfirmDialog({ jobId: gig.id, lineId: gig.lineId })}
-                          variant="outline"
-                          className="text-red-600 border-red-200 hover:bg-red-50"
-                        >
-                          ลบประกาศงาน
-                        </Button>
-                        {gig.status === 'open' && (
-                          <Button
-                            onClick={() => handleToggleJobStatus(gig.id, gig.status)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            ปิดรับสมัครงานนี้
-                          </Button>
-                        )}
-                      </div>
+                    </div>
+                    <div className="flex justify-center">
+                      <Button
+                        onClick={() => setShowConfirmDialog({ jobId: gig.id, lineId: gig.lineId })}
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        ลบประกาศงาน
+                      </Button>
                     </div>
                   </div>
                 )}

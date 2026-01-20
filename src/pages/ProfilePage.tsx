@@ -1020,18 +1020,6 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                         <span className="font-semibold text-foreground">งบประมาณ: {job.budget}</span>
                       </div>
 
-                      {/* Status Toggle Button - แสดงสำหรับเจ้าของงาน */}
-                      <div className="mb-3">
-                        {job.status === 'open' && (
-                          <Button
-                            onClick={() => handleToggleJobStatus(job.id, job.status)}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 text-sm"
-                          >
-                            ปิดรับสมัครงานนี้
-                          </Button>
-                        )}
-                      </div>
-
                       {!isActive && (
                         <p className="text-xs text-muted-foreground italic">ประกาศหมดอายุแล้ว</p>
                       )}
