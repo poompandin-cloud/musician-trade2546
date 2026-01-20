@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="musicGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fed7aa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  
+  <!-- Pattern -->
+  <pattern id="musicPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+    <circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)" />
+    <circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)" />
+    <circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)" />
+  </pattern>
+  <rect width="1200" height="630" fill="url(#musicPattern)" />
+  
+  <!-- Main Content -->
+  <g transform="translate(100, 150)">
+    <!-- Large Music Note -->
+    <g transform="translate(0, 50)">
+      <defs>
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+      
+      <!-- Note heads -->
+      <ellipse cx="80" cy="200" rx="25" ry="18" fill="url(#musicGrad)" filter="url(#shadow)" />
+      <ellipse cx="200" cy="160" rx="25" ry="18" fill="url(#musicGrad)" filter="url(#shadow)" />
+      
+      <!-- Note stems -->
+      <rect x="102" y="80" width="8" height="120" fill="url(#musicGrad)" filter="url(#shadow)" />
+      <rect x="222" y="40" width="8" height="120" fill="url(#musicGrad)" filter="url(#shadow)" />
+      
+      <!-- Note beam -->
+      <path d="M110 80 L230 40 L230 60 L110 100 Z" fill="url(#musicGrad)" filter="url(#shadow)" />
+    </g>
+    
+    <!-- Text Content -->
+    <g transform="translate(350, 0)">
+      <!-- Main Title -->
+      <text x="0" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white">
+        Musician Trade Thai
+      </text>
+      
+      <!-- Subtitle -->
+      <text x="0" y="140" font-family="Arial, sans-serif" font-size="36" fill="rgba(255,255,255,0.9)">
+        หาคนเล่นแทนดนตรี
+      </text>
+      
+      <!-- Description -->
+      <text x="0" y="200" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)">
+        แพลตฟอร์มสำหรับหาคนเล่นดนตรีแทนงานกลางคืน
+      </text>
+      <text x="0" y="240" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)">
+        เชื่อมระหว่างร้าน/ผู้จัดงาน กับนักดนตรีที่พร้อมรับงานทันที
+      </text>
+      
+      <!-- Domain -->
+      <text x="0" y="320" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white">
+        musiciantradethai.com
+      </text>
+    </g>
+  </g>
+  
+  <!-- Bottom decoration -->
+  <g transform="translate(0, 550)">
+    <rect x="0" y="0" width="1200" height="80" fill="rgba(0,0,0,0.1)" />
+    <text x="600" y="45" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.7)" text-anchor="middle">
+      🎵 ด่วน ทันที มั่นใจ 🎵
+    </text>
+  </g>
+</svg>
