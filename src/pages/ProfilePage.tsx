@@ -482,32 +482,61 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   };
 
   // ยืนยันการทำงานสำเร็จ
-  const handleConfirmJobCompletion = async (jobId: string) => {
-    const confirmComplete = window.confirm("คุณต้องการยืนยันว่างานนี้เสร็จแล้วใช่หรือไม่?");
+  const handleToggleJobStatus = async (jobId: string, currentStatus: string) => {
+    // Only allow closing jobs, not reopening
+    if (currentStatus === 'closed') {
+      toast({ 
+        title: "ไม่สามารถเปิดงานอีกครั้ง", 
+        description: "เมื่องานปิดแล้วแล้วไม่สามารถเปิดใหม่อีกครั้ง",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    const newStatus = 'closed';
+    const confirmMessage = "คุณต้องการปิดรับงานนี้ใช่หรือไม่?";
+    
+    const confirmComplete = window.confirm(confirmMessage);
     if (!confirmComplete) return;
 
     try {
-      // อัปเดตสถานะงานเป็น closed
+      // อัปเดตสถานะงาน
       const { error } = await (supabase as any)
         .from("jobs")
         .update({ 
-          status: "closed"
+          status: newStatus
         })
         .eq("id", jobId);
 
       if (error) {
         console.error("Error updating job status:", error);
-        toast({ 
-          title: "อัปเดตสถานะไม่สำเร็จ", 
-          description: error.message,
-          variant: "destructive" 
-        });
+        // ตรวจสอบว่า error เกี่ยว่ากับ permissions หรือไม่
+        const errorMessage = error.message || "ไม่ทราบสาเหตุ";
+        if (errorMessage.includes("permission") || errorMessage.includes("unauthorized") || errorMessage.includes("403")) {
+          toast({ 
+            title: "ไม่สามารถอัปเดตสถานะ", 
+            description: "คุณไม่มีสิทธิ์ในการแก้ไข้ว่างานนี้",
+            variant: "destructive" 
+          });
+        } else if (errorMessage.includes("column") || errorMessage.includes("status")) {
+          toast({ 
+            title: "เกิดข้อผิดพลาดในฐานข้อมูล", 
+            description: "ไม่พบคอลัมน์ 'status' ในตารางงาน",
+            variant: "destructive" 
+          });
+        } else {
+          toast({ 
+            title: "อัปเดตสถานะไม่สำเร็จ", 
+            description: errorMessage,
+            variant: "destructive" 
+          });
+        }
         return;
       }
 
       toast({ 
-        title: "ยืนยันสำเร็จ!", 
-        description: "งานนี้ถูกปิดแล้ว" 
+        title: "ปิดงานสำเร็จ!", 
+        description: "งานนี้ปิดรับสมัครแล้ว และจะแสดงในหน้าหลัก" 
       });
 
       // รีเฟรชข้อมูล
@@ -671,7 +700,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm font-medium">บารมี</span>
+                    <span className="text-sm font-medium">ความมืออาชีพ</span>
                   </div>
                   <span className={`text-sm font-bold ${getPrestigeLevel(profile?.received_tokens || 0).textColor}`}>
                     {getPrestigeLevel(profile?.received_tokens || 0).level}
@@ -991,17 +1020,17 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                         <span className="font-semibold text-foreground">งบประมาณ: {job.budget}</span>
                       </div>
 
-                      {/* Confirmation Button - แสดงเมื่อมีผู้สมัครที่ได้รับการยืนยัน */}
-                      {job.status === 'open' && job.confirmed_applicant_id && (
-                        <div className="mb-3">
+                      {/* Status Toggle Button - แสดงสำหรับเจ้าของงาน */}
+                      <div className="mb-3">
+                        {job.status === 'open' && (
                           <Button
-                            onClick={() => handleConfirmJobCompletion(job.id)}
-                            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 text-sm"
+                            onClick={() => handleToggleJobStatus(job.id, job.status)}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 text-sm"
                           >
-                            ยืนยันการทำงานสำเร็จ
+                            ปิดรับสมัครงานนี้
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       {!isActive && (
                         <p className="text-xs text-muted-foreground italic">ประกาศหมดอายุแล้ว</p>

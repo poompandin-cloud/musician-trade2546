@@ -93,9 +93,9 @@ const ReviewSystem = ({
       // แสดงข้อความตามคะแนน
       let message = "";
       if (pointsChange > 0) {
-        message = `รีวิวสำเร็จ! ${revieweeName} ได้รับ +${pointsChange} แต้มบารมี`;
+        message = `รีวิวสำเร็จ! ${revieweeName} ได้รับ +${pointsChange} แต้มความมืออาชีพ`;
       } else {
-        message = `รีวิวสำเร็จ! ${revieweeName} ถูกหัก ${Math.abs(pointsChange)} แต้มบารมี`;
+        message = `รีวิวสำเร็จ! ${revieweeName} ถูกหัก ${Math.abs(pointsChange)} แต้มความมืออาชีพ`;
       }
 
       toast({

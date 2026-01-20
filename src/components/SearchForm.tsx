@@ -3,64 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, AlertCircle, Search, X, ChevronDown } from "lucide-react";
+import { ArrowLeft, AlertCircle, Search, X, ChevronDown, HelpCircle, ExternalLink, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const instruments = [
   // กีตาร์
   { value: "guitar-acoustic", label: "กีตาร์โปร่ง", category: "กีตาร์" },
   { value: "guitar-electric", label: "กีตาร์ไฟฟ้า", category: "กีตาร์" },
-  { value: "guitar-classical", label: "กีตาร์คลาสสิก", category: "กีตาร์" },
-  { value: "guitar-bass", label: "เบส", category: "กีตาร์" },
-  { value: "guitar-ukulele", label: "ยูคูเลเล", category: "กีตาร์" },
   
   // คีย์บอร์ด/เปียโน
   { value: "keyboard-piano", label: "เปียโน", category: "คีย์บอร์ด" },
   { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์", category: "คีย์บอร์ด" },
-  { value: "keyboard-organ", label: "ออร์แกน", category: "คีย์บอร์ด" },
-  { value: "keyboard-accordion", label: "แอคคอร์เดียน", category: "คีย์บอร์ด" },
   
   // กลอง
   { value: "drums-kit", label: "กลองชุด", category: "กลอง" },
-  { value: "drums-percussion", label: "เพอร์คัสชัน", category: "กลอง" },
-  { value: "drums-cajon", label: "คาฮอน", category: "กลอง" },
-  { value: "drums-djembe", label: "เจมเบ", category: "กลอง" },
-  { value: "drums-bongo", label: "บองโก", category: "กลอง" },
   
-  // เครื่องเป่า
-  { value: "wind-saxophone", label: "แซกโซโฟน", category: "เครื่องเป่า" },
-  { value: "wind-trumpet", label: "ทรัมเป็ต", category: "เครื่องเป่า" },
-  { value: "wind-trombone", label: "ทรอมโบน", category: "เครื่องเป่า" },
-  { value: "wind-flute", label: "ฟลุต", category: "เครื่องเป่า" },
-  { value: "wind-clarinet", label: "คลาริเน็ต", category: "เครื่องเป่า" },
-  { value: "wind-oboe", label: "โอโบ", category: "เครื่องเป่า" },
-  { value: "wind-harmonica", label: "ฮาร์โมนิกา", category: "เครื่องเป่า" },
-  
-  // สาย
+  // เครื่องสาย
   { value: "strings-violin", label: "ไวโอลิน", category: "เครื่องสาย" },
-  { value: "strings-cello", label: "เชลโล", category: "เครื่องสาย" },
-  { value: "strings-viola", label: "วิโอลา", category: "เครื่องสาย" },
-  { value: "strings-doublebass", label: "ดับเบิลเบส", category: "เครื่องสาย" },
-  { value: "strings-erhu", label: "อี้หู", category: "เครื่องสาย" },
   
   // ร้อง
   { value: "vocal-lead", label: "นักร้องนำ", category: "ร้อง" },
   { value: "vocal-backup", label: "นักร้องประสาน", category: "ร้อง" },
-  { value: "vocal-choir", label: "นักร้องคอรัส", category: "ร้อง" },
-  { value: "vocal-rap", label: "แร็ป/เร็ปเปอร์", category: "ร้อง" },
   
-  // DJ และอิเล็กทรอนิกส์
-  { value: "dj-controller", label: "DJ คอนโทรลเลอร์", category: "DJ/อิเล็กทรอนิกส์" },
-  { value: "dj-turntable", label: "เทิร์นเทเบิล", category: "DJ/อิเล็กทรอนิกส์" },
-  { value: "dj-laptop", label: "แล็ปท็อป DJ", category: "DJ/อิเล็กทรอนิกส์" },
-  { value: "dj-producer", label: "โปรดิวเซอร์", category: "DJ/อิเล็กทรอนิกส์" },
-  
-  // อื่นๆ
-  { value: "other-djemb", label: "ดรัมแมชีน", category: "อื่นๆ" },
-  { value: "other-theremin", label: "เธอรามิน", category: "อื่นๆ" },
-  { value: "other-band", label: "วงดนตรีครบ", category: "อื่นๆ" },
-  { value: "other-session", label: "นักดนตรีเซสชัน", category: "อื่นๆ" },
-  { value: "other-sound", label: "วิศวกรเสียง", category: "อื่นๆ" },
+  // อื่นๆ - Custom Input
+  { value: "other-custom", label: "อื่นๆ (ระบุเอง)", category: "อื่นๆ" }
 ];
 
 const provinces = [
@@ -90,71 +56,12 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
     duration: "",
     budget: "",
     lineId: "", 
-    phone: ""   
+    phone: ""
   });
 
-  // State for searchable multi-select
-  const [instrumentSearch, setInstrumentSearch] = useState("");
-  const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
-
-  // Filter instruments based on search
-  const filteredInstruments = instruments.filter(instrument => 
-    instrument.label.toLowerCase().includes(instrumentSearch.toLowerCase()) ||
-    instrument.category.toLowerCase().includes(instrumentSearch.toLowerCase())
-  );
-
-  // Group instruments by category
-  const instrumentsByCategory = filteredInstruments.reduce((acc, instrument) => {
-    if (!acc[instrument.category]) {
-      acc[instrument.category] = [];
-    }
-    acc[instrument.category].push(instrument);
-    return acc;
-  }, {} as Record<string, typeof instruments>);
-
-  // Handle instrument selection
-  const handleInstrumentToggle = (instrument: typeof instruments[0]) => {
-    const isSelected = formData.instruments.includes(instrument.label);
-    if (isSelected) {
-      setFormData({
-        ...formData,
-        instruments: formData.instruments.filter(i => i !== instrument.label)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        instruments: [...formData.instruments, instrument.label]
-      });
-    }
-  };
-
-  // Remove instrument from selection
-  const removeInstrument = (instrumentLabel: string) => {
-    setFormData({
-      ...formData,
-      instruments: formData.instruments.filter(i => i !== instrumentLabel)
-    });
-  };
-
-  // Get selected instrument objects
-  const selectedInstruments = formData.instruments.map(label => 
-    instruments.find(i => i.label === label)
-  ).filter(Boolean) as typeof instruments;
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showInstrumentDropdown) {
-        const target = event.target as Element;
-        if (!target.closest('.instrument-dropdown')) {
-          setShowInstrumentDropdown(false);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showInstrumentDropdown]);
+  // Smart Line Link states
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [copiedStep, setCopiedStep] = useState<number | null>(null);
 
   // โหลดข้อมูลเครดิต
   useEffect(() => {
@@ -213,6 +120,45 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
     }
   }, [userId]);
 
+  // Smart Line Link functions
+  const extractLineId = (input: string): string => {
+    // ดึง ID จากลิงก์ LINE
+    const lineLinkRegex = /line\.me\/ti\/p\/[~]?([a-zA-Z0-9_-]+)/;
+    const match = input.match(lineLinkRegex);
+    if (match) {
+      return match[1];
+    }
+    
+    // ลบช่องว่างและอักขระพิเศษ @ ออก
+    return input.replace(/[@\s]/g, '').trim();
+  };
+
+  const handleLineIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // ถ้าเป็นการ paste ลิงก์ LINE ให้ดึงเฉพาะ ID
+    if (inputValue.includes('line.me')) {
+      const extractedId = extractLineId(inputValue);
+      setFormData({ ...formData, lineId: extractedId });
+    } else {
+      // ลบช่องว่างและ @ ออกขณะพิมพ์
+      const cleanedValue = inputValue.replace(/[@\s]/g, '');
+      setFormData({ ...formData, lineId: cleanedValue });
+    }
+  };
+
+  const copyToClipboard = (text: string, step: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedStep(step);
+    setTimeout(() => setCopiedStep(null), 2000);
+  };
+
+  const testLineLink = () => {
+    if (formData.lineId) {
+      window.open(`https://line.me/ti/p/~${formData.lineId}`, '_blank');
+    }
+  };
+
   const hasEnoughCredits = credits !== null && credits >= 5;
   const isDisabled = loadingCredits || !hasEnoughCredits || isSearching;
 // ... (ส่วนบนคงเดิม)
@@ -220,7 +166,7 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
     e.preventDefault();
     
     // เช็คว่าเลือกเครื่องดนตรีอย่างน้อย 1 ชนิด
-    if (formData.instruments.length === 0) {
+    if (formData.instruments.join(", ").trim().length === 0) {
       toast({ 
         title: "กรุณาเลือกเครื่องดนตรี", 
         description: "ต้องเลือกเครื่องดนตรีอย่างน้อย 1 ชนิด",
@@ -234,7 +180,7 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
     try {
       // ส่งข้อมูลโดยใช้ชื่อคอลัมน์ที่ตรงกับฐานข้อมูลของคุณเป๊ะๆ
       const jobData = {
-        instrument: formData.instruments.join(", "), // แปลง array เป็น string
+        instrument: formData.instruments.join(", ").trim(), // แปลง array เป็น string
         date: formData.date,
         location: formData.location,
         province: formData.province,
@@ -242,6 +188,7 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
         budget: formData.budget,
         lineId: formData.lineId,
         phone: formData.phone,
+        status: "open", // งานเริ่มต้นด้วยสถานะ "เปิดรับสมัคร"
         createdAt: new Date().toISOString()
       };
 
@@ -283,100 +230,45 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
           <div className="space-y-2">
             <Label className="text-sm font-semibold">เครื่องดนตรีที่ต้องการ</Label>
             
-            {/* Searchable Multi-Select Dropdown */}
-            <div className="relative instrument-dropdown">
-              {/* Selected Instruments Display */}
-              <div 
-                className="w-full min-h-12 rounded-2xl border border-input bg-background px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                onClick={() => setShowInstrumentDropdown(!showInstrumentDropdown)}
-              >
-                <div className="flex flex-wrap gap-2 items-center min-h-[32px]">
-                  {formData.instruments.length === 0 ? (
-                    <span className="text-muted-foreground">เลือกเครื่องดนตรี...</span>
-                  ) : (
-                    formData.instruments.map((instrumentLabel, index) => (
-                      <div 
-                        key={index}
-                        className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-sm"
+            {/* Free Text Input with Suggestions */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">เครื่องดนตรีที่ต้องการ</Label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="ระบุชื่อเครื่องดนตรี..."
+                  value={formData.instruments.join(", ")}
+                  onChange={(e) => setFormData({ ...formData, instruments: e.target.value.split(", ").filter(i => i.trim()) })}
+                  className="w-full rounded-2xl border border-input bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                
+                {/* Suggestions Dropdown */}
+                <div className="mt-2">
+                  <div className="text-xs text-muted-foreground mb-2">
+                    รายการแนะนำ: กีต้าร์คลาสสิค, เบส, กลอง, เปียโน, ฯลฯ
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {instruments.map((instrument) => (
+                      <button
+                        key={instrument.value}
+                        type="button"
+                        onClick={() => {
+                          const currentInstruments = formData.instruments.join(", ").split(", ").filter(i => i.trim());
+                          if (!currentInstruments.includes(instrument.label)) {
+                            setFormData({
+                              ...formData,
+                              instruments: [...currentInstruments, instrument.label]
+                            });
+                          }
+                        }}
+                        className="text-left px-3 py-2 rounded-xl border border-input bg-card hover:bg-accent transition-colors text-sm"
                       >
-                        <span>{instrumentLabel}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeInstrument(instrumentLabel);
-                          }}
-                          className="ml-1 text-orange-500 hover:text-orange-700"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground transition-transform ${showInstrumentDropdown ? 'rotate-180' : ''}`} />
-              </div>
-
-              {/* Dropdown */}
-              {showInstrumentDropdown && (
-                <div className="absolute z-50 w-full mt-1 bg-background border border-input rounded-2xl shadow-lg max-h-60 overflow-y-auto">
-                  {/* Search Input */}
-                  <div className="p-3 border-b border-input">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        placeholder="ค้นหาเครื่องดนตรี..."
-                        value={instrumentSearch}
-                        onChange={(e) => setInstrumentSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-input rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Instrument Options */}
-                  <div className="p-2">
-                    {Object.entries(instrumentsByCategory).map(([category, categoryInstruments]) => (
-                      <div key={category} className="mb-3">
-                        <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {category}
-                        </div>
-                        {categoryInstruments.map((instrument) => {
-                          const isSelected = formData.instruments.includes(instrument.label);
-                          return (
-                            <button
-                              key={instrument.value}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInstrumentToggle(instrument);
-                              }}
-                              className={`w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between ${
-                                isSelected
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "hover:bg-accent text-foreground"
-                              }`}
-                            >
-                              <span>{instrument.label}</span>
-                              {isSelected && (
-                                <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                        {instrument.label}
+                      </button>
                     ))}
-                    {filteredInstruments.length === 0 && (
-                      <div className="px-3 py-4 text-center text-muted-foreground text-sm">
-                        ไม่พบเครื่องดนตรีที่ค้นหา
-                      </div>
-                    )}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -417,14 +309,53 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-dashed border-border">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-orange-600">ID Line</Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-semibold text-orange-600">ID Line</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHelpModal(true)}
+                  className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </Button>
+              </div>
               <Input 
-                placeholder="ระบุไอดีไลน์" 
+                type="text" 
+                placeholder="ระบุไอดีไลน์ หรือวางลิงก์ LINE" 
                 value={formData.lineId} 
-                onChange={(e) => setFormData({ ...formData, lineId: e.target.value })} 
+                onChange={handleLineIdChange} 
                 required 
                 className="rounded-2xl h-12 w-full border-orange-100 focus:border-orange-500" 
               />
+              
+              {/* Live Preview */}
+              {formData.lineId && (
+                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-xl">
+                  <div className="text-xs text-orange-700 mb-1">
+                    ลิงก์ที่จะปรากฏ: 
+                    <span className="font-mono ml-1">
+                      https://line.me/ti/p/~{formData.lineId}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={testLineLink}
+                    className="text-xs h-7 px-2 border-orange-200 text-orange-600 hover:bg-orange-100"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    กดเพื่อทดสอบ
+                  </Button>
+                </div>
+              )}
+              
+              {/* Security Warning */}
+              <div className="text-xs text-orange-600 mt-1">
+                ⚠️ สำคัญ: โปรดตรวจสอบว่าคุณเปิดอนุญาตให้เพิ่มเพื่อนด้วยไอดีในแอป LINE แล้ว
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-green-600">เบอร์โทรศัพท์</Label>
@@ -464,6 +395,153 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
           </Button>
         </form>
       </main>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">วิธีเอาลิงก์จาก LINE</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHelpModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Step 1 */}
+              <div className="border border-gray-200 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">เปิดแอป LINE และไปที่หน้าโปรไฟล์</h4>
+                    <p className="text-xs text-gray-600 mb-2">
+                      แตะที่รูปโปรไฟล์ของคุณในหน้าแรก LINE
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-2 text-center">
+                      <div className="text-xs text-gray-500 mb-1">หน้าโปรไฟล์ LINE</div>
+                      <div className="w-12 h-12 bg-green-500 rounded-full mx-auto mb-1"></div>
+                      <div className="text-xs">ชื่อของคุณ</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="border border-gray-200 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">กดปุ่มแชร์/QR Code</h4>
+                    <p className="text-xs text-gray-600 mb-2">
+                      แตะที่เมนู (⋮) หรือปุ่มแชร์ในหน้าโปรไฟล์
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-2 text-center">
+                      <div className="text-xs text-gray-500 mb-1">เมนูแชร์</div>
+                      <div className="flex justify-center gap-2">
+                        <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="border border-gray-200 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">คัดลอกลิงก์</h4>
+                    <p className="text-xs text-gray-600 mb-2">
+                      เลือก "คัดลอกลิงก์" หรือ "Copy Link"
+                    </p>
+                    <div className="bg-gray-100 rounded-lg p-2">
+                      <div className="text-xs text-gray-500 mb-1">ลิงก์ที่ได้:</div>
+                      <div className="bg-white border border-gray-300 rounded p-2 text-xs font-mono break-all">
+                        https://line.me/ti/p/ABC123
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard('https://line.me/ti/p/ABC123', 3)}
+                        className="mt-2 text-xs h-6 px-2"
+                      >
+                        {copiedStep === 3 ? (
+                          <>
+                            <Check className="w-3 h-3 mr-1" />
+                            คัดลอกแล้ว
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 mr-1" />
+                            คัดลอกตัวอย่าง
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div className="border border-gray-200 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    4
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">วางในช่องกรอก</h4>
+                    <p className="text-xs text-gray-600">
+                      กลับมาที่หน้าประกาศงานและวางลิงก์ในช่อง ID Line
+                      <br />
+                      <span className="text-orange-600 font-semibold">
+                        ระบบจะดึงเฉพาะ ID ให้อัตโนมัติ!
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Important Note */}
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm text-orange-800 mb-1">สำคัญ!</h4>
+                    <p className="text-xs text-orange-700">
+                      ต้องเปิดอนุญาตให้เพิ่มเพื่อนด้วยไอดีในแอป LINE ก่อน
+                      <br />
+                      ไปที่: การตั้งค่า {'>'} เพื่อน {'>'} เพิ่มเพื่อนด้วยไอดี
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => setShowHelpModal(false)}
+              className="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              เข้าใจแล้ว
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

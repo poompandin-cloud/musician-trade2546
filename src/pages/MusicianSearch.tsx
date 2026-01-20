@@ -20,7 +20,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const fetchAllMusicians = async () => {
     setLoading(true);
     try {
-      // ดึงข้อมูลนักดนตรีทั้งหมด เรียงตาม prestige_points (แต้มบารมี) จากมากไปน้อย
+      // ดึงข้อมูลนักดนตรีทั้งหมด เรียงตาม prestige_points (แต้มความมืออาชีพ) จากมากไปน้อย
       // ถ้ายังไม่มี prestige_points ให้ใช้ credits แทน หรือใช้ 100 (ค่าเริ่มต้น)
       const { data, error } = await (supabase as any)
         .from("profiles")
@@ -172,7 +172,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
                         <div className="flex items-center gap-2 mt-1">
                           <Trophy className="w-3 h-3 md:w-4 md:h-4 text-orange-500 flex-shrink-0" />
                           <span className="text-xs md:text-sm text-muted-foreground">
-                            แต้มบารมี: {tokens.toLocaleString()}
+                            แต้มความมืออาชีพ: {tokens.toLocaleString()}
                           </span>
                         </div>
                       </div>

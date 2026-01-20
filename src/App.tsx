@@ -167,6 +167,7 @@ const App = () => {
           budget: newJob.budget,
           phone: newJob.phone,     
           lineId: newJob.lineId,   
+          status: newJob.status || "open", // ใช้ค่าที่ส่งมาหรือค่าเริ่มต้น
           user_id: userId 
         }])
         .select()
