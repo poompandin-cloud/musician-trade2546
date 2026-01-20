@@ -151,12 +151,16 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
       return;
     }
 
-    // ตรวจสอบว่าลิงก์เป็น YouTube หรือ Facebook Video
-    const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
-    const facebookRegex = /(?:facebook\.com\/.*\/videos\/|fb\.watch\/)([^\/\n?#]+)/;
+    // ตรวจสอบว่าลิงก์เป็น YouTube หรือ Facebook Video (ปรับปรุง regex ให้ครบถ้วน)
+    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11,})(?:[&?].*)?$/;
+    const facebookRegex = /^(?:https?:\/\/)?(?:www\.)?(?:facebook\.com\/(?:[^\/]+\/videos\/|watch\/\?v=)|fb\.watch\/)([a-zA-Z0-9_-]+)(?:[&?].*)?$/;
     
-    if (!youtubeRegex.test(videoInput) && !facebookRegex.test(videoInput)) {
-      toast({ title: "ลิงก์ไม่ถูกต้อง", description: "กรุณาใช้ลิงก์ YouTube หรือ Facebook Video", variant: "destructive" });
+    if (!youtubeRegex.test(videoInput.trim()) && !facebookRegex.test(videoInput.trim())) {
+      toast({ 
+        title: "ลิงก์ไม่ถูกต้อง", 
+        description: "กรุณาใช้ลิงก์ YouTube หรือ Facebook Video เท่านั้น\n\nYouTube: https://www.youtube.com/watch?v=...\nFacebook: https://www.facebook.com/.../videos/...", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -188,7 +192,24 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
       if (error) {
         console.error("Error updating videos:", error);
-        toast({ title: "เพิ่มวิดีโอไม่สำเร็จ", variant: "destructive" });
+        let errorMessage = "เพิ่มวิดีโอไม่สำเร็จ";
+        
+        // ตรวจสอบประเภทของ error และแสดงข้อความที่เหมาะสม
+        if (error.code === '23505') {
+          errorMessage = "ข้อมูลซ้ำกันหรือเกินขีดจำกัด";
+        } else if (error.code === '23514') {
+          errorMessage = "ข้อมูลไม่ถูกต้องตามรูปแบบ";
+        } else if (error.code === '42501') {
+          errorMessage = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+        } else if (error.message) {
+          errorMessage = `เกิดข้อผิดพลาด: ${error.message}`;
+        }
+        
+        toast({ 
+          title: errorMessage, 
+          description: "กรุณาตรวจสอบลิงก์วิดีโอและลองใหม่อีกครั้ง",
+          variant: "destructive" 
+        });
       } else {
         toast({ title: "เพิ่มวิดีโอสำเร็จ" });
         setProfile({ ...profile!, video_urls: newVideos as any });
@@ -228,7 +249,24 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
       if (error) {
         console.error("Error removing video:", error);
-        toast({ title: "ลบวิดีโอไม่สำเร็จ", variant: "destructive" });
+        let errorMessage = "ลบวิดีโอไม่สำเร็จ";
+        
+        // ตรวจสอบประเภทของ error และแสดงข้อความที่เหมาะสม
+        if (error.code === '23505') {
+          errorMessage = "ข้อมูลซ้ำกันหรือเกินขีดจำกัด";
+        } else if (error.code === '23514') {
+          errorMessage = "ข้อมูลไม่ถูกต้องตามรูปแบบ";
+        } else if (error.code === '42501') {
+          errorMessage = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+        } else if (error.message) {
+          errorMessage = `เกิดข้อผิดพลาด: ${error.message}`;
+        }
+        
+        toast({ 
+          title: errorMessage, 
+          description: "กรุณาลองใหม่อีกครั้ง",
+          variant: "destructive" 
+        });
       } else {
         toast({ title: "ลบวิดีโอสำเร็จ" });
         setProfile({ ...profile!, video_urls: newVideos as any });
@@ -241,9 +279,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
-  // แปลง YouTube URL เป็น embed URL
+  // แปลง YouTube URL เป็น embed URL (ปรับปรุง regex ให้ครบถ้วน)
   const getEmbedUrl = (url: string) => {
-    const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11,})(?:[&?].*)?$/;
     const match = url.match(youtubeRegex);
     if (match) {
       return `https://www.youtube.com/embed/${match[1]}`;
