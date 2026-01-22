@@ -47,7 +47,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
         />
 
         <MenuCard 
-          title="งานคืนนี้ใกล้คุณ"
+          title="งานที่ประกาศ"
           description="ดูงานที่เปิดรับอยู่ตอนนี้"
           icon={<MapPin className="w-6 h-6 text-orange-500" />}
           onClick={() => navigate("/nearby-gigs")}

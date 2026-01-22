@@ -20,6 +20,8 @@ interface Profile {
   received_tokens?: number;
   prestige_points?: number;
   video_urls?: string[] | null;
+  instruments?: string[] | null
+  province?: string | null;
 }
 
 interface Job {
@@ -39,6 +41,30 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const { id } = useParams<{ id?: string }>();
   const { toast, dismiss } = useToast();
   
+  // รายการเครื่องดนตรีสำหรับ dropdown
+  const instruments = [
+    { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
+    { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
+    { value: "bass", label: "เบส" },
+    { value: "drums-kit", label: "กลองชุด" },
+    { value: "keyboard-piano", label: "เปียโน" },
+    { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
+    { value: "vocal-lead", label: "นักร้องนำ" },
+    { value: "vocal-backup", label: "นักร้องประสาน" },
+    { value: "saxophone", label: "แซกโซโฟน" },
+    { value: "violin", label: "ไวโอลิน" },
+    { value: "trumpet", label: "ทรัมเป็ต" },
+    { value: "flute", label: "ฟลุต" },
+  ];
+
+  // รายการจังหวัด
+  const provinces = [
+    "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
+    "พระนครศรีอยุธยา", "สระบุรี", "ลพบุรี", "ชลบุรี (พัทยา)", "ระยอง", "จันทบุรี", 
+    "เชียงใหม่", "เชียงราย", "พิษณุโลก", "นครสวรรค์", "ขอนแก่น", "นครราชสีมา", 
+    "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
+  ];
+  
   // userId คือ id ของโปรไฟล์ที่กำลังดู (จาก URL หรือ currentUserId)
   const profileUserId = id || currentUserId;
   const isOwner = profileUserId === currentUserId;
@@ -50,13 +76,19 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [myJobs, setMyJobs] = useState<Job[]>([]);
   const [confirmedApplications, setConfirmedApplications] = useState<any[]>([]);
   const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState({
     full_name: "",
-    phone: "",
-    line_id: "",
-  });
+phone: "",
+line_id: "",
+instruments: "",
+province: "",
+});
+
   const [videoInput, setVideoInput] = useState("");
   const [showVideoInput, setShowVideoInput] = useState(false);
+  const [instrumentInput, setInstrumentInput] = useState("");
+  const [showInstrumentSuggestions, setShowInstrumentSuggestions] = useState(false);
 
   // โหลดข้อมูลโปรไฟล์
   useEffect(() => {
@@ -74,10 +106,12 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         } else if (data) {
           setProfile(data);
           setFormData({
-            full_name: data.full_name || "",
-            phone: data.phone || "",
-            line_id: data.line_id || "",
-          });
+  full_name: data.full_name || "",
+  phone: data.phone || "",
+  line_id: data.line_id || "",
+  instruments: data.instruments || "", // ห้ามใส่ Array.isArray หรือเงื่อนไขของ Array
+  province: data.province || "",
+});
         } else {
           // ถ้ายังไม่มีโปรไฟล์ และเป็นเจ้าของ ให้สร้างใหม่
           if (isOwner) {
@@ -108,6 +142,20 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
       }
     }
   }, [profileUserId, isOwner]);
+
+  // ปิด dropdown เมื่อคลิกข้างนอก
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showInstrumentSuggestions) {
+        setShowInstrumentSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showInstrumentSuggestions]);
 
   // โหลดงานที่ผู้ใช้ลงประกาศเอง
   const fetchMyJobs = async () => {
@@ -474,39 +522,150 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
+  // ฟังก์ชันสำหรับจัดการเครื่องดนตรี
+  const handleAddInstrument = (instrument: { value: string; label: string }) => {
+    console.log("Adding instrument:", instrument);
+    console.log("Current instruments before:", formData.instruments);
+    
+   if (!formData.instruments.includes(instrument.value)) {
+  const newInstruments = formData.instruments
+    ? `${formData.instruments}, ${instrument.value}`
+    : instrument.value;
+
+  console.log("New instruments string:", newInstruments);
+  setFormData({ ...formData, instruments: newInstruments });
+} else {
+  console.log("Instrument already exists:", instrument.value);
+}
+setInstrumentInput("");
+setShowInstrumentSuggestions(false);
+};
+
+
+  // ฟังก์ชันสำหรับเพิ่มเครื่องดนตรีแบบพิมพ์เอง
+  const handleAddCustomInstrument = (instrumentName: string) => {
+    console.log("Adding custom instrument:", instrumentName);
+    console.log("Current instruments before:", formData.instruments);
+    
+    if (!formData.instruments.includes(instrumentName)) {
+  const newInstruments = formData.instruments
+    ? `${formData.instruments}, ${instrumentName}`
+    : instrumentName;
+
+  console.log("New instruments string:", newInstruments);
+  setFormData({ ...formData, instruments: newInstruments });
+} else {
+  console.log("Instrument already exists:", instrumentName);
+}
+setInstrumentInput("");
+};
+
+
+  // ฟังก์ชันสำหรับจัดการการพิมพ์เครื่องดนตรี (แบบอัตโนมัติ)
+  const handleInstrumentInputChange = (value: string) => {
+    setInstrumentInput(value);
+    
+    // แยกคำด้วย comma หรือ space และเพิ่มเครื่องดนตรีอัตโนมัติ
+    const trimmedValue = value.trim();
+    if (trimmedValue.includes(',') || trimmedValue.includes(' ')) {
+      const newInstrument = trimmedValue.replace(/[, ]+/g, '').trim();
+      if (newInstrument) {
+        handleAddCustomInstrument(newInstrument);
+      }
+    }
+  };
+
+  const handleRemoveInstrument = (instrumentValue: string) => {
+    console.log("Removing instrument:", instrumentValue);
+    console.log("Current instruments before:", formData.instruments);
+    
+    const newInstruments = formData.instruments
+  .split(",")
+  .map(inst => inst.trim())
+  .filter(inst => inst !== instrumentValue)
+  .join(", ");
+
+console.log("New instruments after removal:", newInstruments);
+
+    
+    setFormData({ 
+  ...formData, 
+  instruments: newInstruments
+});
+};
+
+
   // บันทึกข้อมูลโปรไฟล์
   const handleSave = async () => {
     setSaving(true);
 
     try {
-      const { error } = await (supabase as any)
+      const updateData = {
+        full_name: formData.full_name || null,
+        phone: formData.phone || null,
+        line_id: formData.line_id || null,
+        instruments: formData.instruments.length > 0 ? formData.instruments : null,
+        province: formData.province || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log("Saving profile data:", updateData);
+
+      const { data, error } = await (supabase as any)
         .from("profiles")
-        .update({
-          full_name: formData.full_name || null,
-          phone: formData.phone || null,
-          line_id: formData.line_id || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", profileUserId);
+        .update(updateData)
+        .eq("id", profileUserId)
+        .select();
 
       if (error) {
-        console.error("Update error:", error);
-        toast({ title: "บันทึกไม่สำเร็จ", description: error.message, variant: "destructive" });
+        console.error("Update error details:", error);
+        
+        // ตรวจสอบประเภทของ error และแสดงข้อความที่เหมาะสม
+        let errorMessage = error.message || "ไม่สามารถบันทึกข้อมูลได้";
+        let errorTitle = "บันทึกไม่สำเร็จ";
+        
+        if (error.message?.includes('column "instruments" does not exist')) {
+          errorMessage = "ไม่พบคอลัมน์ 'instruments' กรุณารัน SQL Migration: supabase/add_instruments_province_to_profiles.sql";
+        } else if (error.message?.includes('column "province" does not exist')) {
+          errorMessage = "ไม่พบคอลัมน์ 'province' กรุณารัน SQL Migration: supabase/add_instruments_province_to_profiles.sql";
+        } else if (error.message?.includes('permission') || error.message?.includes('unauthorized')) {
+          errorMessage = "ไม่มีสิทธิ์ในการแก้ไขข้อมูลโปรไฟล์นี้";
+        }
+        
+        toast({ 
+          title: errorTitle, 
+          description: errorMessage, 
+          variant: "destructive" 
+        });
       } else {
-        toast({ title: "บันทึกสำเร็จ", description: "อัปเดตข้อมูลโปรไฟล์แล้ว" });
+        console.log("Profile updated successfully:", data);
+        toast({ 
+          title: "บันทึกสำเร็จ", 
+          description: "อัปเดตข้อมูลโปรไฟล์แล้ว" 
+        });
+        
+        // ล้างช่องเครื่องดนตรีหลังบันทึก
+        setInstrumentInput("");
+        
         // อัปเดต state
         if (profile) {
-          setProfile({
-            ...profile,
-            full_name: formData.full_name || null,
-            phone: formData.phone || null,
-            line_id: formData.line_id || null,
-          });
-        }
+         setProfile({
+  ...profile,
+  ...updateData,
+  instruments: updateData.instruments
+    ? updateData.instruments.split(",").map(i => i.trim())
+    : [],
+});
+}
+
       }
     } catch (err) {
       console.error("System Error:", err);
-      toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+      toast({ 
+        title: "เกิดข้อผิดพลาด", 
+        description: "กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
@@ -813,6 +972,74 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                 />
               </div>
 
+               <div className="space-y-2">
+  <Label className="flex items-center gap-2">
+    🎸 เครื่องดนตรีที่เล่น
+  </Label>
+  
+  {/* แสดงรายการที่เลือกแล้วเป็นก้อนๆ (Badges) */}
+  <div className="flex flex-wrap gap-2 mb-2">
+  {formData.instruments
+    .split(",")
+    .map(inst => inst.trim())
+    .filter(Boolean)
+    .map((inst) => (
+      <span
+        key={inst}
+        className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+      >
+        {inst}
+        <button
+          type="button"
+          onClick={() =>
+            setFormData({
+              ...formData,
+              instruments: formData.instruments
+                .split(",")
+                .map(i => i.trim())
+                .filter(i => i !== inst)
+                .join(", "),
+            })
+          }
+        >
+          ✕
+        </button>
+      </span>
+    ))}
+</div>
+
+
+  {/* เครื่องดนตรีที่เล่น */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  เครื่องดนตรีที่เล่น
+                </Label>
+                <Input 
+  value={formData.instruments || ""} 
+  onChange={(e) => setFormData({ ...formData, instruments: e.target.value })} 
+  placeholder="พิมพ์เครื่องดนตรีที่เล่น"
+  className="rounded-2xl h-12"
+/>
+              </div>
+              {/* จังหวัดที่อยู่ */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  จังหวัดที่อยู่
+                </Label>
+                <select 
+                  className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500"
+                  value={formData.province}
+                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                >
+                  <option value="">เลือกจังหวัด</option>
+                  {provinces.map((province) => (
+                    <option key={province} value={province}>{province}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
@@ -858,6 +1085,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                 {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
               </Button>
             </div>
+            </div>
             ) : (
             // แสดงข้อมูลแบบอ่านอย่างเดียวสำหรับผู้เยี่ยมชม
             <div className="space-y-4">
@@ -868,6 +1096,31 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
                 </Label>
                 <p className="text-foreground">{profile?.full_name || "-"}</p>
               </div>
+
+              {/* เครื่องดนตรีที่เล่น */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span className="text-xs">🎸</span>
+                  </div>
+                  เครื่องดนตรีที่เล่น
+                </Label>
+                {profile?.instruments ? (
+                  <p className="text-foreground">{profile.instruments}</p>
+                ) : (
+                  <p className="text-foreground">ไม่ได้ระบุเครื่องดนตรี</p>
+                )}
+              </div>
+
+              {/* จังหวัดที่อยู่ */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  จังหวัดที่อยู่
+                </Label>
+                <p className="text-foreground">{profile?.province || "-"}</p>
+              </div>
+
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
