@@ -1,0 +1,323 @@
+/* Mobile First CSS Utilities */
+
+/* Base Mobile Styles */
+.mobile-container {
+  @apply max-w-full overflow-hidden;
+}
+
+.mobile-card {
+  @apply w-full max-w-full mx-auto;
+  @apply rounded-lg shadow-sm;
+  @apply p-4 sm:p-6;
+}
+
+.mobile-button {
+  @apply w-full sm:w-auto;
+  @apply h-12 sm:h-10;
+  @apply text-sm sm:text-base;
+  @apply px-4 sm:px-6;
+}
+
+.mobile-input {
+  @apply w-full;
+  @apply text-base sm:text-sm;
+  @apply h-12 sm:h-10;
+  @apply px-4;
+}
+
+.mobile-text {
+  @apply text-sm sm:text-base;
+  @apply leading-relaxed;
+}
+
+.mobile-title {
+  @apply text-lg sm:text-xl lg:text-2xl;
+  @apply font-bold;
+  @apply break-words;
+}
+
+.mobile-subtitle {
+  @apply text-base sm:text-sm;
+  @apply text-muted-foreground;
+  @apply break-words;
+}
+
+/* Grid System */
+.mobile-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.mobile-grid-2 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+.mobile-grid-4 {
+  @apply grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4;
+}
+
+/* Flex Utilities */
+.mobile-flex {
+  @apply flex flex-col sm:flex-row;
+  @apply gap-2 sm:gap-4;
+  @apply items-start sm:items-center;
+}
+
+.mobile-flex-between {
+  @apply flex flex-col sm:flex-row;
+  @apply justify-between;
+  @apply items-start sm:items-center;
+  @apply gap-2 sm:gap-4;
+}
+
+.mobile-flex-center {
+  @apply flex flex-col sm:flex-row;
+  @apply justify-center;
+  @apply items-center;
+  @apply gap-2 sm:gap-4;
+}
+
+/* Job Card Mobile Optimizations */
+.job-card {
+  @apply mobile-card;
+  @apply hover:shadow-md transition-shadow;
+}
+
+.job-card-header {
+  @apply flex flex-col sm:flex-row;
+  @apply justify-between;
+  @apply items-start sm:items-center;
+  @apply gap-3;
+  @apply pb-3;
+}
+
+.job-card-content {
+  @apply space-y-3;
+}
+
+.job-card-footer {
+  @apply flex flex-col sm:flex-row;
+  @apply justify-between;
+  @apply items-end sm:items-center;
+  @apply gap-3;
+  @apply pt-3;
+  @apply border-t;
+}
+
+/* Profile Card Mobile */
+.profile-card {
+  @apply mobile-card;
+  @apply text-center sm:text-left;
+}
+
+.profile-header {
+  @apply flex flex-col items-center sm:flex-row sm:items-start;
+  @apply gap-4;
+  @apply pb-4;
+}
+
+.profile-content {
+  @apply space-y-4;
+  @apply w-full;
+}
+
+/* Form Mobile */
+.mobile-form {
+  @apply space-y-4;
+  @apply w-full max-w-full;
+}
+
+.mobile-form-group {
+  @apply space-y-2;
+  @apply w-full;
+}
+
+.mobile-form-row {
+  @apply grid grid-cols-1 sm:grid-cols-2;
+  @apply gap-4;
+}
+
+/* Navigation Mobile */
+.mobile-nav {
+  @apply fixed bottom-0 left-0 right-0;
+  @apply bg-background border-t;
+  @apply px-4 py-2;
+  @apply z-50;
+  @apply sm:hidden;
+}
+
+.mobile-nav-item {
+  @apply flex flex-col items-center;
+  @apply gap-1;
+  @apply py-2;
+  @apply text-xs;
+}
+
+/* Modal Mobile */
+.mobile-modal {
+  @apply fixed inset-0;
+  @apply bg-black/50;
+  @apply z-50;
+  @apply flex items-end sm:items-center;
+  @apply justify-center;
+  @apply p-0 sm:p-4;
+}
+
+.mobile-modal-content {
+  @apply bg-background;
+  @apply w-full max-w-full;
+  @apply max-h-[80vh] sm:max-h-[90vh];
+  @apply overflow-y-auto;
+  @apply rounded-t-2xl sm:rounded-2xl;
+  @apply p-4 sm:p-6;
+}
+
+/* Table Mobile */
+.mobile-table {
+  @apply w-full;
+  @apply text-sm;
+}
+
+.mobile-table th,
+.mobile-table td {
+  @apply px-2 py-3;
+  @apply text-left;
+}
+
+@media (max-width: 640px) {
+  .mobile-table {
+    @apply block;
+  }
+  
+  .mobile-table thead {
+    @apply hidden;
+  }
+  
+  .mobile-table tbody,
+  .mobile-table tr,
+  .mobile-table td {
+    @apply block;
+    @apply w-full;
+  }
+  
+  .mobile-table tr {
+    @apply mb-4;
+    @apply border rounded-lg p-4;
+  }
+  
+  .mobile-table td {
+    @apply border-none;
+    @apply pl-0;
+  }
+  
+  .mobile-table td::before {
+    @apply font-medium;
+    @apply text-muted-foreground;
+    @apply block;
+    @apply mb-1;
+  }
+}
+
+/* Badge Mobile */
+.mobile-badge {
+  @apply inline-flex items-center;
+  @apply px-2 py-1;
+  @apply text-xs;
+  @apply rounded-full;
+  @apply whitespace-nowrap;
+}
+
+/* Progress Bar Mobile */
+.mobile-progress {
+  @apply w-full;
+  @apply h-2 sm:h-3;
+}
+
+/* Avatar Mobile */
+.mobile-avatar {
+  @apply w-12 h-12 sm:w-10 sm:h-10;
+}
+
+/* Icon Mobile */
+.mobile-icon {
+  @apply w-5 h-5 sm:w-4 sm:h-4;
+}
+
+.mobile-icon-lg {
+  @apply w-6 h-6 sm:w-5 sm:h-5;
+}
+
+/* Safe Area for Mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Touch Targets */
+.mobile-touch {
+  @apply min-h-[44px] min-w-[44px];
+  @apply flex items-center justify-center;
+}
+
+/* Responsive Text */
+.mobile-responsive-text {
+  @apply text-sm sm:text-base;
+  @apply break-words;
+  @apply overflow-hidden;
+}
+
+.mobile-responsive-title {
+  @apply text-lg sm:text-xl;
+  @apply font-bold;
+  @apply break-words;
+  @apply line-clamp-2;
+}
+
+/* Loading States */
+.mobile-loading {
+  @apply flex items-center justify-center;
+  @apply min-h-[200px];
+  @apply w-full;
+}
+
+/* Error States */
+.mobile-error {
+  @apply text-center;
+  @apply p-4;
+  @apply text-red-600;
+  @apply text-sm;
+}
+
+/* Success States */
+.mobile-success {
+  @apply text-center;
+  @apply p-4;
+  @apply text-green-600;
+  @apply text-sm;
+}
+
+/* Animations */
+.mobile-slide-up {
+  @apply animate-in slide-in-from-bottom duration-300;
+}
+
+.mobile-fade-in {
+  @apply animate-in fade-in duration-300;
+}
+
+/* Scroll Behavior */
+.mobile-scroll {
+  @apply overflow-x-auto;
+  @apply scrollbar-hide;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

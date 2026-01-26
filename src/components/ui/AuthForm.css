@@ -1,0 +1,107 @@
+/* Husky.css - แก้ไขด่วนให้สัดส่วนถูกต้อง */
+
+.husky-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+}
+
+.husky {
+  position: relative;
+  height: 140px; /* ขนาดที่พอดีสำหรับหน้าจอหลัก */
+  width: 180px;
+  animation: squiggly-anim 0.3s infinite;
+}
+
+/* ตั้งค่าให้ทุกส่วนประกอบวางซ้อนกันได้ถูกต้อง */
+.husky div, .husky div:before, .husky div:after {
+  position: absolute;
+  content: "";
+  display: block;
+}
+
+/* ส่วนหัว */
+.head {
+  height: 45%;
+  width: 58%;
+  left: 21%;
+  top: 5%;
+  background: #30508F;
+  border-top-left-radius: 50% 40%;
+  border-top-right-radius: 50% 40%;
+  border-bottom-right-radius: 10% 60%;
+  z-index: 5;
+}
+
+/* ใบหน้าขาวๆ */
+.face {
+  width: 94%;
+  height: 65%;
+  top: 15%;
+  left: 3%;
+  background: #fff;
+  border-top-left-radius: 40% 50%;
+  border-top-right-radius: 40% 50%;
+  border-bottom-left-radius: 30% 50%;
+  border-bottom-right-radius: 30% 40%;
+  z-index: 6;
+}
+
+/* ตา */
+.eye {
+  width: 15px;
+  height: 15px;
+  background: #343C60;
+  border-radius: 50%;
+  top: 35%;
+  z-index: 7;
+}
+.eye.left { left: 25%; }
+.eye.right { right: 25%; }
+
+/* จมูก */
+.nose {
+  width: 20px;
+  height: 15px;
+  background: #30508F;
+  border-radius: 50% 50% 60% 60%;
+  top: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+}
+
+/* ลำตัว (ส่วนที่เป็นก้อนสีน้ำเงินในรูปของคุณ) */
+.body {
+  width: 55%;
+  height: 50%;
+  background: #30508F;
+  bottom: 0;
+  left: 22.5%;
+  border-radius: 40% 40% 10% 10%;
+  z-index: 1;
+}
+
+/* หางดุ๊กดิ๊ก */
+.tail {
+  width: 40px;
+  height: 15px;
+  background: #343C60;
+  bottom: 5px;
+  left: -20px;
+  border-radius: 10px;
+  transform-origin: right center;
+  animation: tail-wag 2s infinite;
+}
+
+@keyframes tail-wag {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(20deg); }
+}
+
+@keyframes squiggly-anim {
+  0% { filter: contrast(100%); }
+  50% { filter: contrast(110%) brightness(105%); }
+}
