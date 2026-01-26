@@ -1,37 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Music, Info, Users } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
+import HuskyAnimation from '@/components/ui/HuskyAnimation';
 
 const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }) => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
+      {/* Husky Animation */}
+      <div className="mb-8">
+        <HuskyAnimation />
+      </div>
+
       {/* Header ส่วนหัวข้อ */}
       <div className="flex flex-col items-center mb-12 text-center">
-        <div className="w-40 h-40 mb-4 flex items-center justify-center">
-          <img 
-            // ใช้ / นำหน้าชื่อไฟล์โดยตรง เพราะ Vite จะไปดูที่โฟลเดอร์ public ให้อัตโนมัติ
-            src="/logo.jpg" 
-            alt="snowguin logo" 
-            className="max-w-full max-h-full object-contain" 
-            // ใส่พารามิเตอร์ v เพื่อกัน Cache ของเก่าที่เสีย
-            key="snowguin-logo-v1"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              console.error("ยังโหลดรูป /public/logo.jpg ไม่ได้");
-              // แผนสำรองสุดท้าย: ถ้ายังไม่ขึ้น ให้แสดงตัวหนังสือแทนเพื่อให้แอปดูไม่เสีย
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent && !parent.querySelector('.fallback-text')) {
-                const text = document.createElement('div');
-                text.className = 'fallback-text text-2xl font-black text-orange-500 tracking-tighter';
-                text.innerText = 'SNOWGUIN';
-                parent.appendChild(text);
-              }
-            }}
-          />
-        </div>
         <h1 className="text-3xl font-bold text-gray-900">หาคนเล่นแทน</h1>
         <h2 className="text-3xl font-bold text-orange-500">ดนตรีกลางคืน</h2>
         <p className="text-gray-500 mt-2">แบบด่วน ทันที 🎵</p>

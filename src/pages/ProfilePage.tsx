@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import HuskyAnimation from '@/components/ui/HuskyAnimation';
 
 interface Profile {
   id: string;
@@ -854,7 +855,12 @@ console.log("New instruments after removal:", newInstruments);
             <ArrowLeft className="w-5 h-5" />
             <span>กลับ</span>
           </button>
-          <h1 className="text-xl font-bold flex-1">{isOwner ? "โปรไฟล์ของฉัน" : "โปรไฟล์"}</h1>
+          
+          {/* Husky Animation Logo - Centered */}
+          <div className="flex-1 flex justify-center">
+            <HuskyAnimation />
+          </div>
+          
           {isOwner && (
             <button
               onClick={handleShareProfile}

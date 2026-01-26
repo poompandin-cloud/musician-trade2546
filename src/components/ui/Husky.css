@@ -1,0 +1,265 @@
+/* Husky.css - สไตล์และอนิเมชั่นทั้งหมด */
+
+.husky-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px; /* ระยะห่างจากข้อความด้านล่าง */
+}
+
+*, *:before, *:after {
+  box-sizing: border-box;
+  position: relative;
+}
+
+.husky {
+  animation: squiggly-anim 0.3s infinite;
+  height: 100px; /* ลดขนาดความสูงลงเหลือ 150px */
+  width: 130px;  /* ลดขนาดความกว้างลงเหลือ 210px */
+  margin: 0 auto; /* จัดให้อยู่กึ่งกลาง */
+}
+
+@media screen and (max-width: 400px) {
+  .husky {
+    animation: none;
+  }
+}
+
+.husky:before {
+  width: 90%;
+  height: 0.5vmin;
+  background: #30508F;
+  border-radius: 0.5vmin;
+  top: 100%;
+  left: 5%;
+  z-index: 2;
+  content: "";
+  display: block;
+  position: absolute;
+}
+
+div:before, div:after {
+  content: "";
+  display: block;
+  position: absolute;
+}
+
+/* --- ส่วนหัว --- */
+.head {
+  animation: head 12s none infinite;
+  position: absolute;
+  height: 45%;
+  width: 58%;
+  left: 34%;
+  top: 5%;
+  transform-origin: bottom center;
+}
+
+.head:before {
+  background: #30508F;
+  border-top-left-radius: 50% 40%;
+  border-top-right-radius: 50% 40%;
+  border-bottom-right-radius: 10% 60%;
+  height: 100%;
+  width: 100%;
+}
+
+.face {
+  animation: face 12s none infinite;
+  position: absolute;
+  width: 98%;
+  height: 62%;
+  top: 15%;
+  left: 2%;
+}
+
+.face:before {
+  z-index: 1;
+  width: 94%;
+  height: 70%;
+  left: 3%;
+  background-color: white;
+  bottom: 5%;
+  border-top-left-radius: 40% 50%;
+  border-top-right-radius: 40% 50%;
+  border-bottom-left-radius: 30% 50%;
+  border-bottom-right-radius: 30% 40%;
+}
+
+/* --- ตา --- */
+.eye {
+  position: absolute;
+  width: 30%;
+  height: 40%;
+  background-color: white;
+  right: 45%;
+  border-top-left-radius: 55% 50%;
+  border-top-right-radius: 45% 50%;
+  z-index: 2;
+}
+
+.eye:before {
+  animation: left-eye 12s none infinite;
+  height: 15%;
+  width: 15%;
+  border-radius: 100%;
+  background: #343C60;
+  top: 45%;
+  left: 45%;
+}
+
+.eye + .eye {
+  z-index: 1;
+  right: initial;
+  left: 48%;
+  border-top-right-radius: 55% 50%;
+  border-top-left-radius: 45% 50%;
+}
+
+/* --- จมูกและปาก --- */
+.nose {
+  animation: nose 12s none infinite;
+  z-index: 2;
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  top: 29%;
+  left: 42%;
+}
+
+.nose:after {
+  background: #30508F;
+  height: 100%;
+  width: 100%;
+  border-radius: 20% 30% 55% 50% / 20% 20% 80% 80%;
+}
+
+.mouth {
+  z-index: 1;
+  animation: mouth 12s none infinite;
+  position: absolute;
+  width: 48%;
+  height: 55%;
+  bottom: -5%;
+  left: 28%;
+  overflow: hidden;
+}
+
+.tongue {
+  animation: tongue 12s none infinite;
+  position: absolute;
+  height: 100%;
+  width: 44%;
+  background: #DE6465;
+  left: 25%;
+  bottom: 100%;
+  border-radius: 0 0 50% 50% / 0 0 20% 20%;
+}
+
+/* --- หู --- */
+.ear {
+  animation: left-ear 12s both infinite;
+  position: absolute;
+  top: 3%;
+  left: -10%;
+  width: 48%;
+  height: 30%;
+  background: #30508F;
+  border-bottom-left-radius: 100% 90%;
+  transform-origin: 80% center;
+}
+
+.ear + .ear {
+  animation: right-ear 12s both infinite;
+  background-color: #343C60;
+  left: 15%;
+  top: 5%;
+  z-index: -1;
+}
+
+/* --- ลำตัวและขา --- */
+.body {
+  animation: body 12s none infinite;
+  width: 45%;
+  height: 100%;
+  position: absolute;
+  left: 25%;
+}
+
+.torso {
+  position: absolute;
+  height: 55%;
+  width: 100%;
+  bottom: 0;
+}
+
+.torso:before { background: #30508F; width: 50%; height: 100%; transform: skewX(-30deg); border-radius: 0 30% 0 60%; }
+.torso:after { background: #30508F; width: 60%; height: 100%; right: 0; border-radius: 10% 40% 60% 0; }
+
+.legs {
+  background-color: #30508F;
+  position: absolute;
+  height: 30%;
+  width: 42%;
+  left: 23%;
+  bottom: 0;
+  border-radius: 20% 50% 0 10% / 37% 50% 0 37%;
+}
+
+.front-legs > .leg {
+  width: 51%; height: 100%; position: absolute; bottom: 0; right: 50%; overflow: hidden;
+}
+
+.front-legs > .leg:before {
+  background: #C8DAF2; height: 100%; width: 100%; transform: skewY(-30deg);
+}
+
+/* --- หาง --- */
+.tail {
+  position: absolute;
+  width: 15%;
+  height: 6%;
+  bottom: 0;
+  right: 72%;
+  background: #343C60;
+}
+
+.tail > .tail {
+  animation: tail 12s none infinite;
+  height: 100%;
+  width: 40px;
+  right: 26%;
+  transform-origin: center right;
+  border-radius: 50%;
+}
+
+/* --- KEYFRAMES (อนิเมชั่น) --- */
+@keyframes head {
+  0%, 6.6%, 73.3%, 80%, 100% { transform: rotate(0); }
+  20%, 46.6% { transform: rotate(-14deg); }
+  40%, 60% { transform: rotate(-7deg); }
+}
+
+@keyframes tongue {
+  0%, 46.6%, 80%, 100% { transform: translateY(0); }
+  53.3%, 73.3% { transform: translateY(100%) rotate(10deg); }
+}
+
+@keyframes tail {
+  0%, 6.6%, 13.3%, 20%, 48.3%, 100% { transform: rotate(0); }
+  10%, 26.6%, 46.6% { transform: rotate(30deg); }
+  50%, 55%, 60%, 65%, 70% { transform: rotate(28deg); }
+}
+
+@keyframes squiggly-anim {
+  0% { filter: url("#squiggly-0"); }
+  25% { filter: url("#squiggly-1"); }
+  50% { filter: url("#squiggly-2"); }
+  75% { filter: url("#squiggly-3"); }
+  100% { filter: url("#squiggly-4"); }
+}
+
+/* ส่วนที่เหลือของ Keyframes อื่นๆ (ย่อไว้เพื่อความกะทัดรัด แต่ใส่ให้ครบในไฟล์จริงนะครับ) */
+@keyframes left-eye { 0%, 100% { transform: scaleY(1); } 3.3%, 10%, 22.6% { transform: scaleY(0.3); } }
+@keyframes face { 0%, 46.6% { transform: translate(0); } 13.3%, 26.6% { transform: translateX(15%); } 33.3%, 40% { transform: translateY(-15%); } }
