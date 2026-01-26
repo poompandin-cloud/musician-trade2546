@@ -13,10 +13,11 @@
   position: relative;
 }
 
+/* หาคลาส .husky แล้วแก้เป็นแบบนี้ */
 .husky {
   animation: squiggly-anim 0.3s infinite;
   height: 100px; /* ลดขนาดความสูงลงเหลือ 150px */
-  width: 130px;  /* ลดขนาดความกว้างลงเหลือ 210px */
+  width: 150px;  /* ลดขนาดความกว้างลงเหลือ 210px */
   margin: 0 auto; /* จัดให้อยู่กึ่งกลาง */
 }
 
