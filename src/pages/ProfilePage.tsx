@@ -827,9 +827,18 @@ console.log("New instruments after removal:", newInstruments);
     if (!confirmLogout) return;
 
     try {
+      // ✅ เคลียร์ Session ออกจากระบบจริงๆ
       await supabase.auth.signOut();
+      
+      // ✅ เคลียร์ข้อมูลใน localStorage และ sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // ✅ แสดงข้อความสำเร็จ
       toast({ title: "ออกจากระบบสำเร็จ" });
-      navigate("/");
+      
+      // ✅ ส่งผู้ใช้กลับไปที่หน้า AuthPage ทันที
+      navigate("/auth");
     } catch (err) {
       console.error("Logout error:", err);
       toast({ title: "ออกจากระบบไม่สำเร็จ", variant: "destructive" });

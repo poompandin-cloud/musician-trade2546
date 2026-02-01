@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   full_name: string | null;
@@ -9,9 +10,10 @@ interface Profile {
 }
 
 const Navbar = ({ userId }: { userId: string | null }) => {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,19 +43,25 @@ const Navbar = ({ userId }: { userId: string | null }) => {
     fetchProfile();
   }, [userId]);
 
-  // ภายในไฟล์ Navbar.tsx
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
 
-const handleProfileClick = () => {
-  if (userId) {
-    // ถ้าล็อกอินแล้ว ให้ไปหน้าโปรไฟล์
-    navigate("/profile");
-  } else {
-    // ✅ ถ้ายังไม่ล็อกอิน ให้ไปหน้า Auth ที่เราเพิ่งสร้าง
-    navigate("/auth"); 
-  }
-};
+    return () => subscription.unsubscribe();
+  }, []);
 
-  // ✅ ลบส่วน return null ออกเพื่อให้แถบบนแสดงผลเสมอ
+  const handleProfileClick = () => {
+    if (userId) {
+      navigate("/profile");
+    } else {
+      // ✅ ถ้ายังไม่ล็อกอิน ให้ไปหน้า Auth ที่เราเพิ่งสร้าง
+      navigate("/auth"); 
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">

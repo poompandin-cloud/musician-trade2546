@@ -362,6 +362,7 @@ const App = () => {
               <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
               <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
               <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
+              <Route path="/auth" element={<AuthPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             
