@@ -178,3 +178,49 @@
 .auth-body .social-btn span {
     font-family: inherit;
 }
+/* --- แก้ไขสำหรับการแสดงผลบนมือถือ (Mobile Responsive) --- */
+@media (max-width: 768px) {
+    .auth-body .container {
+        width: 95%; /* ขยายให้เกือบเต็มหน้าจอมือถือ */
+        min-height: 550px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ซ่อนแถบสีส้มด้านข้างบนมือถือเพื่อประหยัดพื้นที่ */
+    .auth-body .toggle-container {
+        display: none; 
+    }
+
+    .auth-body .form-container {
+        width: 100%;
+        position: relative;
+    }
+
+    .auth-body .container.active .sign-in {
+        transform: none; /* ป้องกันหน้าจอเลื่อนหนีบนมือถือ */
+    }
+
+    .auth-body .container.active .sign-up {
+        transform: none;
+    }
+
+    /* ปรับแต่งปุ่ม Social ให้พอดีหน้าจอ */
+    .social-icons {
+        flex-direction: column; /* เรียงปุ่มลงมาข้างล่าง */
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .social-btn {
+        width: 100%; /* ปุ่มยาวเต็มความกว้างฟอร์ม */
+        max-width: 100%;
+        margin: 5px 0;
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .auth-body .container h1 {
+        font-size: 1.5rem; /* ลดขนาดหัวข้อลงนิดหน่อย */
+    }
+}
