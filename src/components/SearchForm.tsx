@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, AlertCircle, Search, X, ChevronDown, HelpCircle, ExternalLink, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom"; // เพิ่ม import
 
 const instruments = [
   // กีตาร์
@@ -44,6 +45,7 @@ interface SearchFormProps {
 
 const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate(); // เพิ่ม navigate hook
   const [isSearching, setIsSearching] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(true);
@@ -434,28 +436,45 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
             </div>
           </div>
 
-          {/* แสดงคำเตือนถ้าเครดิตไม่พอ */}
-          {!loadingCredits && !hasEnoughCredits && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>เครดิตไม่เพียงพอ (ต้องการ 5 เครดิต, คุณมี {credits || 0} เครดิต)</span>
-            </div>
+          {/* ✅ แก้ไขส่วนแสดงคำเตือนเครดิต */}
+          {!loadingCredits && (
+            !userId ? (
+              // กรณีที่ 1: ยังไม่ได้เข้าสู่ระบบ
+              <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-700 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>กรุณาเข้าสู่ระบบเพื่อรับเครดิตและลงประกาศงาน</span>
+              </div>
+            ) : !hasEnoughCredits ? (
+              // กรณีที่ 2: เข้าสู่ระบบแล้วแต่เครดิตไม่พอ
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>เครดิตไม่เพียงพอ (ต้องการ 5 เครดิต, คุณมี {credits || 0} เครดิต)</span>
+              </div>
+            ) : null
           )}
 
+         {/* ✅ ปุ่มหลักที่คุณหาอยู่คือตรงนี้ครับ */}
           <Button 
-            type="submit" 
+            type={userId ? "submit" : "button"} // ถ้ายังไม่ login ให้เป็น button ธรรมดา
             className={`w-full h-14 rounded-2xl text-white text-lg font-bold shadow-lg ${
-              isDisabled 
-                ? "bg-gray-400 cursor-not-allowed" 
+              (!userId || !hasEnoughCredits || isSearching) 
+                ? "bg-gray-400" // เอา cursor-not-allowed ออกเพื่อให้กดได้
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
-            disabled={isDisabled}
+            onClick={() => {
+              if (!userId) {
+                navigate("/auth"); // ✅ สั่งให้วิ่งไปหน้าสไลด์ Login ที่คุณสร้าง
+              }
+            }}
+            disabled={userId && (!hasEnoughCredits || isSearching)} // สั่ง disabled เฉพาะตอนที่ล็อกอินแล้วแต่เครดิตไม่พอ
           >
             {isSearching 
               ? "กำลังประกาศ..." 
-              : hasEnoughCredits 
-                ? "ประกาศงานทันที (ใช้ 5 เครดิต)" 
-                : "เครดิตไม่เพียงพอ"}
+              : !userId 
+                ? "กรุณาเข้าสู่ระบบ" // ข้อความที่จะโชว์ตอนยังไม่ Login
+                : hasEnoughCredits 
+                  ? "ประกาศงานทันที (ใช้ 5 เครดิต)" 
+                  : "เครดิตไม่เพียงพอ"}
           </Button>
         </form>
       </main>

@@ -16,6 +16,7 @@ const Navbar = ({ userId }: { userId: string | null }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!userId) {
+        setProfile(null);
         setLoading(false);
         return;
       }
@@ -40,18 +41,22 @@ const Navbar = ({ userId }: { userId: string | null }) => {
     fetchProfile();
   }, [userId]);
 
-  const handleProfileClick = () => {
-    if (userId) {
-      navigate("/profile");
-    }
-  };
+  // ภายในไฟล์ Navbar.tsx
 
-  if (!userId) {
-    return null;
+const handleProfileClick = () => {
+  if (userId) {
+    // ถ้าล็อกอินแล้ว ให้ไปหน้าโปรไฟล์
+    navigate("/profile");
+  } else {
+    // ✅ ถ้ายังไม่ล็อกอิน ให้ไปหน้า Auth ที่เราเพิ่งสร้าง
+    navigate("/auth"); 
   }
+};
+
+  // ✅ ลบส่วน return null ออกเพื่อให้แถบบนแสดงผลเสมอ
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <button
@@ -61,20 +66,24 @@ const Navbar = ({ userId }: { userId: string | null }) => {
             snowguin
           </button>
 
+          {/* ถ้าล็อกอินแล้วแสดงรูปโปรไฟล์ ถ้ายังไม่ล็อกอินแสดงปุ่มเข้าสู่ระบบ */}
           <button
             onClick={handleProfileClick}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            title="โปรไฟล์"
           >
             {loading ? (
-              <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
-            ) : (
-              <Avatar className="w-10 h-10 border-2 border-orange-500/20 hover:border-orange-500/50 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+            ) : userId ? (
+              <Avatar className="w-10 h-10 border-2 border-orange-500/20">
                 <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
                 <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
                   {profile?.full_name?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
+            ) : (
+              <span className="text-sm font-medium text-orange-500 border border-orange-500 px-4 py-1.5 rounded-full hover:bg-orange-50">
+                เข้าสู่ระบบ
+              </span>
             )}
           </button>
         </div>

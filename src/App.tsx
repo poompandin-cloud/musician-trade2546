@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Auth } from '@supabase/auth-ui-react'; 
-import { ThemeSupa } from '@supabase/auth-ui-shared'; 
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -19,6 +17,7 @@ import AboutSection from "./components/AboutSection";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CreditWidget from "./components/CreditWidget";
+import AuthPage from "./pages/AuthPage"; // Import เข้ามาด้วย
 
 const queryClient = new QueryClient();
 
@@ -99,13 +98,14 @@ const App = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      // ✅ เรียก fetchJobs หลังจากมี session แล้ว
+      fetchJobs();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    fetchJobs();
     return () => subscription.unsubscribe();
   }, []);
 
@@ -115,7 +115,7 @@ const App = () => {
       throw new Error("กรุณาเข้าสู่ระบบก่อน");
     }
 
-    const userId = session.user.id;
+    const userId = session?.user?.id;
 
     try {
       // 1. เช็ค Weekly Quota: นับงานใน 7 วันล่าสุด
@@ -269,24 +269,39 @@ const App = () => {
     return (Date.now() - jobTime) < (3 * 24 * 60 * 60 * 1000);
   });
 
+  // ✅ ถ้าไม่มี session ให้แสดงหน้า AuthPage (หน้าสีส้ม) เท่านั้น
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
-          <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">เข้าสู่ระบบนักดนตรี 🎸</h2>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
-            theme="default"
-            providers={[]} 
-          />
-          <p className="mt-6 text-center text-sm text-gray-400 italic">
-            * กรอก Email และตั้งรหัสผ่านเพื่อเริ่มต้นใช้งาน
-          </p>
-        </div>
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthPage />
+        </TooltipProvider>
+      </QueryClientProvider>
     );
   }
+
+  // ✅ เพิ่มการเช็คว่ามีข้อมูล jobs หรือไม่ก่อนแสดงผล
+  if (!jobs || jobs.length === 0) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+              </div>
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -296,78 +311,60 @@ const App = () => {
         <BrowserRouter>
           <div className="min-h-screen flex flex-col overflow-x-hidden">
             <Navbar userId={session?.user?.id || null} />
+            
             <Routes>
               <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
               
               <Route 
                 path="/profile" 
                 element={
-                  <ProfilePage 
-                    currentUserId={session.user.id} 
-                    onDeleteJob={deleteJob}
-                  />
+                  session ? (
+                    <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                  ) : (
+                    <Index jobs={activeJobs} onAddJob={addJob} /> 
+                  )
                 } 
               />
               
               <Route 
                 path="/profile/:id" 
                 element={
-                  <ProfilePage 
-                    currentUserId={session.user.id} 
-                    onDeleteJob={deleteJob}
-                  />
-                } 
-              />
-              
-              <Route 
-                path="/nearby-gigs" 
-                element={
-                  <NearbyGigs 
-                    jobs={activeJobs} 
-                    onBack={() => window.history.back()} 
-                    onDeleteJob={deleteJob}
-                    currentUserId={session.user.id} 
-                  />
+                  session ? (
+                    <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                  ) : (
+                    <Index jobs={activeJobs} onAddJob={addJob} /> 
+                  )
                 } 
               />
 
-              <Route 
-                path="/search" 
-                element={
-                  <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
-                    <div className="w-full max-w-md">
-                      <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
-                      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
-                      <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
-                        <SearchForm 
-                          onBack={() => window.history.back()} 
-                          onAddJob={addJob}
-                          userId={session.user.id}
-                        /> 
-                      </div>
-                    </div>
-                  </div>
-                } 
-              />
+              // ✅ แบบใหม่: ใครก็เข้าได้ (แต่ตอนกดบันทึกงาน ระบบจะถาม login อีกทีตามที่คุณเขียนไว้)
+<Route 
+  path="/search" 
+  element={
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
+      <div className="w-full max-w-md">
+        <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
+        <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
+          <SearchForm 
+            onBack={() => window.history.back()} 
+            onAddJob={addJob}
+            userId={session?.user?.id}
+          /> 
+        </div>
+      </div>
+    </div>
+  } 
+/>
 
-              <Route 
-                path="/musicians" 
-                element={
-                  <MusicianSearch onBack={() => window.history.back()} />
-                } 
-              />
-
-              <Route 
-                path="/my-applications" 
-                element={
-                  <MyApplicationsPage currentUserId={session?.user?.id || null} />
-                } 
-              />
-
+              <Route path="/nearby-gigs" element={<NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session?.user?.id} />} />
+              <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
+              <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
               <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
               <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            
             <Footer />
             <CreditWidget userId={session?.user?.id || null} />
           </div>
