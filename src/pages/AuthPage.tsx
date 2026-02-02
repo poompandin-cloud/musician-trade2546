@@ -46,21 +46,31 @@ const AuthPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ 
+      console.log(`🔍 Starting ${provider} OAuth...`);
+      console.log("🔍 Current origin:", window.location.origin);
+      console.log("🔍 Redirect URL:", window.location.origin);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({ 
         provider,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin // ✅ ใช้ window.location.origin ชัดเจน
         }
       });
       
+      console.log(`🔍 ${provider} OAuth Response:`, { data, error });
+      
       if (error) {
+        console.error(`❌ ${provider} OAuth Error:`, error);
         toast({ 
           variant: "destructive",
           title: "เข้าสู่ระบบไม่สำเร็จ", 
           description: error.message 
         });
+      } else {
+        console.log(`✅ ${provider} OAuth initiated successfully`);
       }
     } catch (error: any) {
+      console.error(`❌ ${provider} OAuth Exception:`, error);
       toast({ 
         variant: "destructive",
         title: "เกิดข้อผิดพลาด", 
@@ -72,21 +82,31 @@ const AuthPage = () => {
   // ✅ เพิ่มฟังก์ชัน signInWithGoogle เฉพาะสำหรับ Google
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ 
+      console.log("🔍 Starting Google OAuth...");
+      console.log("🔍 Current origin:", window.location.origin);
+      console.log("🔍 Redirect URL:", window.location.origin);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({ 
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin // ✅ ใช้ window.location.origin ชัดเจน
         }
       });
       
+      console.log("🔍 OAuth Response:", { data, error });
+      
       if (error) {
+        console.error("❌ Google OAuth Error:", error);
         toast({ 
           variant: "destructive",
           title: "เข้าสู่ระบบด้วย Google ไม่สำเร็จ", 
           description: error.message 
         });
+      } else {
+        console.log("✅ Google OAuth initiated successfully");
       }
     } catch (error: any) {
+      console.error("❌ Google OAuth Exception:", error);
       toast({ 
         variant: "destructive",
         title: "เกิดข้อผิดพลาด", 

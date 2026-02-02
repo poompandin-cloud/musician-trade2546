@@ -178,49 +178,108 @@
 .auth-body .social-btn span {
     font-family: inherit;
 }
-/* --- แก้ไขสำหรับการแสดงผลบนมือถือ (Mobile Responsive) --- */
+/* --- แก้ไขสำหรับการแสดงผลบนมือถือให้เหมือนคอม --- */
 @media (max-width: 768px) {
+    .auth-body {
+        padding: 5px;
+        height: 100vh;
+        overflow: hidden;
+    }
+
     .auth-body .container {
-        width: 95%; /* ขยายให้เกือบเต็มหน้าจอมือถือ */
-        min-height: 550px;
-        display: flex;
-        flex-direction: column;
+        /* ใช้ transform: scale() เพื่อย่อขนาดลงแต่ยังคงสัดส่วนเดิม */
+        width: 100%;
+        max-width: 95vw;
+        min-height: 90vh;
+        border-radius: 15px;
+        transform: scale(0.85); /* ย่อขนาดทั้งหมดลง 15% */
+        margin: 0 auto;
     }
 
-    /* ซ่อนแถบสีส้มด้านข้างบนมือถือเพื่อประหยัดพื้นที่ */
+    /* ✅ ไม่ซ่อน toggle-container ให้ใช้งานได้เหมือนคอม */
     .auth-body .toggle-container {
-        display: none; 
+        display: block !important; 
+        border-radius: 60px 0 0 40px;
+        width: 50%;
     }
 
-    .auth-body .form-container {
-        width: 100%;
-        position: relative;
+    .auth-body .container.active .toggle-container {
+        border-radius: 0 60px 40px 0;
     }
 
-    .auth-body .container.active .sign-in {
-        transform: none; /* ป้องกันหน้าจอเลื่อนหนีบนมือถือ */
+    /* ปรับขนาดตัวหนังสือในหน้า Toggle (สีส้ม) */
+    .auth-body .toggle-panel h1 {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
     }
 
-    .auth-body .container.active .sign-up {
-        transform: none;
+    .auth-body .toggle-panel p {
+        font-size: 0.75rem;
+        line-height: 1.1;
+        margin-bottom: 15px;
     }
 
-    /* ปรับแต่งปุ่ม Social ให้พอดีหน้าจอ */
+    /* ปรับปุ่มสไลด์ให้เล็กลง */
+    .toggle-btn, .register-toggle-btn {
+        padding: 6px 15px !important;
+        font-size: 10px !important;
+        border-radius: 20px;
+    }
+
+    /* จัดการหน้าฟอร์ม (ขาว) */
+    .auth-body .container h1 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    .auth-body .container form {
+        padding: 0 15px;
+    }
+
+    /* ปรับ input fields */
+    .auth-body .container input {
+        padding: 10px 15px;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    /* ปรับปุ่ม Social ให้เล็กลงแต่ยังคง flex-direction: row */
     .social-icons {
-        flex-direction: column; /* เรียงปุ่มลงมาข้างล่าง */
-        width: 100%;
+        flex-direction: row !important; /* ✅ ใช้ row เหมือนคอม */
+        gap: 8px;
+        justify-content: center;
+        margin: 15px 0;
         padding: 0 10px;
     }
 
     .social-btn {
-        width: 100%; /* ปุ่มยาวเต็มความกว้างฟอร์ม */
-        max-width: 100%;
-        margin: 5px 0;
-        font-size: 14px;
-        padding: 12px;
+        width: auto !important; /* ✅ ไม่ใช้ width 100% */
+        min-width: 120px;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        border-radius: 20px;
+        flex: 1;
+        max-width: 140px;
     }
 
-    .auth-body .container h1 {
-        font-size: 1.5rem; /* ลดขนาดหัวข้อลงนิดหน่อย */
+    .social-btn i {
+        font-size: 14px;
+    }
+
+    .social-btn span {
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    /* ปรับปุ่ม submit */
+    .auth-body .container button[type="submit"] {
+        padding: 12px 20px;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .auth-body .social-text {
+        font-size: 12px;
+        margin: 10px 0;
     }
 }

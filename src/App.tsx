@@ -23,7 +23,8 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [jobs, setJobs] = useState<any[]>([]);
-  const [session, setSession] = useState<any>(null); 
+  const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true); // ✅ ใช้เพียง loading state เดียว 
 
   const fetchJobs = async () => {
     try {
@@ -96,14 +97,28 @@ const App = () => {
   };
 
   useEffect(() => {
+    console.log("🔍 App.tsx: Initializing session check...");
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("🔍 App.tsx: Initial session:", session);
       setSession(session);
+      setIsLoading(false); // ✅ หยุด loading หลังตรวจสอบ session
       // ✅ เรียก fetchJobs หลังจากมี session แล้ว
-      fetchJobs();
+      if (session) {
+        fetchJobs();
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("🔍 App.tsx: Auth state changed:", { event: _event, session });
       setSession(session);
+      setIsLoading(false); // ✅ หยุด loading เมื่อมีการเปลี่ยนแปลง
+      if (session) {
+        console.log("🔍 App.tsx: User logged in, fetching jobs...");
+        fetchJobs();
+      } else {
+        console.log("🔍 App.tsx: User logged out");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -269,6 +284,24 @@ const App = () => {
     return (Date.now() - jobTime) < (3 * 24 * 60 * 60 * 1000);
   });
 
+  // ✅ หาก isLoading เป็น true ให้แสดงหน้า Loading เปล่าๆ ก่อน
+  if (isLoading) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">กำลังโหลด...</p>
+            </div>
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
   // ✅ ถ้าไม่มี session ให้แสดงหน้า AuthPage (หน้าสีส้ม) เท่านั้น
   if (!session) {
     return (
@@ -282,27 +315,7 @@ const App = () => {
     );
   }
 
-  // ✅ เพิ่มการเช็คว่ามีข้อมูล jobs หรือไม่ก่อนแสดงผล
-  if (!jobs || jobs.length === 0) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
-              </div>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
-
-
+  // ✅ แสดงหน้าหลักทันทีเมื่อมี session ไม่ต้องรอ jobs
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
