@@ -305,17 +305,17 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
 
           <div className="space-y-2">
             <Label className="text-sm font-semibold">สถานที่ / แผนที่ร้าน</Label>
-            <Input placeholder="ชื่อร้าน หรือ Google Maps" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required className="rounded-2xl h-12" />
+            <Input placeholder="ชื่อร้าน หรือ Google Maps" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required className="rounded-2xl h-12 w-full text-sm sm:text-base break-words" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-sm font-semibold">เวลาที่เล่น</Label>
-              <Input placeholder="เช่น 20.00-21.30" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} required className="rounded-2xl h-12 w-full" />
+              <Input placeholder="เช่น 20.00-21.30" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} required className="rounded-2xl h-12 w-full text-sm sm:text-base break-words" />
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold">งบประมาณ</Label>
-              <Input type="text" placeholder="ระบุงบประมาณ" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} required className="rounded-2xl h-12 w-full" />
+              <Input type="text" placeholder="ระบุงบประมาณ" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} required className="rounded-2xl h-12 w-full text-sm sm:text-base break-words" />
             </div>
           </div>
 

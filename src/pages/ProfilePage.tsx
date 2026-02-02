@@ -1363,7 +1363,7 @@ console.log("New instruments after removal:", newInstruments);
                           <Timer className="w-3 h-3" />
                           <span>{job.duration || "-"}</span>
                         </div>
-                        <span className="font-semibold text-foreground">งบประมาณ: {job.budget}</span>
+                        <span className="font-semibold text-foreground break-words text-sm sm:text-base">งบประมาณ: {job.budget}</span>
                       </div>
 
                       {!isActive && (

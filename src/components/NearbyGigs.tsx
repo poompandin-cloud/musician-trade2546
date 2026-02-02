@@ -184,27 +184,36 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
                     )}
                   </div>
 
-                  <button onClick={() => navigate(`/profile/${gig.user_id}`)} className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50 hover:opacity-80 transition-opacity w-full text-left">
-                    <Avatar className="w-10 h-10 border border-orange-100">
-                      <AvatarImage src={posterAvatar || undefined} />
-                      <AvatarFallback className="bg-orange-100 text-orange-600">{posterName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{posterName}</p>
-                      <p className="text-[10px] text-muted-foreground">คลิกดูโปรไฟล์</p>
-                    </div>
-                  </button>
+{/* 1. ส่วนหัว: ข้อมูลผู้โพสต์ และ งบประมาณ (ขนานกับคำว่า คลิกดูโปรไฟล์) */}
+<button onClick={() => navigate(`/profile/${gig.user_id}`)} className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50 hover:opacity-80 transition-opacity w-full text-left">
+  <Avatar className="w-10 h-10 border border-orange-100">
+    <AvatarImage src={posterAvatar || undefined} />
+    <AvatarFallback className="bg-orange-100 text-orange-600">{posterName.charAt(0)}</AvatarFallback>
+  </Avatar>
+  
+  <div className="flex-1 min-w-0 flex justify-between items-end"> 
+    <div>
+      <p className="text-sm font-semibold text-foreground truncate">{posterName}</p>
+      <p className="text-[10px] text-muted-foreground">คลิกดูโปรไฟล์</p>
+    </div>
 
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-orange-500">{gig.instrument}</h3>
-                      <p className="font-medium text-gray-700 flex items-center gap-1 mt-1 break-words text-sm">📍 {gig.location}</p>
-                    </div>
-                    <div className="text-right ml-4 pt-6">
-                      <span className="text-xl font-black text-gray-900">{gig.budget}</span>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold">งบประมาณ</p>
-                    </div>
-                  </div>
+    {/* งบประมาณอันใหม่ที่พี่ต้องการ */}
+    <div className="text-right">
+      <div className="flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
+        <span className="text-[9px] text-orange-600 font-bold">ค่าจ้าง</span>
+        <span className="text-sm font-black text-gray-900">{gig.budget}</span>
+      </div>
+    </div>
+  </div>
+</button>
+
+{/* 2. ส่วนเนื้อหา: แสดงเครื่องดนตรี และ สถานที่ (ลบงบประมาณอันเก่าออกเรียบร้อย) */}
+<div className="mb-4">
+  <h3 className="text-xl font-bold text-orange-500 mb-1">{gig.instrument}</h3>
+  <p className="font-medium text-gray-700 flex items-center gap-1 text-sm break-words">
+    📍 {gig.location}
+  </p>
+</div>
 
                   <div className="grid grid-cols-2 gap-3 mb-6">
                     <a href={gig.phone ? `tel:${gig.phone}` : "#"} className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 text-green-700 rounded-xl border border-green-100 hover:bg-green-100 transition-colors">
