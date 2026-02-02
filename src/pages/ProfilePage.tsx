@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealTimeCredits } from "@/services/realTimeCreditService";
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
 
 interface Profile {
@@ -77,6 +78,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [myJobs, setMyJobs] = useState<Job[]>([]);
   const [confirmedApplications, setConfirmedApplications] = useState<any[]>([]);
   const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
+  
+  // ✅ ใช้ Real-time Credits สำหรับเจ้าของโปรไฟล์เท่านั้น
+  const { credits: realTimeCredits } = useRealTimeCredits(isOwner ? currentUserId : null);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -1087,7 +1091,9 @@ console.log("New instruments after removal:", newInstruments);
                 <div className="pt-4 border-t border-border">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-muted-foreground">เครดิตคงเหลือ</span>
-                    <span className="text-xl font-bold text-orange-500">{profile.credits || 0} เครดิต</span>
+                    <span className="text-xl font-bold text-orange-500">
+                      {isOwner ? realTimeCredits : (profile.credits || 0)} เครดิต
+                    </span>
                   </div>
                 </div>
               )}

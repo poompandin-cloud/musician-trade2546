@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Coins, RefreshCw } from "lucide-react";
-import { useCredits } from "@/services/creditService";
+import { Coins } from "lucide-react";
+import { useRealTimeCredits } from "@/services/realTimeCreditService";
 import { Badge } from "@/components/ui/badge";
 
 interface CreditWidgetProps {
@@ -8,7 +8,8 @@ interface CreditWidgetProps {
 }
 
 const CreditWidget = ({ userId }: CreditWidgetProps) => {
-  const { credits, loading, lastReset, fetchCredits } = useCredits(userId || "");
+  // ✅ ใช้ Real-time Credit Service แทน useCredits เดิม
+  const { credits, loading } = useRealTimeCredits(userId);
 
   // ไม่แสดง widget ถ้ายังไม่ login
   if (!userId || loading) {
@@ -43,33 +44,11 @@ const CreditWidget = ({ userId }: CreditWidgetProps) => {
             <span className="text-base sm:text-lg font-bold leading-tight whitespace-nowrap">
               {credits}
             </span>
-            {lastReset && (
-              <span className="text-[9px] text-white/70 leading-tight">
-                รีเซ็ต: {new Date(lastReset).toLocaleDateString('th-TH', { 
-                  month: 'short', 
-                  day: 'numeric' 
-                })}
-              </span>
-            )}
+            <span className="text-[9px] text-white/70 leading-tight">
+              Real-time
+            </span>
           </div>
-          
-          {/* Refresh button */}
-          <button
-            onClick={fetchCredits}
-            className="bg-white/20 p-1.5 rounded-lg hover:bg-white/30 transition-colors"
-            title="รีเฟรชเครดิต"
-          >
-            <RefreshCw className="w-3 h-3 text-white" />
-          </button>
         </div>
-        
-        {/* Weekly reset indicator */}
-        {lastReset && (
-          <div className="mt-2 text-xs text-white/80 text-center bg-white/10 rounded-lg px-2 py-1">
-            <RefreshCw className="w-3 h-3 inline mr-1" />
-            รีเซ็ตสัปดาห์นี้แล้ว
-          </div>
-        )}
         
         {/* Low credits warning */}
         {isLowCredits && (

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, AlertCircle, Search, X, ChevronDown, HelpCircle, ExternalLink, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom"; // เพิ่ม import
+import { useRealTimeCredits } from "@/services/realTimeCreditService";
 
 const instruments = [
   // กีตาร์
@@ -47,8 +48,8 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate(); // เพิ่ม navigate hook
   const [isSearching, setIsSearching] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [loadingCredits, setLoadingCredits] = useState(true);
+  // ใช้ Hook ตัวใหม่ที่พี่สร้าง เลขจะวิ่งไปหา 15 ทันที
+const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
 
   const [formData, setFormData] = useState({
     instruments: [] as string[],
@@ -64,63 +65,6 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
   // Smart Line Link states
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [copiedStep, setCopiedStep] = useState<number | null>(null);
-
-  // โหลดข้อมูลเครดิต
-  useEffect(() => {
-    const fetchCredits = async () => {
-      if (!userId) {
-        setLoadingCredits(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await (supabase as any)
-          .from("profiles")
-          .select("credits")
-          .eq("id", userId)
-          .single();
-
-        if (error && error.code !== "PGRST116") {
-          console.error("Error fetching credits:", error);
-        } else if (data) {
-          setCredits(data.credits || 0);
-        } else {
-          setCredits(25); // Default value
-        }
-      } catch (err) {
-        console.error("System Error:", err);
-      } finally {
-        setLoadingCredits(false);
-      }
-    };
-
-    fetchCredits();
-
-    // Subscribe to real-time changes
-    if (userId) {
-      const channel = supabase
-        .channel(`profile:${userId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "profiles",
-            filter: `id=eq.${userId}`,
-          },
-          (payload) => {
-            if (payload.new && (payload.new as any).credits !== undefined) {
-              setCredits((payload.new as any).credits);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [userId]);
 
   // Smart Line Link functions
   const extractLineId = (input: string): string => {
@@ -225,13 +169,15 @@ const SearchForm = ({ onBack, onAddJob, userId }: SearchFormProps) => {
         budget: formData.budget,
         lineId: formData.lineId,
         phone: formData.phone,
-        status: "open", // งานเริ่มต้นด้วยสถานะ "เปิดรับสมัคร"
-        createdAt: new Date().toISOString()
+        status: "open"
       };
 
-      console.log("Submitting job data:", jobData); // Debug log
+      console.log("🔍 Submitting job data:", jobData); // Debug log
+      console.log("🔍 Calling onAddJob function...");
 
       await onAddJob(jobData);
+      
+      console.log("✅ onAddJob completed successfully!");
       toast({ title: "ประกาศงานสำเร็จ!", description: "ข้อมูลติดต่อถูกบันทึกแล้ว และหักเครดิต 5 เครดิต" });
       onBack();
     } catch (error: any) {

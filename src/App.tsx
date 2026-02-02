@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/ProfilePage";
-import MyApplicationsPage from "./pages/MyApplicationsPage";
-import MusicianSearch from "./pages/MusicianSearch";
-import NearbyGigs from "./components/NearbyGigs";
-import SearchForm from "./components/SearchForm";
-import MusicianSignup from "./components/MusicianSignup";
-import AboutSection from "./components/AboutSection";
+import AuthPage from "./pages/AuthPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CreditWidget from "./components/CreditWidget";
-import AuthPage from "./pages/AuthPage"; // Import เข้ามาด้วย
+import { refetchProfile } from "./services/realTimeCreditService";
+import MusicianSignup from "./components/MusicianSignup";
+import AboutSection from "./components/AboutSection";
+import SearchForm from "./components/SearchForm";
+import NearbyGigs from "./components/NearbyGigs";
+import MusicianSearch from "./pages/MusicianSearch";
+import MyApplicationsPage from "./pages/MyApplicationsPage";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -124,131 +125,78 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ฟังก์ชันเพิ่มประกาศงาน (พร้อมเช็ค weekly quota และหักเครดิต)
+  // ฟังก์ชันเพิ่มประกาศงาน (ฉบับสะอาดและแม่นยำ)
   const addJob = async (newJob: any) => {
-    if (!session) {
-      throw new Error("กรุณาเข้าสู่ระบบก่อน");
-    }
-
+    console.log("🚀 เริ่มต้นกระบวนการประกาศงาน...", newJob);
+    
+    if (!session) throw new Error("กรุณาเข้าสู่ระบบก่อน");
     const userId = session?.user?.id;
 
     try {
-      // 1. เช็ค Weekly Quota: นับงานใน 7 วันล่าสุด
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      const { data: recentJobs, error: quotaError } = await (supabase as any)
-        .from('jobs')
-        .select('id')
-        .eq('user_id', userId)
-        .gte('created_at', sevenDaysAgo.toISOString());
-
-      if (quotaError) {
-        console.error("Error checking quota:", quotaError);
-        throw new Error("ไม่สามารถตรวจสอบโควตาการลงงานได้");
-      }
-
-      const jobCount = recentJobs?.length || 0;
-      if (jobCount >= 5) {
-        throw new Error("คุณใช้สิทธิ์ลงงานฟรีครบ 5 ครั้งในสัปดาห์นี้แล้ว");
-      }
-
-      // 2. เช็ค Credits: ตรวจสอบว่าเครดิตเพียงพอหรือไม่
-      const { data: profile, error: profileError } = await (supabase as any)
+      // 1. ดึงค่า credits ล่าสุดของผู้ใช้ออกมาจาก Supabase
+      const { data: profile, error: pError } = await supabase
         .from('profiles')
         .select('credits')
         .eq('id', userId)
         .single();
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        throw new Error("ไม่สามารถตรวจสอบเครดิตได้");
-      }
-
+      if (pError) throw new Error("ไม่สามารถดึงข้อมูลเครดิตได้: " + pError.message);
+      
       const currentCredits = profile?.credits || 0;
+      console.log("🔍 เครดิตปัจจุบันใน DB:", currentCredits);
+
+      // 2. ตรวจสอบว่าถ้ามีน้อยกว่า 5 เครดิต ให้แจ้งเตือน
       if (currentCredits < 5) {
-        throw new Error("เครดิตไม่เพียงพอ (ต้องการ 5 เครดิต)");
+        throw new Error(`เครดิตไม่พอ (ต้องการ 5 แต่คุณมี ${currentCredits})`);
       }
 
-      // 3. บันทึกงานใหม่
+      // 3. หากพอ ให้ทำการบันทึกงานลงตาราง jobs
       const { data: insertedJob, error: insertError } = await (supabase as any)
         .from('jobs')
         .insert([{
-          instrument: newJob.instrument,
-          date: newJob.date,
-          location: newJob.location,
-          province: newJob.province,
-          duration: newJob.duration,
-          budget: newJob.budget,
-          phone: newJob.phone,     
-          lineId: newJob.lineId,   
-          status: newJob.status || "open", // ใช้ค่าที่ส่งมาหรือค่าเริ่มต้น
-          user_id: userId 
+          ...newJob,
+          user_id: userId,
+          status: "open",
+          created_at: new Date().toISOString() // เปลี่ยนเป็น created_at ให้ตรงกับฐานข้อมูล
         }])
         .select()
         .single();
 
-      if (insertError) {
-        console.error("Error inserting job:", insertError);
-        console.error("Full insert error details:", JSON.stringify(insertError, null, 2));
-        
-        // ส่ง error ที่ละเอียดกลับไปให้ SearchForm แสดง
-        let errorMessage = "ไม่สามารถบันทึกงานได้";
-        
-        if (insertError.message) {
-          if (insertError.message.includes("column") || insertError.message.includes("does not exist")) {
-            errorMessage = `คอลัมน์ในตารางไม่ถูกต้อง: ${insertError.message}`;
-          } else if (insertError.message.includes("permission") || insertError.message.includes("unauthorized") || insertError.message.includes("403")) {
-            errorMessage = "คุณไม่มีสิทธิ์ในการเพิ่มงาน กรุณาตรวจสอบ RLS Policy";
-          } else if (insertError.message.includes("duplicate") || insertError.message.includes("unique")) {
-            errorMessage = "มีข้อมูลซ้ำในระบบ";
-          } else if (insertError.message.includes("foreign key")) {
-            errorMessage = "ข้อมูลผู้ใช้ไม่ถูกต้อง";
-          } else {
-            errorMessage = insertError.message;
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
+      if (insertError) throw insertError;
+      console.log("✅ บันทึกงานสำเร็จ ID:", insertedJob.id);
 
-      // 4. หักเครดิต 5 เครดิต
-      const { error: creditError } = await (supabase as any)
-        .from('profiles')
-        .update({ credits: currentCredits - 5 })
-        .eq('id', userId);
-
-      if (creditError) {
-        console.error("Error deducting credits:", creditError);
-        // ถ้าหักเครดิตไม่สำเร็จ ให้ลบงานที่เพิ่มไปด้วย
-        if (insertedJob?.id) {
-          await (supabase as any).from('jobs').delete().eq('id', insertedJob.id);
-        }
-        throw new Error("ไม่สามารถหักเครดิตได้ กรุณาลองใหม่อีกครั้ง");
-      }
-
-      // 5. บันทึกการหักเครดิตใน credit_logs
-      const { error: logError } = await (supabase as any)
-        .from('credit_logs')
-        .insert([{
-          user_id: userId,
-          amount: -5,
-          action_type: 'spent',
-          description: `หักเครดิตจากการลงประกาศงาน: ${newJob.instrument}`,
-        }]);
-
-      if (logError) {
-        console.error("Error logging credit:", logError);
-        // ไม่ throw error เพราะงานบันทึกสำเร็จแล้ว แค่ log ไม่สำเร็จ
-      }
-
-      // 6. Refresh jobs list
-      await fetchJobs();
+      // 4. หลังจากบันทึกงานสำเร็จ ให้ทำการหักเครดิตออก 5
+      const newBalance = currentCredits - 5;
+      console.log("🔍 กำลังจะหักเครดิต:", { currentCredits, newBalance, userId });
       
+      const { data: updateData, error: updateError } = await supabase
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      console.log("🔍 ผลการอัปเดตเครดิต:", { updateData, updateError });
+
+      // 5. จัดการ Error: หากการหักเครดิตล้มเหลว ให้ทำการลบ (Rollback) งานที่เพิ่งสร้างทิ้ง
+      if (updateError) {
+        console.error("❌ หักเครดิตล้มเหลว:", updateError);
+        // ลบงานที่เพิ่งสร้างทิ้งเพื่อป้องกันการลงงานฟรี
+        await supabase.from('jobs').delete().eq('id', insertedJob.id);
+        throw new Error("หักเครดิตไม่สำเร็จ: " + updateError.message);
+      } else {
+        console.log("✅ หักเครดิตสำเร็จ! ยอดคงเหลือ:", newBalance);
+        
+        // 6. Real-time Update: เมื่อหักเครดิตสำเร็จ ให้อัปเดตหน้าจอทันที
+        console.log("🔄 กำลังอัปเดตหน้าจอทันที...");
+        await refetchProfile(userId); // อัปเดต Credit Widget และหน้า Profile
+        await fetchJobs();            // รีเฟรชรายการงานหน้าแรก
+        console.log("✅ อัปเดตหน้าจอสำเร็จ!");
+      }
+       
     } catch (err: any) {
-      console.error("Submission Error:", err);
-      // Throw error เพื่อให้ SearchForm แสดง error message
-      throw err;
+      console.error("❌ เกิดข้อผิดพลาดใน addJob:", err.message);
+      throw err; // ส่ง Error ไปให้หน้า UI แสดง Alert
     }
   };
 
@@ -289,8 +237,8 @@ const App = () => {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <ShadcnToaster />
           <Toaster />
-          <Sonner />
           <div className="min-h-screen flex items-center justify-center bg-white">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
@@ -307,8 +255,8 @@ const App = () => {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <ShadcnToaster />
           <Toaster />
-          <Sonner />
           <AuthPage />
         </TooltipProvider>
       </QueryClientProvider>
@@ -319,8 +267,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <ShadcnToaster />
         <Toaster />
-        <Sonner />
         <BrowserRouter>
           <div className="min-h-screen flex flex-col overflow-x-hidden">
             <Navbar userId={session?.user?.id || null} />
