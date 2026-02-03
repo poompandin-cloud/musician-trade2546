@@ -71,7 +71,7 @@ const Navbar = ({ userId }: { userId: string | null }) => {
             onClick={() => navigate("/")}
             className="text-2xl font-bold text-orange-500 hover:text-orange-600 transition-colors"
           >
-            snowguin
+            หาคนแทน
           </button>
 
           {/* ถ้าล็อกอินแล้วแสดงรูปโปรไฟล์ ถ้ายังไม่ล็อกอินแสดงปุ่มเข้าสู่ระบบ */}

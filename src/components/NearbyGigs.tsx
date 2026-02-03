@@ -231,15 +231,6 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
                     </Button>
                   )}
 
-                  {gig.user_id !== currentUserId && (
-                    <Button
-                      onClick={() => gig.status === 'open' ? handleAcceptJob(gig.id, gig.lineId) : null}
-                      disabled={gig.status === 'closed'}
-                      className={`w-full font-bold py-3 ${gig.status === 'closed' ? "bg-gray-400 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}
-                    >
-                      {gig.status === 'closed' ? "ปิดรับสมัครแล้ว" : "รับงานนี้"}
-                    </Button>
-                  )}
 
                   {gig.user_id === currentUserId && (
                     <div className="mt-4 pt-4 border-t border-dashed flex justify-center">
