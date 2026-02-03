@@ -240,7 +240,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-3xl border border-border shadow-sm">
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">เครื่องดนตรีที่ต้องการ</Label>
+            
             
             {/* Free Text Input with Suggestions */}
             <div className="space-y-3">
