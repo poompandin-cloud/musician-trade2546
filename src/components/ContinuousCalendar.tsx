@@ -11,7 +11,8 @@ const monthNames = [
 interface ContinuousCalendarProps {
   onClick?: (_day:number, _month: number, _year: number) => void;
   jobs?: Job[]; // เปลี่ยนเป็น Array of Objects
-  isOwner?: boolean; // เพิ่ม prop สำหรับตรวจสอบสิทธิ์
+  isOwner?: boolean; // เพิ่ม prop สำหรับตรวจสอบสิทธิ
+  dayMinHeight?: string; // เพิ่ม prop สำหรับความสูงของช่องวันที่
 }
 
 interface Job {
@@ -23,7 +24,7 @@ interface Job {
   date: string; // format: "DD/MM/YYYY"
 }
 
-export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick, jobs, isOwner = true }) => {
+export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick, jobs, isOwner = true, dayMinHeight = 'min-h-[60px]' }) => {
   const today = new Date();
   const dayRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -161,40 +162,84 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
               data-month={month}
               data-day={day}
               onClick={() => handleDayClick(day, month, year)}
-              className={`relative z-10 m-[-0.5px] group aspect-square w-full grow cursor-pointer rounded-xl border font-medium transition-all hover:z-20 hover:border-cyan-400 sm:-m-px sm:size-8 sm:rounded-lg sm:border-2 lg:size-12 lg:rounded-xl 2xl:size-16 min-h-[70px] ${!isOwner ? 'pointer-events-none' : ''}`}
+              className={`relative z-10 m-[-0.5px] group w-full grow cursor-pointer rounded-xl border font-medium transition-all hover:z-20 hover:border-cyan-400 sm:-m-px sm:rounded-lg sm:border-2 lg:rounded-xl ${dayMinHeight} ${!isOwner ? 'pointer-events-none' : ''}`}
             >
               <span className={`absolute left-1 top-1 flex size-1 items-center justify-center rounded-full text-xs sm:size-2 sm:text-xs lg:left-1 lg:top-1 lg:size-3 lg:text-xs ${isToday ? 'bg-blue-500 font-semibold text-white' : ''} ${month < 0 ? 'text-slate-400' : 'text-slate-800'}`}>
                 {day}
               </span>
-              {/* แสดงงานเป็นแถบสีใต้หมายเลขวันที่ */}
-              {jobs && jobs
-                .filter(job => job.date === `${day}/${month + 1}/${year}`)
-                .map((job, index) => {
-                  // คำนวณตำแหน่งและจำกัดไม่ให้ล้น พร้อมยืดงานแถบ
-                  const topPosition = index * 28 + 12;
-                  const maxTop = 80; // จำกัดความสูงสูงสุด
-                  const finalTop = Math.min(topPosition, maxTop);
-                  
-                  return (
-                    <div 
-                      key={job.id}
-                      className="absolute left-1 right-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-1 py-1 rounded font-medium overflow-hidden"
-                      style={{ 
-                        top: `${finalTop}px`,
-                        height: '26px',
-                        zIndex: 5
-                      }}
-                    >
-                      <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
-                      <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.startTime} - {job.endTime}</div>
-                    </div>
-                  );
-                })
-              }
+              {/* 2. สร้างตะกร้าใบนี้ครอบส่วน jobs ไว้เพื่อตัดส่วนเกินเฉพาะแถบสีฟ้า */}
+<div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+  {jobs && jobs
+    .filter(job => job.date === `${day}/${month + 1}/${year}`)
+    .map((job, index) => {
+      // คำนวณตำแหน่งและจำกัดไม่ให้ล้นเกินช่อง
+      const topPosition = index * 28 + 12;
+      const maxTop = 80; // จำกัดความสูงสูงสุด
+      const finalTop = Math.min(topPosition, maxTop);
+      
+      return (
+        <div 
+          key={job.id}
+          className="absolute left-1 right-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-1 py-1 rounded font-medium overflow-hidden"
+          style={{ 
+            top: `${finalTop}px`,
+            height: '26px',
+            zIndex: 5
+          }}
+        >
+          <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.startTime} - {job.endTime}</div>
+        </div>
+      );
+    })
+  }
+</div>
+              {/* 2. สร้างตะกร้าใบนี้ครอบส่วน jobs ไว้เพื่อตัดส่วนเกินเฉพาะแถบสีฟ้า */}
+<div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+  {jobs && jobs
+    .filter(job => job.date === `${day}/${month + 1}/${year}`)
+    .map((job, index) => {
+      // คำนวณตำแหน่งและจำกัดไม่ให้ล้นเกินช่อง
+      const topPosition = index * 28 + 12;
+      const maxTop = 80; // จำกัดความสูงสูงสุด
+      const finalTop = Math.min(topPosition, maxTop);
+      
+      return (
+        <div 
+          key={job.id}
+          className="absolute left-1 right-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-1 py-1 rounded font-medium overflow-hidden"
+          style={{ 
+            top: `${finalTop}px`,
+            height: '26px',
+            zIndex: 5
+          }}
+        >
+          <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.startTime} - {job.endTime}</div>
+        </div>
+      );
+    })
+  }
+</div>
               
               {/* จุดสีแดงสำหรับวันที่มีงาน (ถ้าต้องการเก็บไว้ด้วย) */}
               {jobs && jobs.filter(job => job.date === `${day}/${month + 1}/${year}`).length > 0 && (
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              )}
+              
+              {/* เพิ่ม Event Bar ของคนอื่น */}
+              {index === 0 && day === 15 && (
+                <div 
+                  className="absolute left-1 right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-1 py-1 rounded font-medium overflow-hidden"
+                  style={{ 
+                    top: '40px',
+                    height: '26px',
+                    zIndex: 5
+                  }}
+                >
+                  <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">งานของคนอื่น</div>
+                  <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">14:00 - 18:00</div>
+                </div>
               )}
               
               {/* ลบ Month Watermark ออก */}

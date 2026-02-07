@@ -1340,83 +1340,6 @@ console.log("New instruments after removal:", newInstruments);
           </CardContent>
         </Card>
 
-{/* --- ส่วนปฏิทินแบบ Full Width --- */}
-<div className="mt-4 mb-2">
-  <label className="block text-sm font-semibold text-gray-800 mb-1">
-    🗓️ ตารางงานของฉัน
-  </label>
-  
-  {/* Full Width Calendar - ลดความสูงลงอีก */}
-  <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden max-h-[500px] relative">
-    <DemoWrapper>
-      <div className="pt-1 transform scale-30 origin-top">
-        <ContinuousCalendar 
-          jobs={calendarJobs}
-          onClick={handleDateClick}
-        />
-      </div>
-    </DemoWrapper>
-    
-    {/* ปุ่มขยายปฏิทิน - ย้ายมาไว้ขวาล่างของบล็อค */}
-    <button
-      onClick={() => setIsFullscreenCalendar(true)}
-      className="absolute bottom-2 right-2 z-20 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
-      title="ขยายปฏิทิน"
-    >
-      <Maximize2 className="w-4 h-4 text-gray-600" />
-    </button>
-  </div>
-</div>
-
-{/* Modal สำหรับเพิ่ม/แก้ไขงาน */}
-<JobModal
-  isOpen={isModalOpen}
-  onClose={() => {
-    setIsModalOpen(false);
-    setEditingJob([]);
-  }}
-  onSave={handleSaveJob}
-  selectedDate={selectedDate}
-  editingJobs={editingJob}
-  onDeleteJob={handleDeleteCalendarJob}
-  isOwner={isOwner}
-/>
-
-{/* Fullscreen Calendar Modal */}
-{isFullscreenCalendar && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full h-full max-w-6xl max-h-[90vh] shadow-2xl relative overflow-hidden">
-      {/* ปุ่มปิด */}
-      <button
-        onClick={() => setIsFullscreenCalendar(false)}
-        className="absolute top-4 right-4 z-30 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
-        title="ย่อขนาด"
-      >
-        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-xl font-bold text-gray-800">🗓️ ตารางงานของฉัน (ขยาย)</h2>
-      </div>
-      
-      {/* Calendar Content - Responsive และ Flexible */}
-      <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
-        <DemoWrapper>
-          <div className="transform scale-60 sm:scale-70 origin-top w-full max-w-[95vw] mx-auto">
-            <ContinuousCalendar 
-              jobs={calendarJobs}
-              onClick={handleDateClick}
-            />
-          </div>
-        </DemoWrapper>
-      </div>
-    </div>
-  </div>
-)}
-
         {/* ส่วน Video Portfolio */}
         <Card>
           <CardHeader>
@@ -1574,7 +1497,86 @@ console.log("New instruments after removal:", newInstruments);
           </CardContent>
         </Card>
 
-        {/* ส่วน My Jobs List - แสดงเฉพาะเจ้าของ */}
+{/* --- ส่วนปฏิทินแบบ Full Width --- */}
+<div className="mt-4 mb-2">
+  <label className="block text-sm font-semibold text-gray-800 mb-1">
+    🗓️ ตารางงานของฉัน
+  </label>
+  
+  {/* Full Width Calendar - ลดความสูงลงอีก */}
+  <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden max-h-[700px] relative">
+    <DemoWrapper>
+      <div className="pt-1 transform scale-30 origin-top">
+        <ContinuousCalendar 
+          jobs={calendarJobs}
+          onClick={handleDateClick}
+          dayMinHeight="min-h-[100px]"
+        />
+      </div>
+    </DemoWrapper>
+    
+    {/* ปุ่มขยายปฏิทิน - ย้ายมาไว้ขวาล่างของบล็อค */}
+    <button
+      onClick={() => setIsFullscreenCalendar(true)}
+      className="absolute bottom-2 right-2 z-20 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+      title="ขยายปฏิทิน"
+    >
+      <Maximize2 className="w-4 h-4 text-gray-600" />
+    </button>
+  </div>
+</div>
+
+{/* Modal สำหรับเพิ่ม/แก้ไขงาน */}
+<JobModal
+  isOpen={isModalOpen}
+  onClose={() => {
+    setIsModalOpen(false);
+    setEditingJob([]);
+  }}
+  onSave={handleSaveJob}
+  selectedDate={selectedDate}
+  editingJobs={editingJob}
+  onDeleteJob={handleDeleteCalendarJob}
+  isOwner={isOwner}
+/>
+
+{/* Fullscreen Calendar Modal */}
+{isFullscreenCalendar && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl w-full h-full max-w-6xl max-h-[90vh] shadow-2xl relative overflow-hidden">
+      {/* ปุ่มปิด */}
+      <button
+        onClick={() => setIsFullscreenCalendar(false)}
+        className="absolute top-4 right-4 z-30 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        title="ย่อขนาด"
+      >
+        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <h2 className="text-xl font-bold text-gray-800">🗓️ ตารางงานของฉัน (ขยาย)</h2>
+      </div>
+      
+      {/* Calendar Content - Responsive และ Flexible */}
+      <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+        
+           <div className="w-full max-w-full mx-auto">
+             <ContinuousCalendar 
+               jobs={calendarJobs}
+               onClick={handleDateClick}
+               dayMinHeight="min-h-[100px]"
+             />
+           </div>
+        
+       </div>
+    </div>
+  </div>
+)}
+
+{/* ส่วน My Jobs List - แสดงเฉพาะเจ้าของ */}
         {isOwner && (
         <Card>
           <CardHeader>
@@ -1633,6 +1635,8 @@ console.log("New instruments after removal:", newInstruments);
           </CardContent>
         </Card>
         )}
+
+        
 
         {/* Confirmed Applications Section - แสดงคนที่ได้รับการยืนยัน */}
         {isOwner && confirmedApplications.length > 0 && (
