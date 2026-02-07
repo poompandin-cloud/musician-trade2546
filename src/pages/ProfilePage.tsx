@@ -11,6 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealTimeCredits } from "@/services/realTimeCreditService";
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
+import SearchForm from '@/components/SearchForm';
+import DemoWrapper from '@/components/DemoWrapper';
+import { ContinuousCalendar } from '@/components/ContinuousCalendar';
+import { JobModal } from '@/components/JobModal';
+import { Maximize2 } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -36,6 +41,36 @@ interface Job {
   created_at: string;
   status?: 'open' | 'closed' | null;
   confirmed_applicant_id?: string | null;
+  jobs?: {
+    instrument: string;
+    location: string;
+    province: string;
+    duration: string;
+    budget: string;
+  };
+  applicant_id?: string;
+}
+
+// เพิ่ม interface สำหรับงานในปฏิทิน
+interface CalendarJob {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  date: string; // format: "DD/MM/YYYY"
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  reviewer_name: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
+  };
+  reviewer_id?: string;
 }
 
 const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; onDeleteJob: (id: string) => Promise<void> }) => {
@@ -76,8 +111,152 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myJobs, setMyJobs] = useState<Job[]>([]);
-  const [confirmedApplications, setConfirmedApplications] = useState<any[]>([]);
-  const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
+  const [confirmedApplications, setConfirmedApplications] = useState<Job[]>([]);
+  const [receivedReviews, setReceivedReviews] = useState<Review[]>([]);
+  
+  // เพิ่ม state สำหรับงานในปฏิทิน
+  const [calendarJobs, setCalendarJobs] = useState<CalendarJob[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [editingJob, setEditingJob] = useState<CalendarJob[]>([]);
+  const [isFullscreenCalendar, setIsFullscreenCalendar] = useState(false); // เพิ่ม state สำหรับ fullscreen calendar
+  
+  // ดึงข้อมูลงานจาก Supabase สำหรับเจ้าของโปรไฟล์
+  const fetchCalendarJobs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('calendar_jobs')
+        .select('*')
+        .eq('user_id', profileUserId)
+        .order('date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching calendar jobs:', error);
+        setCalendarJobs([]);
+      } else {
+        setCalendarJobs(data || []);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setCalendarJobs([]);
+    }
+  };
+
+  useEffect(() => {
+    if (isOwner) {
+      // ถ้าเป็นเจ้าของ ให้ใช้ localStorage เหมือนเดิม
+      const savedJobs = localStorage.getItem('calendarJobs');
+      if (savedJobs) {
+        setCalendarJobs(JSON.parse(savedJobs));
+      }
+    } else {
+      // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลจาก Supabase
+      fetchCalendarJobs();
+    }
+  }, [isOwner, profileUserId]);
+  
+  // บันทึกข้อมูลลง localStorage เมื่อมีการเปลี่ยนแปลง (สำหรับเจ้าของเท่านั้น)
+  useEffect(() => {
+    if (isOwner) {
+      localStorage.setItem('calendarJobs', JSON.stringify(calendarJobs));
+    }
+  }, [calendarJobs, isOwner]);
+  
+  // ฟังก์ชันสำหรับจัดการงานในปฏิทิน
+  const handleDateClick = (day: number, month: number, year: number) => {
+    const dateStr = `${day}/${month + 1}/${year}`;
+    setSelectedDate(dateStr);
+    
+    // ตรวจสอบสิทธิ์ของผู้ใช้
+    if (!isOwner) {
+      // ถ้าไม่ใช่เจ้าของโปรไฟล์ ให้เปิด Modal แบบ Read-only
+      const jobsOnDate = calendarJobs.filter(job => job.date === dateStr);
+      setEditingJob(jobsOnDate);
+    } else {
+      // ถ้าเป็นเจ้าของ ทำงานปกติ
+      const jobsOnDate = calendarJobs.filter(job => job.date === dateStr);
+      
+      // เปิด Modal พร้อมข้อมูลเก่า แต่ไม่ว่างานเก่าจะหายไป
+      setEditingJob(jobsOnDate);
+    }
+    
+    setIsModalOpen(true);
+  };
+
+  const handleSaveJob = async (jobs: CalendarJob[]) => {
+    if (!isOwner) {
+      return; // ไม่ให้บันทึกถ้าไม่ใช่เจ้าของ
+    }
+    
+    // สร้าง Set ของ ID ที่มีอยู่แล้วเพื่อตรวจสอบซ้ำ
+    const existingIds = new Set(calendarJobs.map(job => job.id));
+    
+    // บันทึกทุกงานใน array และเพิ่มเข้า State แบบไม่ทับ
+    for (const job of jobs) {
+      try {
+        const { error } = await supabase
+          .from('calendar_jobs')
+          .upsert({
+            id: job.id.startsWith('temp_') ? undefined : job.id, // ถ้าเป็น temp id ให้สร้างใหม่
+            user_id: profileUserId,
+            title: job.title,
+            startTime: job.startTime,
+            endTime: job.endTime,
+            location: job.location,
+            date: job.date
+          });
+        
+        if (error) {
+          console.error('Error saving job:', error);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+    
+    // อัปเดต State โดยเก็บงานเก่าและเพิ่มงานใหม่
+    setCalendarJobs(prev => {
+      const existingJobs = prev.filter(job => existingIds.has(job.id));
+      const newJobs = jobs.filter(job => !existingIds.has(job.id));
+      return [...existingJobs, ...newJobs];
+    });
+    
+    setEditingJob([]);
+    setIsModalOpen(false);
+    
+    // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลล่าสุดจาก Supabase
+    if (!isOwner) {
+      fetchCalendarJobs();
+    }
+  };
+
+  const handleDeleteCalendarJob = async (jobId: string) => {
+    if (!isOwner) {
+      return; // ไม่ให้ลบถ้าไม่ใช่เจ้าของ
+    }
+    
+    setCalendarJobs(prev => prev.filter(job => job.id !== jobId));
+    setEditingJob(prev => prev.filter(job => job.id !== jobId));
+    
+    // ลบข้อมูลจาก Supabase
+    try {
+      const { error } = await supabase
+        .from('calendar_jobs')
+        .delete()
+        .eq('id', jobId);
+        
+      if (error) {
+        console.error('Error deleting job:', error);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+    
+    // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลล่าสุดจาก Supabase
+    if (!isOwner) {
+      fetchCalendarJobs();
+    }
+  };
   
   // ✅ ใช้ Real-time Credits สำหรับเจ้าของโปรไฟล์เท่านั้น
   const { credits: realTimeCredits } = useRealTimeCredits(isOwner ? currentUserId : null);
@@ -1160,6 +1339,83 @@ console.log("New instruments after removal:", newInstruments);
             )}
           </CardContent>
         </Card>
+
+{/* --- ส่วนปฏิทินแบบ Full Width --- */}
+<div className="mt-4 mb-2">
+  <label className="block text-sm font-semibold text-gray-800 mb-1">
+    🗓️ ตารางงานของฉัน
+  </label>
+  
+  {/* Full Width Calendar - ลดความสูงลงอีก */}
+  <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden max-h-[500px] relative">
+    <DemoWrapper>
+      <div className="pt-1 transform scale-30 origin-top">
+        <ContinuousCalendar 
+          jobs={calendarJobs}
+          onClick={handleDateClick}
+        />
+      </div>
+    </DemoWrapper>
+    
+    {/* ปุ่มขยายปฏิทิน - ย้ายมาไว้ขวาล่างของบล็อค */}
+    <button
+      onClick={() => setIsFullscreenCalendar(true)}
+      className="absolute bottom-2 right-2 z-20 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+      title="ขยายปฏิทิน"
+    >
+      <Maximize2 className="w-4 h-4 text-gray-600" />
+    </button>
+  </div>
+</div>
+
+{/* Modal สำหรับเพิ่ม/แก้ไขงาน */}
+<JobModal
+  isOpen={isModalOpen}
+  onClose={() => {
+    setIsModalOpen(false);
+    setEditingJob([]);
+  }}
+  onSave={handleSaveJob}
+  selectedDate={selectedDate}
+  editingJobs={editingJob}
+  onDeleteJob={handleDeleteCalendarJob}
+  isOwner={isOwner}
+/>
+
+{/* Fullscreen Calendar Modal */}
+{isFullscreenCalendar && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl w-full h-full max-w-6xl max-h-[90vh] shadow-2xl relative overflow-hidden">
+      {/* ปุ่มปิด */}
+      <button
+        onClick={() => setIsFullscreenCalendar(false)}
+        className="absolute top-4 right-4 z-30 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        title="ย่อขนาด"
+      >
+        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <h2 className="text-xl font-bold text-gray-800">🗓️ ตารางงานของฉัน (ขยาย)</h2>
+      </div>
+      
+      {/* Calendar Content - Responsive และ Flexible */}
+      <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+        <DemoWrapper>
+          <div className="transform scale-60 sm:scale-70 origin-top w-full max-w-[95vw] mx-auto">
+            <ContinuousCalendar 
+              jobs={calendarJobs}
+              onClick={handleDateClick}
+            />
+          </div>
+        </DemoWrapper>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* ส่วน Video Portfolio */}
         <Card>

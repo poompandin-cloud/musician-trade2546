@@ -59,7 +59,8 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     duration: "",
     budget: "",
     lineId: "", 
-    phone: ""
+    phone: "",
+    expiryDate: ""
   });
 
   // Smart Line Link states
@@ -244,7 +245,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
             
             {/* Free Text Input with Suggestions */}
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">เครื่องดนตรีที่ต้องการ</Label>
+              <Label className="text-sm font-semibold">เครื่องดนตรีที่ต้องการให้มาแทน</Label>
               <div className="relative">
                 <Input
                   type="text"

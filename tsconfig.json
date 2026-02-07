@@ -1,6 +1,9 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "references": [
+    { "path": "./tsconfig.app.json" }, 
+    { "path": "./tsconfig.node.json" }
+  ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -8,9 +11,18 @@
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
-    "skipLibCheck": true,
+    "skipLibCheck": true,      
     "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false
-  }
+    "strictNullChecks": false,
+    "types": ["node"],         /* เปลี่ยนจาก jest เป็น node เพื่อตัด Error */
+    "isolatedModules": true,
+    "esModuleInterop": true
+  },
+  "exclude": [
+    "node_modules",            /* สั่งให้หยุดสแกนโฟลเดอร์นี้ */
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }
