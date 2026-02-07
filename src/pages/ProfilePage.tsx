@@ -143,24 +143,43 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   };
 
   useEffect(() => {
-    if (isOwner) {
-      // ถ้าเป็นเจ้าของ ให้ใช้ localStorage เหมือนเดิม
-      const savedJobs = localStorage.getItem('calendarJobs');
-      if (savedJobs) {
-        setCalendarJobs(JSON.parse(savedJobs));
-      }
-    } else {
-      // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลจาก Supabase
-      fetchCalendarJobs();
-    }
-  }, [isOwner, profileUserId]);
+    // ดึงข้อมูลงานจาก Supabase สำหรับเจ้าของโปรไฟล์เสมอ
+    fetchCalendarJobs();
+  }, [profileUserId]);
   
-  // บันทึกข้อมูลลง localStorage เมื่อมีการเปลี่ยนแปลง (สำหรับเจ้าของเท่านั้น)
+  // บันทึกข้อมูลลง localStorage เมื่อมีการเปลี่ยนแปลง (สำหรับเจ้าของเท่านั้น) และอัปเดต Supabase
   useEffect(() => {
     if (isOwner) {
       localStorage.setItem('calendarJobs', JSON.stringify(calendarJobs));
+      
+      // อัปเดตข้อมูลใน Supabase สำหรับเจ้าของ
+      const updateSupabaseJobs = async () => {
+        try {
+          // ลบงานเก่าทั้งหมดของผู้ใช้
+          await supabase
+            .from('calendar_jobs')
+            .delete()
+            .eq('user_id', profileUserId);
+          
+          // เพิ่มงานใหม่ทั้งหมด
+          if (calendarJobs.length > 0) {
+            const jobsToInsert = calendarJobs.map(job => ({
+              ...job,
+              user_id: profileUserId
+            }));
+            
+            await supabase
+              .from('calendar_jobs')
+              .insert(jobsToInsert);
+          }
+        } catch (err) {
+          console.error('Error updating Supabase:', err);
+        }
+      };
+      
+      updateSupabaseJobs();
     }
-  }, [calendarJobs, isOwner]);
+  }, [calendarJobs, isOwner, profileUserId]);
   
   // ฟังก์ชันสำหรับจัดการงานในปฏิทิน
   const handleDateClick = (day: number, month: number, year: number) => {

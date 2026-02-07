@@ -162,7 +162,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
               data-month={month}
               data-day={day}
               onClick={() => handleDayClick(day, month, year)}
-              className={`relative z-10 m-[-0.5px] group w-full grow cursor-pointer rounded-xl border font-medium transition-all hover:z-20 hover:border-cyan-400 sm:-m-px sm:rounded-lg sm:border-2 lg:rounded-xl ${dayMinHeight} ${!isOwner ? 'pointer-events-none' : ''}`}
+              className={`relative z-10 m-[-0.5px] group w-full grow cursor-pointer rounded-xl border font-medium transition-all hover:z-20 hover:border-cyan-400 sm:-m-px sm:rounded-lg sm:border-2 lg:rounded-xl ${dayMinHeight}`}
             >
               <span className={`absolute left-1 top-1 flex size-1 items-center justify-center rounded-full text-xs sm:size-2 sm:text-xs lg:left-1 lg:top-1 lg:size-3 lg:text-xs ${isToday ? 'bg-blue-500 font-semibold text-white' : ''} ${month < 0 ? 'text-slate-400' : 'text-slate-800'}`}>
                 {day}
