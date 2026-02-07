@@ -1567,7 +1567,7 @@ console.log("New instruments after removal:", newInstruments);
              <ContinuousCalendar 
                jobs={calendarJobs}
                onClick={handleDateClick}
-               dayMinHeight="min-h-[100px]"
+               dayMinHeight="min-h-[200px]"
              />
            </div>
         
