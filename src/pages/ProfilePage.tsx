@@ -55,8 +55,8 @@ interface Job {
 interface CalendarJob {
   id: string;
   title: string;
-  startTime: string;
-  endTime: string;
+  starttime: string; // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
+  endtime: string;   // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -125,7 +125,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const fetchCalendarJobs = async () => {
     try {
       const { data, error } = await supabase
-        .from('calendar_jobs')
+        .from('jobs')
         .select('*')
         .eq('user_id', profileUserId)
         .order('date', { ascending: true });
@@ -134,7 +134,17 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         console.error('Error fetching calendar jobs:', error);
         setCalendarJobs([]);
       } else {
-        setCalendarJobs(data || []);
+        // ✅ แปลงข้อมูลจาก DB ให้ตรงกับ interface CalendarJob
+        const transformedData = (data || []).map(job => ({
+          id: job.id,
+          title: job.instrument, // ✅ แปลงจาก instrument เป็น title
+          starttime: job.time,   // ✅ แปลงจาก time เป็น starttime
+          endtime: job.time,    // ✅ ใช้ time เดียวกัน
+          location: job.location || '',
+          date: job.date,
+        }));
+        
+        setCalendarJobs(transformedData);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -146,65 +156,6 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     // ดึงข้อมูลงานจาก Supabase สำหรับเจ้าของโปรไฟล์เสมอ
     fetchCalendarJobs();
   }, [profileUserId]);
-  
-// 1. ดึงข้อมูลสำหรับทุกคน (ไม่ว่าจะเป็นเจ้าของหรือคนนอก)
-useEffect(() => {
-  const fetchJobs = async () => {
-    if (!profileUserId) return;
-    
-    setLoading(true); // เริ่มต้น Loading (ต้องมี State นี้ที่ด้านบนนะพี่)
-    try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('user_id', profileUserId);
-
-      if (error) throw error;
-      if (data) {
-        setCalendarJobs(data);
-        // อัปเดต Cache ของเครื่องนั้นๆ
-        localStorage.setItem(`calendarJobs_${profileUserId}`, JSON.stringify(data));
-      }
-    } catch (err) {
-      console.error('Error fetching jobs:', err);
-    } finally {
-      setLoading(false); // โหลดเสร็จแล้วปิด Loading
-    }
-  };
-
-  fetchJobs();
-}, [profileUserId]); // ดึงใหม่ทุกครั้งที่เปลี่ยนหน้าโปรไฟล์
-
-// 2. บันทึกข้อมูล (เฉพาะเจ้าของเท่านั้นที่มีสิทธิ์รันตัวนี้)
-useEffect(() => {
-  // เช็คว่าเป็นเจ้าของ และมีการเปลี่ยนแปลงข้อมูลจริงๆ
-  if (isOwner && calendarJobs.length >= 0) {
-    localStorage.setItem(`calendarJobs_${profileUserId}`, JSON.stringify(calendarJobs));
-    
-    const updateSupabaseJobs = async () => {
-      try {
-        // ลบของเก่าออกก่อน (ตาม Logic เดิมของพี่)
-        await supabase
-          .from('calendar_jobs')
-          .delete()
-          .eq('user_id', profileUserId);
-        
-        // ใส่ของใหม่เข้าไป
-        if (calendarJobs.length > 0) {
-          const jobsToInsert = calendarJobs.map(job => ({
-            ...job,
-            user_id: profileUserId
-          }));
-          await supabase.from('calendar_jobs').insert(jobsToInsert);
-        }
-      } catch (err) {
-        console.error('Error syncing to Supabase:', err);
-      }
-    };
-    
-    updateSupabaseJobs();
-  }
-}, [calendarJobs, isOwner, profileUserId]);
   
   // ฟังก์ชันสำหรับจัดการงานในปฏิทิน
   const handleDateClick = (day: number, month: number, year: number) => {
@@ -227,50 +178,55 @@ useEffect(() => {
     setIsModalOpen(true);
   };
 
-  const handleSaveJob = async (jobs: CalendarJob[]) => {
-    if (!isOwner) {
-      return; // ไม่ให้บันทึกถ้าไม่ใช่เจ้าของ
-    }
-    
-    // สร้าง Set ของ ID ที่มีอยู่แล้วเพื่อตรวจสอบซ้ำ
-    const existingIds = new Set(calendarJobs.map(job => job.id));
-    
-    // บันทึกทุกงานใน array และเพิ่มเข้า State แบบไม่ทับ
-    for (const job of jobs) {
-      try {
-        const { error } = await supabase
-          .from('calendar_jobs')
-          .upsert({
-            id: job.id.startsWith('temp_') ? undefined : job.id, // ถ้าเป็น temp id ให้สร้างใหม่
-            user_id: profileUserId,
-            title: job.title,
-            startTime: job.startTime,
-            endTime: job.endTime,
-            location: job.location,
-            date: job.date
-          });
+ const handleSaveJob = async (jobs: CalendarJob[]) => {
+    if (!isOwner) return;
+
+    try {
+      // 1. ส่งข้อมูลไปที่ 'jobs' ตามโครงสร้าง DB ใหม่
+      for (const job of jobs) {
+        // ✅ ห้ามส่งฟิลด์ id เด็ดขาดถ้าเป็นงานใหม่
+        const isTempJob = job.id.startsWith('temp_');
         
+        // ✅ สร้าง Object สำหรับบันทึก โดยไม่รวม id ถ้าเป็นงานใหม่
+        const jobData = {
+          // ✅ ห้ามส่ง id ถ้าเป็นงานใหม่ให้ Identity column ทำงาน
+          ...(isTempJob ? {} : { id: job.id }),
+          // ✅ คอลัมน์ตามโครงสร้าง DB ใหม่
+          user_id: profileUserId,
+          instrument: job.title, // ✅ เปลี่ยนจาก title เป็น instrument
+          time: job.starttime,   // ✅ เปลี่ยนจาก starttime เป็น time
+          date: job.date,
+          lineId: '', // ✅ เพิ่มคอลัมน์ lineId
+          status: 'active', // ✅ เพิ่มคอลัมน์ status
+        };
+
+        console.log('กำลังบันทึกข้อมูล:', jobData); // Debug log
+
+        const { error } = await supabase
+          .from('jobs')
+          .upsert(jobData);
+
         if (error) {
-          console.error('Error saving job:', error);
+          console.error('Supabase Error:', error); // ✅ Log แบบละเอียด
+          throw error;
         }
-      } catch (err) {
-        console.error('Error:', err);
       }
-    }
-    
-    // อัปเดต State โดยเก็บงานเก่าและเพิ่มงานใหม่
-    setCalendarJobs(prev => {
-      const existingJobs = prev.filter(job => existingIds.has(job.id));
-      const newJobs = jobs.filter(job => !existingIds.has(job.id));
-      return [...existingJobs, ...newJobs];
-    });
-    
-    setEditingJob([]);
-    setIsModalOpen(false);
-    
-    // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลล่าสุดจาก Supabase
-    if (!isOwner) {
-      fetchCalendarJobs();
+
+      // ✅ หลัง .upsert() สำเร็จ เรียก fetchCalendarJobs() ทันที
+      await fetchCalendarJobs();
+
+      setIsModalOpen(false); // ปิดหน้าต่างบันทึก
+      console.log("บันทึกสำเร็จและ Sync เรียบร้อย!");
+
+    } catch (err) {
+      console.error('Error saving job:', err);
+      console.error('Error details:', {
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code
+      });
+      alert(`บันทึกลงฐานข้อมูลไม่สำเร็จ: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -285,7 +241,7 @@ useEffect(() => {
     // ลบข้อมูลจาก Supabase
     try {
       const { error } = await supabase
-        .from('calendar_jobs')
+        .from('jobs') // ✅ ต้องเป็น 'jobs'
         .delete()
         .eq('id', jobId);
         
@@ -294,11 +250,6 @@ useEffect(() => {
       }
     } catch (err) {
       console.error('Error:', err);
-    }
-    
-    // ถ้าไม่ใช่เจ้าของ ให้ดึงข้อมูลล่าสุดจาก Supabase
-    if (!isOwner) {
-      fetchCalendarJobs();
     }
   };
   

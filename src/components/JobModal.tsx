@@ -5,8 +5,8 @@ import React from 'react';
 interface Job {
   id: string;
   title: string;
-  startTime: string;
-  endTime: string;
+  starttime: string; // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
+  endtime: string;   // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -48,8 +48,8 @@ export const JobModal: React.FC<JobModalProps> = ({
     const newJob: Job = {
       id: Date.now().toString(),
       title: '',
-      startTime: '09:00',
-      endTime: '10:00',
+      starttime: '09:00', // ✅ เปลี่ยนเป็นตัวเล็ก
+      endtime: '10:00',   // ✅ เปลี่ยนเป็นตัวเล็ก
       location: '',
       date: selectedDate,
     };
@@ -141,8 +141,8 @@ export const JobModal: React.FC<JobModalProps> = ({
                       </label>
                       <input
                         type="time"
-                        value={job.startTime}
-                        onChange={(e) => handleJobChange(job.id, 'startTime', e.target.value)}
+                        value={job.starttime}
+                        onChange={(e) => handleJobChange(job.id, 'starttime', e.target.value)}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         disabled={!isOwner}
                       />
@@ -153,8 +153,8 @@ export const JobModal: React.FC<JobModalProps> = ({
                       </label>
                       <input
                         type="time"
-                        value={job.endTime}
-                        onChange={(e) => handleJobChange(job.id, 'endTime', e.target.value)}
+                        value={job.endtime}
+                        onChange={(e) => handleJobChange(job.id, 'endtime', e.target.value)}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         disabled={!isOwner}
                       />
