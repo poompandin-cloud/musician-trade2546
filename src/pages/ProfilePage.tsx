@@ -147,39 +147,64 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     fetchCalendarJobs();
   }, [profileUserId]);
   
-  // บันทึกข้อมูลลง localStorage เมื่อมีการเปลี่ยนแปลง (สำหรับเจ้าของเท่านั้น) และอัปเดต Supabase
-  useEffect(() => {
-    if (isOwner) {
-      localStorage.setItem('calendarJobs', JSON.stringify(calendarJobs));
-      
-      // อัปเดตข้อมูลใน Supabase สำหรับเจ้าของ
-      const updateSupabaseJobs = async () => {
-        try {
-          // ลบงานเก่าทั้งหมดของผู้ใช้
-          await supabase
-            .from('calendar_jobs')
-            .delete()
-            .eq('user_id', profileUserId);
-          
-          // เพิ่มงานใหม่ทั้งหมด
-          if (calendarJobs.length > 0) {
-            const jobsToInsert = calendarJobs.map(job => ({
-              ...job,
-              user_id: profileUserId
-            }));
-            
-            await supabase
-              .from('calendar_jobs')
-              .insert(jobsToInsert);
-          }
-        } catch (err) {
-          console.error('Error updating Supabase:', err);
-        }
-      };
-      
-      updateSupabaseJobs();
+// 1. ดึงข้อมูลสำหรับทุกคน (ไม่ว่าจะเป็นเจ้าของหรือคนนอก)
+useEffect(() => {
+  const fetchJobs = async () => {
+    if (!profileUserId) return;
+    
+    setLoading(true); // เริ่มต้น Loading (ต้องมี State นี้ที่ด้านบนนะพี่)
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('user_id', profileUserId);
+
+      if (error) throw error;
+      if (data) {
+        setCalendarJobs(data);
+        // อัปเดต Cache ของเครื่องนั้นๆ
+        localStorage.setItem(`calendarJobs_${profileUserId}`, JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+    } finally {
+      setLoading(false); // โหลดเสร็จแล้วปิด Loading
     }
-  }, [calendarJobs, isOwner, profileUserId]);
+  };
+
+  fetchJobs();
+}, [profileUserId]); // ดึงใหม่ทุกครั้งที่เปลี่ยนหน้าโปรไฟล์
+
+// 2. บันทึกข้อมูล (เฉพาะเจ้าของเท่านั้นที่มีสิทธิ์รันตัวนี้)
+useEffect(() => {
+  // เช็คว่าเป็นเจ้าของ และมีการเปลี่ยนแปลงข้อมูลจริงๆ
+  if (isOwner && calendarJobs.length >= 0) {
+    localStorage.setItem(`calendarJobs_${profileUserId}`, JSON.stringify(calendarJobs));
+    
+    const updateSupabaseJobs = async () => {
+      try {
+        // ลบของเก่าออกก่อน (ตาม Logic เดิมของพี่)
+        await supabase
+          .from('calendar_jobs')
+          .delete()
+          .eq('user_id', profileUserId);
+        
+        // ใส่ของใหม่เข้าไป
+        if (calendarJobs.length > 0) {
+          const jobsToInsert = calendarJobs.map(job => ({
+            ...job,
+            user_id: profileUserId
+          }));
+          await supabase.from('calendar_jobs').insert(jobsToInsert);
+        }
+      } catch (err) {
+        console.error('Error syncing to Supabase:', err);
+      }
+    };
+    
+    updateSupabaseJobs();
+  }
+}, [calendarJobs, isOwner, profileUserId]);
   
   // ฟังก์ชันสำหรับจัดการงานในปฏิทิน
   const handleDateClick = (day: number, month: number, year: number) => {
