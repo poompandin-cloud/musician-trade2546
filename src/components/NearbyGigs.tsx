@@ -71,8 +71,8 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
     return Array.from(provinces).sort();
   }, [jobs]);
 
-  const filteredJobs = useMemo(() => {
-    let filtered = [...jobs];
+ const filteredJobs = useMemo(() => {
+    let filtered = jobs.filter(job => job.job_type !== 'calendar');
     if (currentUserId) {
       filtered = filtered.filter((job) => job.user_id === currentUserId || job.status === 'open');
     } else {

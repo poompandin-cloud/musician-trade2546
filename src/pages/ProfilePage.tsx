@@ -92,7 +92,15 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     { value: "violin", label: "ไวโอลิน" },
     { value: "trumpet", label: "ทรัมเป็ต" },
     { value: "flute", label: "ฟลุต" },
+    { value: "ukulele", label: "อูคูเลเล่" }, // ✅ เพิ่มอูคูเลเล่
+    { value: "harmonica", label: "หมอนิกา" }, // ✅ เพิ่มหมอนิกา
+    { value: "drum-electric", label: "กลองไฟฟ้า" }, // ✅ เพิ่มกลองไฟฟ้า
+    { value: "acoustic-guitar", label: "กีตาร์อะคูสติก" }, // ✅ แก้ไขคำสะกด
   ];
+
+  // State สำหรับจัดการเครื่องดนตรีที่เลือก
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
 
   // รายการจังหวัด
   const provinces = [
@@ -164,18 +172,18 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     
     // ตรวจสอบสิทธิ์ของผู้ใช้
     if (!isOwner) {
-      // ถ้าไม่ใช่เจ้าของโปรไฟล์ ให้เปิด Modal แบบ Read-only
+      // ✅ ถ้าไม่ใช่เจ้าของโปรไฟล์ ให้เปิด Modal แบบ Read-only และแสดงเฉพาะออกมาเป็นแถบสีฟ้าอย่างเดียว
       const jobsOnDate = calendarJobs.filter(job => job.date === dateStr);
       setEditingJob(jobsOnDate);
+      setIsModalOpen(true);
     } else {
-      // ถ้าเป็นเจ้าของ ทำงานปกติ
+      // ✅ ถ้าเป็นเจ้าของ ทำงานปกติ
       const jobsOnDate = calendarJobs.filter(job => job.date === dateStr);
       
       // เปิด Modal พร้อมข้อมูลเก่า แต่ไม่ว่างานเก่าจะหายไป
       setEditingJob(jobsOnDate);
+      setIsModalOpen(true);
     }
-    
-    setIsModalOpen(true);
   };
 
  const handleSaveJob = async (jobs: CalendarJob[]) => {
@@ -266,8 +274,85 @@ province: "",
 
   const [videoInput, setVideoInput] = useState("");
   const [showVideoInput, setShowVideoInput] = useState(false);
-  const [instrumentInput, setInstrumentInput] = useState("");
-  const [showInstrumentSuggestions, setShowInstrumentSuggestions] = useState(false);
+
+  // ฟังก์ชันสำหรับจัดการเครื่องดนตรี
+  const handleInstrumentSelect = (instrumentValue: string) => {
+    console.log("handleInstrumentSelect called with:", instrumentValue); // ✅ Debug log
+    console.log("Current selectedInstruments:", selectedInstruments); // ✅ Debug log
+    
+    // ✅ เช็คว่าค่านั้นมีอยู่ใน Array หรือยัง
+    if (!selectedInstruments.includes(instrumentValue)) {
+      // ✅ ถ้ายังไม่มีให้ push เข้าไปใน State
+      const newSelectedInstruments = [...selectedInstruments, instrumentValue];
+      console.log("New selectedInstruments:", newSelectedInstruments); // ✅ Debug log
+      setSelectedInstruments(newSelectedInstruments);
+      
+      // ✅ Sync กับ Profile - อัปเดต formData ให้ตรงกับ selectedInstruments
+      const instrumentsString = newSelectedInstruments.join(',');
+      setFormData(prev => ({
+        ...prev,
+        instruments: instrumentsString
+      }));
+      
+      // ✅ อัปเดต profile state ทันที
+      if (profile) {
+        setProfile({
+          ...profile,
+          instruments: newSelectedInstruments // ✅ ใช้ array ไม่ใช่ string
+        });
+      }
+      
+      console.log("เลือกเครื่องดนตรี:", getInstrumentLabel(instrumentValue));
+      console.log("รายการทั้งหมด:", newSelectedInstruments.map(getInstrumentLabel));
+      console.log("String สำหรับบันทึก:", instrumentsString);
+      
+    } else {
+      console.log("เครื่องดนตรีนี้เลือกแล้ว:", getInstrumentLabel(instrumentValue));
+    }
+    // ✅ ไม่ต้องปิด dropdown เพราะใช้ select element
+    // setShowInstrumentDropdown(false);
+  };
+
+  const handleInstrumentRemove = (instrumentValue: string) => {
+    // การลบข้อมูล - ลบออกจากรายการ
+    const newSelectedInstruments = selectedInstruments.filter(inst => inst !== instrumentValue);
+    setSelectedInstruments(newSelectedInstruments);
+    
+    // Sync กับ Profile - อัปเดต formData และ profile state
+    const instrumentsString = newSelectedInstruments.join(',');
+    setFormData(prev => ({
+      ...prev,
+      instruments: instrumentsString
+    }));
+    
+    // อัปเดต profile state ทันที
+    if (profile) {
+      setProfile({
+        ...profile,
+        instruments: newSelectedInstruments // ✅ ใช้ array ไม่ใช่ string
+      });
+    }
+    
+    console.log("ลบเครื่องดนตรี:", getInstrumentLabel(instrumentValue));
+    console.log("รายการที่เหลือ:", newSelectedInstruments.map(getInstrumentLabel));
+    console.log("String สำหรับบันทึก:", instrumentsString);
+  };
+
+  const getInstrumentLabel = (value: string) => {
+    const instrument = instruments.find(inst => inst.value === value);
+    return instrument ? instrument.label : value;
+  };
+
+  // แปลง selectedInstruments เป็น string สำหรับบันทึก
+  const instrumentsToString = () => {
+    return selectedInstruments.join(',');
+  };
+
+  // แปลง string จาก DB เป็น array เมื่อโหลดข้อมูล
+  const stringToInstruments = (instrumentsStr: string) => {
+    if (!instrumentsStr) return [];
+    return instrumentsStr.split(',').filter(inst => inst.trim());
+  };
 
   // โหลดข้อมูลโปรไฟล์
   useEffect(() => {
@@ -288,9 +373,14 @@ province: "",
   full_name: data.full_name || "",
   phone: data.phone || "",
   line_id: data.line_id || "",
-  instruments: data.instruments || "", // ห้ามใส่ Array.isArray หรือเงื่อนไขของ Array
+  instruments: Array.isArray(data.instruments) ? data.instruments.join(',') : (data.instruments || ""), // ✅ รองรับทั้ง array และ string
   province: data.province || "",
 });
+          // ✅ โหลดเครื่องดนตรีที่เลือกจาก DB
+          const instrumentsArray = Array.isArray(data.instruments) 
+            ? data.instruments 
+            : stringToInstruments(data.instruments || "");
+          setSelectedInstruments(instrumentsArray);
         } else {
           // ถ้ายังไม่มีโปรไฟล์ และเป็นเจ้าของ ให้สร้างใหม่
           if (isOwner) {
@@ -325,8 +415,8 @@ province: "",
   // ปิด dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showInstrumentSuggestions) {
-        setShowInstrumentSuggestions(false);
+      if (showInstrumentDropdown) {
+        setShowInstrumentDropdown(false);
       }
     };
 
@@ -334,7 +424,7 @@ province: "",
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showInstrumentSuggestions]);
+  }, [showInstrumentDropdown]);
 
   // โหลดงานที่ผู้ใช้ลงประกาศเอง
   const fetchMyJobs = async () => {
@@ -716,8 +806,7 @@ province: "",
 } else {
   console.log("Instrument already exists:", instrument.value);
 }
-setInstrumentInput("");
-setShowInstrumentSuggestions(false);
+setShowInstrumentDropdown(false);
 };
 
 
@@ -736,14 +825,11 @@ setShowInstrumentSuggestions(false);
 } else {
   console.log("Instrument already exists:", instrumentName);
 }
-setInstrumentInput("");
 };
 
 
   // ฟังก์ชันสำหรับจัดการการพิมพ์เครื่องดนตรี (แบบอัตโนมัติ)
   const handleInstrumentInputChange = (value: string) => {
-    setInstrumentInput(value);
-    
     // แยกคำด้วย comma หรือ space และเพิ่มเครื่องดนตรีอัตโนมัติ
     const trimmedValue = value.trim();
     if (trimmedValue.includes(',') || trimmedValue.includes(' ')) {
@@ -779,11 +865,16 @@ console.log("New instruments after removal:", newInstruments);
     setSaving(true);
 
     try {
+      // ✅ ตรวจสอบการบันทึก - แปลง Array เป็น String ให้ถูกต้อง
+      const instrumentsString = instrumentsToString();
+      console.log("กำลังบันทึกเครื่องดนตรี:", selectedInstruments.map(getInstrumentLabel));
+      console.log("String ที่จะบันทึก:", instrumentsString);
+
       const updateData = {
         full_name: formData.full_name || null,
         phone: formData.phone || null,
         line_id: formData.line_id || null,
-        instruments: formData.instruments.length > 0 ? formData.instruments : null,
+        instruments: instrumentsString, // ✅ แปลง array เป็น string คั่นด้วย comma
         province: formData.province || null,
         updated_at: new Date().toISOString(),
       };
@@ -822,9 +913,6 @@ console.log("New instruments after removal:", newInstruments);
           title: "บันทึกสำเร็จ", 
           description: "อัปเดตข้อมูลโปรไฟล์แล้ว" 
         });
-        
-        // ล้างช่องเครื่องดนตรีหลังบันทึก
-        setInstrumentInput("");
         
         // อัปเดต state
         if (profile) {
@@ -1208,12 +1296,51 @@ console.log("New instruments after removal:", newInstruments);
                   <User className="w-4 h-4" />
                   เครื่องดนตรีที่เล่น
                 </Label>
-                <Input 
-  value={formData.instruments || ""} 
-  onChange={(e) => setFormData({ ...formData, instruments: e.target.value })} 
-  placeholder="พิมพ์เครื่องดนตรีที่เล่น"
-  className="rounded-2xl h-12"
-/>
+                
+                {/* ✅ เปลี่ยนเป็น Select แบบจังหวัด */}
+                <select 
+                  className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500"
+                  value=""
+                  onChange={(e) => {
+                    const instrumentValue = e.target.value;
+                    if (instrumentValue && !selectedInstruments.includes(instrumentValue)) {
+                      handleInstrumentSelect(instrumentValue);
+                    }
+                  }}
+                >
+                  <option value="">เลือกเครื่องดนตรี...</option>
+                  {instruments.map((instrument) => (
+                    <option 
+                      key={instrument.value} 
+                      value={instrument.value}
+                      disabled={selectedInstruments.includes(instrument.value)}
+                    >
+                      {instrument.label}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* ✅ สร้างส่วนแสดง Tags สีส้ม */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedInstruments.map((instrumentValue) => (
+                    <span
+                      key={instrumentValue}
+                      className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                    >
+                      {getInstrumentLabel(instrumentValue)}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInstrumentRemove(instrumentValue);
+                        }}
+                        className="ml-1 hover:text-orange-900 font-bold"
+                      >
+                        [x]
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
               {/* จังหวัดที่อยู่ */}
               <div className="space-y-2">

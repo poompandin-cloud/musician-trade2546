@@ -35,11 +35,10 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
           icon={<MapPin className="w-6 h-6 text-orange-500" />}
           onClick={() => navigate("/nearby-gigs")}
           variant="primary"
-          className="scale-105 shadow-xl border-2 border-orange-500" 
         />
 
         <MenuCard 
-          title="ค้นหานักดนตรี"
+          title="ค้นหานักดนตรีใกล้คุณ"
           description="ค้นหาจากชื่อนักดนตรี"
           icon={<Users className="w-6 h-6 text-orange-500" />}
           onClick={() => navigate("/musicians")}
@@ -47,14 +46,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
         />
 
         <MenuCard 
-          title="สมัครเป็นนักดนตรี"
-          description="เข้าร่วมเครือข่ายและรับงานเพิ่ม"
-          icon={<Music className="w-6 h-6 text-gray-600" />}
-          onClick={() => navigate("/join")}
-        />
-
-        <MenuCard 
-          title="เกี่ยวกับ snowguin"
+          title="เกี่ยวกับเว็บไซต์หาคนแทน"
           description="เรียนรู้เพิ่มเติมเกี่ยวกับเรา"
           icon={<Info className="w-6 h-6 text-gray-600" />}
           onClick={() => navigate("/about")}

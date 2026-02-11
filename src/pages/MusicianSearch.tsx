@@ -1,14 +1,39 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Search, Trophy, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
+// รายชื่อจังหวัด
+const provinces = [
+  "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
+  "พระนครศรีอยุธยา", "สระบุรี", "ลพบุรี", "ชลบุรี (พัทยา)", "ระยอง", "จันทบุรี", 
+  "เชียงใหม่", "เชียงราย", "พิษณุโลก", "นครสวรรค์", "ขอนแก่น", "นครราชสีมา", 
+  "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
+];
+
+// รายชื่อเครื่องดนตรี
+const instruments = [
+  { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
+  { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
+  { value: "keyboard-piano", label: "เปียโน" },
+  { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
+  { value: "drums-kit", label: "กลองชุด" },
+  { value: "strings-violin", label: "ไวโอลิน" },
+  { value: "vocal-lead", label: "นักร้องนำ" },
+  { value: "vocal-backup", label: "นักร้องประสาน" },
+  { value: "ukulele", label: "อูคูเลเล่" },
+  { value: "harmonica", label: "หมอนิกา" },
+  { value: "drums-electric", label: "กลองไฟฟ้า" },
+];
+
 const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedInstrument, setSelectedInstrument] = useState("");
   const [allMusicians, setAllMusicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,11 +45,10 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const fetchAllMusicians = async () => {
     setLoading(true);
     try {
-      // ดึงข้อมูลนักดนตรีทั้งหมด เรียงตาม prestige_points (แต้มความมืออาชีพ) จากมากไปน้อย
-      // ถ้ายังไม่มี prestige_points ให้ใช้ credits แทน หรือใช้ 100 (ค่าเริ่มต้น)
+      // ดึงข้อมูลนักดนตรีทั้งหมด รวม province และ instruments
       const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("id, full_name, avatar_url, prestige_points, credits")
+        .select("id, full_name, avatar_url, prestige_points, credits, province, instruments")
         .not("full_name", "is", null)
         .order("prestige_points", { ascending: false, nullsFirst: false })
         .order("credits", { ascending: false, nullsFirst: false });
@@ -41,7 +65,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  // Filter และเรียงลำดับนักดนตรีตาม search term
+  // Filter และเรียงลำดับนักดนตรีตาม search term, province และ instrument
   const filteredMusicians = useMemo(() => {
     let filtered = [...allMusicians];
 
@@ -53,6 +77,29 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
       );
     }
 
+    // Filter ตามจังหวัด
+    if (selectedProvince) {
+      filtered = filtered.filter((musician) =>
+        musician.province === selectedProvince
+      );
+    }
+
+    // Filter ตามเครื่องดนตรี
+    if (selectedInstrument) {
+      filtered = filtered.filter((musician) => {
+        const musicianInstruments = musician.instruments;
+        if (!musicianInstruments) return false;
+        
+        // ถ้าเป็น string ให้แปลงเป็น array
+        const instrumentsArray = Array.isArray(musicianInstruments) 
+          ? musicianInstruments 
+          : musicianInstruments.split(',').map((s: string) => s.trim());
+        
+        // ตรวจสอบว่ามีเครื่องดนตรีที่เลือกหรือไม่
+        return instrumentsArray.includes(selectedInstrument);
+      });
+    }
+
     // เรียงลำดับตาม prestige_points (หรือ credits) จากมากไปน้อย
     filtered.sort((a, b) => {
       const tokensA = a.prestige_points || a.credits || 100;
@@ -61,7 +108,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
     });
 
     return filtered;
-  }, [allMusicians, searchTerm]);
+  }, [allMusicians, searchTerm, selectedProvince, selectedInstrument]);
 
   const handleMusicianClick = (userId: string) => {
     navigate(`/profile/${userId}`);
@@ -83,7 +130,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
 
       <main className="container py-6 md:py-8 max-w-2xl mx-auto px-4">
         <div className="text-center mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">ค้นหานักดนตรี</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">ค้นหานักดนตรีใกล้คุณ</h1>
           <p className="text-muted-foreground text-sm md:text-base">ค้นหาและดูโปรไฟล์นักดนตรีทั้งหมด</p>
         </div>
 
@@ -96,9 +143,59 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-12 pr-4 h-12 md:h-14 rounded-2xl text-base md:text-lg w-full"
-            autoFocus
           />
         </div>
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Province Filter */}
+          <div className="relative">
+            <select
+              value={selectedProvince}
+              onChange={(e) => setSelectedProvince(e.target.value)}
+              className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+            >
+              <option value="">เลือกจังหวัด...</option>
+              {provinces.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Instrument Filter */}
+          <div className="relative">
+            <select
+              value={selectedInstrument}
+              onChange={(e) => setSelectedInstrument(e.target.value)}
+              className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+            >
+              <option value="">เลือกเครื่องดนตรี...</option>
+              {instruments.map((instrument) => (
+                <option key={instrument.value} value={instrument.value}>
+                  {instrument.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Clear Filters */}
+        {(selectedProvince || selectedInstrument) && (
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => {
+                setSelectedProvince("");
+                setSelectedInstrument("");
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-orange-500 hover:text-orange-600 font-medium"
+            >
+              <X className="w-4 h-4" />
+              ล้างตัวกรอง
+            </button>
+          </div>
+        )}
 
         {/* Results Count */}
         {!loading && (
