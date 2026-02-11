@@ -204,6 +204,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
           instrument: job.title, // ✅ เปลี่ยนจาก title เป็น instrument
           time: job.starttime,   // ✅ เปลี่ยนจาก starttime เป็น time
           date: job.date,
+          job_type: 'calendar', // ✅ เพิ่ม job_type เพื่อป้องกันการแสดงผลปนกับงานประกาศ
           lineId: '', // ✅ เพิ่มคอลัมน์ lineId
           status: 'active', // ✅ เพิ่มคอลัมน์ status
         };
