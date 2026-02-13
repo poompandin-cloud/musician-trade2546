@@ -540,10 +540,10 @@ const { data: uploadData, error: uploadError } = await (supabase as any)
       }
 
       // 1. ดึง Public URL ของไฟล์ที่เพิ่งอัปโหลด
-      const { data: urlData } = await supabase.storage
-        .from('profile-videos')
-        .getPublicUrl(fullPath);
-
+    // ✅ ให้พี่ลองเปลี่ยนเป็นแบบนี้ (ลบ fullPath ออกแล้วใส่แค่ fileName):
+const { data: urlData } = supabase.storage
+  .from('profile-videos')
+  .getPublicUrl(fileName);
       // 2. รับค่า URL มา (ประกาศแค่ครั้งเดียวพอ!)
       const videoUrl = urlData.publicUrl;
       
