@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -275,6 +275,8 @@ province: "",
 
   const [videoInput, setVideoInput] = useState("");
   const [showVideoInput, setShowVideoInput] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // ฟังก์ชันสำหรับจัดการเครื่องดนตรี
   const handleInstrumentSelect = (instrumentValue: string) => {
@@ -462,32 +464,40 @@ province: "",
     }
   };
 
-  // เพิ่มวิดีโอ
+  // เพิ่มวิดีโอ (อัปโหลดไฟล์)
   const handleAddVideo = async () => {
-    if (!videoInput.trim()) {
-      toast({ title: "กรุณากรอกลิงก์วิดีโอ", variant: "destructive" });
+    if (!videoFile) {
+      toast({ title: "กรุณาเลือกไฟล์วิดีโอ", variant: "destructive" });
       return;
     }
 
-    // ตรวจสอบว่าลิงก์เป็น YouTube หรือ Facebook Video (ปรับปรุง regex ให้ครบถ้วน)
-    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11,})(?:[&?].*)?$/;
-    const facebookRegex = /^(?:https?:\/\/)?(?:www\.)?(?:facebook\.com\/(?:[^\/]+\/videos\/|watch\/\?v=)|fb\.watch\/)([a-zA-Z0-9_-]+)(?:[&?].*)?$/;
-    
-    if (!youtubeRegex.test(videoInput.trim()) && !facebookRegex.test(videoInput.trim())) {
+    // ตรวจสอบขนาดไฟล์ (จำกัด 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (videoFile.size > maxSize) {
       toast({ 
-        title: "ลิงก์ไม่ถูกต้อง", 
-        description: "กรุณาใช้ลิงก์ YouTube หรือ Facebook Video เท่านั้น\n\nYouTube: https://www.youtube.com/watch?v=...\nFacebook: https://www.facebook.com/.../videos/...", 
+        title: "ไฟล์ใหญ่เกินไป", 
+        description: "สามารถอัปโหลดวิดีโอได้สูงสุด 50MB เท่านั้น", 
         variant: "destructive" 
       });
       return;
     }
 
-    // ดึง video_urls จาก profile (รองรับทั้ง string[] และ JSONB)
+    // ตรวจสอบประเภทไฟล์
+    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/webm'];
+    if (!allowedTypes.includes(videoFile.type)) {
+      toast({ 
+        title: "ประเภทไฟล์ไม่รองรับ", 
+        description: "รองรับไฟล์วิดีโอ: MP4, AVI, MOV, WMV, WebM", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // ดึง video_urls จาก profile
     let currentVideos: string[] = [];
     if (Array.isArray(profile?.video_urls)) {
       currentVideos = profile.video_urls;
     } else if (profile?.video_urls) {
-      // ถ้าเป็น JSONB object ให้แปลงเป็น array
       try {
         currentVideos = Array.isArray(profile.video_urls) ? profile.video_urls : [];
       } catch {
@@ -495,59 +505,88 @@ province: "",
       }
     }
 
-    if (currentVideos.length >= 5) {
-      toast({ title: "เกินจำนวนที่กำหนด", description: "สามารถอัปโหลดได้สูงสุด 5 คลิป", variant: "destructive" });
+    // ตรวจสอบจำนวนวิดีโอปัจจุบัน (จำกัด 3 คลิป)
+    if (currentVideos.length >= 3) {
+      toast({ 
+        title: "เพิ่มวิดีโอไม่ได้", 
+        description: "สามารถเพิ่มวิดีโอได้สูงสุด 3 คลิปเท่านั้น", 
+        variant: "destructive" 
+      });
       return;
     }
 
-    setSaving(true);
+    setUploadingVideo(true);
     try {
-      const newVideos = [...currentVideos, videoInput.trim()];
-      const { error } = await (supabase as any)
+     // --- แก้ไขในฟังก์ชัน handleAddVideo ---
+
+// 1. สร้างชื่อไฟล์ใหม่เพื่อรองรับภาษาไทย (ใส่ไว้ก่อนบรรทัด .upload)
+const fileExt = videoFile.name.split('.').pop();
+const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+const fullPath = `${profileUserId}/${fileName}`; // ใช้ตัวแปรนี้แทนชื่อเดิม
+
+// 2. ปรับการอัปโหลดให้ใช้ fullPath
+const { data: uploadData, error: uploadError } = await (supabase as any)
+  .storage
+  .from('profile-videos')
+  .upload(fullPath, videoFile, { // <-- เปลี่ยนจากชื่อไฟล์เดิม เป็น fullPath
+    contentType: videoFile.type,
+    upsert: false
+  });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast({ title: "อัปโหลดไม่สำเร็จ", variant: "destructive" });
+        return;
+      }
+
+      // 1. ดึง Public URL ของไฟล์ที่เพิ่งอัปโหลด
+      const { data: urlData } = await supabase.storage
+        .from('profile-videos')
+        .getPublicUrl(fullPath);
+
+      // 2. รับค่า URL มา (ประกาศแค่ครั้งเดียวพอ!)
+      const videoUrl = urlData.publicUrl;
+      
+      // 3. เตรียมรายการวิดีโอใหม่ โดยเอาของใหม่ไปต่อท้ายของเดิม
+      const newVideos = [...(profile?.video_urls || []), videoUrl];
+
+      // 4. อัปเดตข้อมูลลง Database (ตาราง profiles)
+      const { error: updateError } = await (supabase as any)
         .from("profiles")
         .update({ video_urls: newVideos })
         .eq("id", profileUserId);
 
-      if (error) {
-        console.error("Error updating videos:", error);
-        let errorMessage = "เพิ่มวิดีโอไม่สำเร็จ";
+      // 5. เช็คผลลัพธ์
+      if (updateError) {
+        console.error("Error updating videos:", updateError);
+        throw updateError;
+      } else {
+        // อัปโหลดสำเร็จ -> อัปเดต State หน้าจอให้วิดีโอเด้งขึ้นมาทันที
+        toast({ title: "อัปโหลดวิดีโอสำเร็จ" });
         
-        // ตรวจสอบประเภทของ error และแสดงข้อความที่เหมาะสม
-        if (error.code === '23505') {
-          errorMessage = "ข้อมูลซ้ำกันหรือเกินขีดจำกัด";
-        } else if (error.code === '23514') {
-          errorMessage = "ข้อมูลไม่ถูกต้องตามรูปแบบ";
-        } else if (error.code === '42501') {
-          errorMessage = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
-        } else if (error.code === '42703') {
-          errorMessage = "ไม่พบคอลัมน์ 'video_urls' กรุณาติดต่อผู้ดูและรัน migration";
-        } else if (error.message && error.message.includes('column "video_urls" does not exist')) {
-          errorMessage = "ฐานข้อมูลยังไม่พร้อม กรุณารัน migration ใน Supabase";
-        } else if (error.message) {
-          errorMessage = `เกิดข้อผิดพลาด: ${error.message}`;
+        if (profile) {
+          setProfile({ ...profile, video_urls: newVideos as any });
         }
         
-        toast({ 
-          title: errorMessage, 
-          description: error.code === '42703' ? "กรุณาติดต่อผู้ดูและรัน SQL: supabase/add_video_urls_column.sql" : "กรุณาตรวจสอบลิงก์วิดีโอและลองใหม่อีกครั้ง",
-          variant: "destructive" 
-        });
-      } else {
-        toast({ title: "เพิ่มวิดีโอสำเร็จ" });
-        setProfile({ ...profile!, video_urls: newVideos as any });
-        setVideoInput("");
+        // ล้างสถานะการเลือกไฟล์และการเปิดช่อง Input
+        setVideoFile(null);
         setShowVideoInput(false);
       }
     } catch (err) {
       console.error("System Error:", err);
-      toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+      toast({ 
+        title: "อัปโหลดวิดีโอไม่สำเร็จ", 
+        description: "กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive" 
+      });
     } finally {
-      setSaving(false);
+      setUploadingVideo(false);
     }
   };
 
   // ลบวิดีโอ
   const handleRemoveVideo = async (index: number) => {
+    // ดึง video_urls จาก profile
     // ดึง video_urls จาก profile (รองรับทั้ง string[] และ JSONB)
     let currentVideos: string[] = [];
     if (Array.isArray(profile?.video_urls)) {
@@ -673,19 +712,20 @@ province: "",
     setUploading(true);
 
     try {
-      // สร้าง path สำหรับเก็บไฟล์ (เก็บใน folder ตาม user_id เพื่อให้ตรงกับ RLS policy)
-      const fileExt = file.name.split(".").pop()?.toLowerCase() || 'jpg';
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${profileUserId}/${fileName}`;
-
-      // อัปโหลดไฟล์ไปยัง Supabase Storage โดยตรง
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { 
-          upsert: true,
-          contentType: file.type 
-        });
-
+     // 1. สร้างชื่อไฟล์ใหม่ โดยใช้เวลาปัจจุบัน (Timestamp) มาทำเป็นชื่อ
+// วิธีนี้จะช่วยให้ชื่อไฟล์เป็นภาษาอังกฤษเสมอ แม้ไฟล์ต้นฉบับจะเป็นภาษาไทยครับ
+// 1. สร้างชื่อไฟล์ใหม่ให้เป็นภาษาอังกฤษ/ตัวเลขเสมอ (แก้ปัญหาภาษาไทย)
+const fileExt = videoFile.name.split('.').pop();
+const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+const fullPath = `${profileUserId}/${fileName}`; // ใช้ตัวแปรนี้ตอน .upload()
+// 2. ตอนอัปโหลด ใช้ cleanFileName แทนชื่อเดิม
+const { data: uploadData, error: uploadError } = await (supabase as any)
+  .storage
+  .from('profile-videos')
+  .upload(fullPath, videoFile, {
+    contentType: videoFile.type,
+    upsert: false
+  });
       if (uploadError) {
         console.error("Upload error:", uploadError);
         
@@ -719,10 +759,11 @@ province: "",
       }
 
       // ดึง public URL
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
+      // 2. ตอนสั่ง getPublicUrl (บรรทัดที่ 758 ที่พี่ติด Error)
+// ให้เปลี่ยนจาก filePath เป็น fullPath ตามที่เราตั้งชื่อไว้ข้างบนครับ
+const { data: urlData } = supabase.storage
+  .from("avatars") // หรือ "profile-videos" ตามที่พี่ใช้งาน
+  .getPublicUrl(fullPath); // เปลี่ยนตรงนี้ให้เป็น fullPath ครับพี่!
       if (!urlData?.publicUrl) {
         toast({ 
           title: "ไม่สามารถสร้าง URL", 
@@ -1487,7 +1528,7 @@ console.log("New instruments after removal:", newInstruments);
                         videoUrls = [];
                       }
                     }
-                    return videoUrls.length >= 5;
+                    return videoUrls.length >= 3;
                   })()}
                   className={(() => {
                     let videoUrls: string[] = [];
@@ -1500,7 +1541,7 @@ console.log("New instruments after removal:", newInstruments);
                         videoUrls = [];
                       }
                     }
-                    return videoUrls.length >= 5 ? "opacity-50 cursor-not-allowed" : "";
+                    return videoUrls.length >= 3 ? "opacity-50 cursor-not-allowed" : "";
                   })()}
                   title={(() => {
                     let videoUrls: string[] = [];
@@ -1513,11 +1554,11 @@ console.log("New instruments after removal:", newInstruments);
                         videoUrls = [];
                       }
                     }
-                    return videoUrls.length >= 5 ? "เพิ่มได้สูงสุด 5 วิดีโอ" : "เพิ่มวิดีโอ";
+                    return videoUrls.length >= 3 ? "เพิ่มได้สูงสุด 3 วิดีโอ" : "เพิ่มวิดีโอ";
                   })()}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  เพิ่มวิดีโอ ({(() => {
+                  เพิ่มวีดีโอ ({(() => {
                     let videoUrls: string[] = [];
                     if (Array.isArray(profile?.video_urls)) {
                       videoUrls = profile.video_urls;
@@ -1529,7 +1570,7 @@ console.log("New instruments after removal:", newInstruments);
                       }
                     }
                     return videoUrls.length;
-                  })()}/5)
+                  })()}/3)
                 </Button>
               )}
             </div>
@@ -1539,30 +1580,55 @@ console.log("New instruments after removal:", newInstruments);
             {isOwner && showVideoInput && (
               <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
                 <div>
-                  <Label>ลิงก์วิดีโอ (YouTube หรือ Facebook Video)</Label>
-                  <Input
-                    value={videoInput}
-                    onChange={(e) => setVideoInput(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="rounded-xl h-10 mt-2"
-                  />
+                  <Label>อัปโหลดวีดีโอ</Label>
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      accept="video/mp4,video/avi,video/mov,video/wmv,video/webm"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setVideoFile(file);
+                        }
+                      }}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+                    />
+                    {videoFile && (
+                      <div className="mt-2 p-2 bg-white rounded-lg border">
+                        <p className="text-sm font-medium">{videoFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          ขนาด: {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    รองรับลิงก์ YouTube และ Facebook Video
+                    รองรับไฟล์วีดีโอ: MP4, AVI, MOV, WMV, WebM (สูงสุด 50MB)
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleAddVideo}
-                    disabled={saving}
+                    disabled={uploadingVideo || !videoFile}
                     size="sm"
                     className="flex-1"
                   >
-                    เพิ่มวิดีโอ
+                    {uploadingVideo ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        กำลังอัปโหลด...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        อัปโหลดวีดีโอ
+                      </>
+                    )}
                   </Button>
                   <Button
                     onClick={() => {
                       setShowVideoInput(false);
-                      setVideoInput("");
+                      setVideoFile(null);
                     }}
                     variant="outline"
                     size="sm"
