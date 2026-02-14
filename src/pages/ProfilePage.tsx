@@ -522,13 +522,13 @@ province: "",
 // 1. สร้างชื่อไฟล์ใหม่เพื่อรองรับภาษาไทย (ใส่ไว้ก่อนบรรทัด .upload)
 const fileExt = videoFile.name.split('.').pop();
 const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-// ตัด ${profileUserId}/ ออก ให้เหลือแค่ชื่อไฟล์เพียวๆ
-const fullPath = `${fileName}`;
+const fullPath = `${profileUserId}/${fileName}`; // ✅ ใส่ profileUserId กลับมา
+
 // 2. ปรับการอัปโหลดให้ใช้ fullPath
 const { data: uploadData, error: uploadError } = await (supabase as any)
   .storage
   .from('profile-videos')
-  .upload(fullPath, videoFile, { // <-- เปลี่ยนจากชื่อไฟล์เดิม เป็น fullPath
+  .upload(fullPath, videoFile, { // ✅ ใช้ fullPath
     contentType: videoFile.type,
     upsert: false
   });
@@ -540,11 +540,10 @@ const { data: uploadData, error: uploadError } = await (supabase as any)
       }
 
       // 1. ดึง Public URL ของไฟล์ที่เพิ่งอัปโหลด
-    // ✅ ให้พี่ลองเปลี่ยนเป็นแบบนี้ (ลบ fullPath ออกแล้วใส่แค่ fileName):
-// ใช้ fileName ไปเลยตรงๆ
+// ✅ ใช้ fullPath เหมือนกับที่อัปโหลด
 const { data: urlData } = supabase.storage
   .from('profile-videos')
-  .getPublicUrl(fileName);
+  .getPublicUrl(fullPath); // ✅ ใช้ fullPath ตรงกับ upload
       // 2. รับค่า URL มา (ประกาศแค่ครั้งเดียวพอ!)
       const videoUrl = urlData.publicUrl;
       
