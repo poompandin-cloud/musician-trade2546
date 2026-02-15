@@ -132,10 +132,6 @@ const AuthPage = () => {
                 <i className="fa-brands fa-google"></i>
                 <span>สมัครด้วย Google</span>
               </button>
-              <button type="button" className="social-btn facebook" onClick={() => handleSocialLogin('facebook')}>
-                <i className="fa-brands fa-facebook-f"></i>
-                <span>สมัครด้วย Facebook</span>
-              </button>
             </div>
           </form>
         </div>
@@ -153,10 +149,6 @@ const AuthPage = () => {
               <button type="button" className="social-btn google" onClick={signInWithGoogle}>
                 <i className="fa-brands fa-google"></i>
                 <span>เข้าสู่ระบบด้วย Google</span>
-              </button>
-              <button type="button" className="social-btn facebook" onClick={() => handleSocialLogin('facebook')}>
-                <i className="fa-brands fa-facebook-f"></i>
-                <span>เข้าสู่ระบบด้วย Facebook</span>
               </button>
             </div>
           </form>

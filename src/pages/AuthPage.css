@@ -125,6 +125,7 @@
     flex-direction: column;
     gap: 12px;
     width: 100%;
+    align-items: center; /* ✅ จัดให้อยู่ตรงกลาง */
 }
 
 .auth-body .social-btn {
@@ -247,9 +248,10 @@
     .social-icons {
         flex-direction: row !important; /* ✅ ใช้ row เหมือนคอม */
         gap: 8px;
-        justify-content: center;
+        justify-content: center; /* ✅ จัดให้อยู่ตรงกลาง */
         margin: 15px 0;
         padding: 0 10px;
+        align-items: center; /* ✅ จัดให้อยู่ตรงกลาง */
     }
 
     .social-btn {
