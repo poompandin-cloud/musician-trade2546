@@ -1656,13 +1656,19 @@ console.log("New instruments after removal:", newInstruments);
               }
 
               return videoUrls.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {videoUrls.map((videoUrl: string, index: number) => (
                   <div key={index} className="relative group">
-                    <div className="aspect-video rounded-lg overflow-hidden bg-muted border border-border">
+                    <div className="aspect-video rounded-lg overflow-hidden bg-black border-border">
                       <video
                         src={videoUrl}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          backgroundColor: 'black'
+                        }}
                         controls
                         playsInline
                         muted
