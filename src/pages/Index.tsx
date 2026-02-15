@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Search, MapPin, Music, Info, Users } from "lucide-react";
+import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch  } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
+
 
 const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }) => {
   const navigate = useNavigate();
@@ -22,33 +23,43 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
 
       <div className="flex flex-col gap-4 w-full max-w-md">
         <MenuCard 
-          title="หาคนแทนด่วน"
-          description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
-          icon={<Search className="w-6 h-6 text-orange-500" />}
-          onClick={() => navigate("/search")}
-          variant="primary"
-        />
+  title="หาคนแทนด่วน"
+  description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
+  icon={
+    <div className="p-2 bg-orange-100 rounded-xl">
+      <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+    </div>
+  }
+  onClick={() => navigate("/search")}
+  variant="primary"
+/>
+        <MenuCard 
+  title="งานที่ประกาศ"
+  description="ดูงานที่เปิดรับอยู่ตอนนี้"
+  icon={
+  <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+    <ClipboardList className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+  </div>
+}
+  onClick={() => navigate("/nearby-gigs")}
+  variant="primary"
+/>
+        <MenuCard 
+  title="ค้นหานักดนตรีใกล้คุณ"
+  description="ค้นหาจากชื่อนักดนตรี"
+  icon={
+    <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+      <UserSearch className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+    </div>
+  }
+  onClick={() => navigate("/musicians")}
+  variant="primary"
+/>
 
         <MenuCard 
-          title="งานที่ประกาศ"
-          description="ดูงานที่เปิดรับอยู่ตอนนี้"
-          icon={<MapPin className="w-6 h-6 text-orange-500" />}
-          onClick={() => navigate("/nearby-gigs")}
-          variant="primary"
-        />
-
-        <MenuCard 
-          title="ค้นหานักดนตรีใกล้คุณ"
-          description="ค้นหาจากชื่อนักดนตรี"
-          icon={<Users className="w-6 h-6 text-orange-500" />}
-          onClick={() => navigate("/musicians")}
-          variant="primary"
-        />
-
-        <MenuCard 
-          title="เกี่ยวกับเว็บไซต์หาคนแทน"
-          description="เรียนรู้เพิ่มเติมเกี่ยวกับเรา"
-          icon={<Info className="w-6 h-6 text-gray-600" />}
+          title="ติดต่อเรา"
+          description="เกี่ยวกับเว็บไซต์หาคนแทน"
+          icon={<Info className="w-6 h-6 text-orange-600" />}
           onClick={() => navigate("/about")}
         />
       </div>

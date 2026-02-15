@@ -60,7 +60,8 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     budget: "",
     lineId: "", 
     phone: "",
-    expiryDate: ""
+    expiryDate: "",
+    additionalNotes: ""
   });
 
   // Smart Line Link states
@@ -170,6 +171,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
         budget: formData.budget,
         lineId: formData.lineId,
         phone: formData.phone,
+        additional_notes: formData.additionalNotes, // เพิ่มหมายเหตุเพิ่มเติม
         status: "open"
       };
 
@@ -307,6 +309,17 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
           <div className="space-y-2">
             <Label className="text-sm font-semibold">สถานที่ / แผนที่ร้าน</Label>
             <Input placeholder="ชื่อร้าน หรือ Google Maps" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required className="rounded-2xl h-12 w-full text-sm sm:text-base break-words" />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">หมายเหตุเพิ่มเติม</Label>
+            <textarea
+              placeholder="เช่น รายละเอียดเพลงที่ต้องการ, การแต่งกาย หรือข้อมูลอื่น ๆ"
+              value={formData.additionalNotes}
+              onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
+              rows={4}
+              className="w-full rounded-2xl border border-input bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm sm:text-base"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

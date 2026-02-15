@@ -217,6 +217,18 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
   <span className="text-2xl font-black text-gray-900 leading-none">{gig.budget}</span>
 </div>
 
+{/* --- ส่วนที่เพิ่มใหม่: หมายเหตุเพิ่มเติม --- */}
+{gig.additional_notes && gig.additional_notes.trim() !== "" && (
+  <div className="mt-3 mb-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded-r-xl">
+    <p className="text-[11px] font-bold text-orange-600 mb-1 flex items-center gap-1">
+      📝 หมายเหตุเพิ่มเติม:
+    </p>
+    <p className="text-xs text-black-700 whitespace-pre-wrap leading-relaxed">
+      {gig.additional_notes}
+    </p>
+  </div>
+)}
+
 {/* 4. ปุ่มติดต่อ (Phone/Line) */}
 <div className="grid grid-cols-2 gap-3 mb-6">
   <a href={gig.phone ? `tel:${gig.phone}` : "#"} className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 text-green-700 rounded-xl border border-green-100 hover:bg-green-100 transition-colors">

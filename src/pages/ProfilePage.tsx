@@ -41,6 +41,7 @@ interface Job {
   created_at: string;
   status?: 'open' | 'closed' | null;
   confirmed_applicant_id?: string | null;
+  additional_notes?: string; // เพิ่มหมายเหตุเพิ่มเติม
   jobs?: {
     instrument: string;
     location: string;
@@ -1832,6 +1833,16 @@ console.log("New instruments after removal:", newInstruments);
                         </div>
                         <span className="font-semibold text-foreground break-words text-sm sm:text-base">งบประมาณ: {job.budget}</span>
                       </div>
+
+                      {/* แสดงหมายเหตุเพิ่มเติมเฉพาะกรณีมีข้อมูล - อยู่ใต้งบประมาณ */}
+                      {job.additional_notes && job.additional_notes.trim() && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                          <h4 className="text-sm font-semibold text-gray-800 mb-1">หมายเหตุเพิ่มเติม:</h4>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {job.additional_notes}
+                          </p>
+                        </div>
+                      )}
 
                       {!isActive && (
                         <p className="text-xs text-muted-foreground italic">ประกาศหมดอายุแล้ว</p>

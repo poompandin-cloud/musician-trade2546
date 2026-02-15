@@ -21,6 +21,7 @@ interface Job {
   status: 'open' | 'closed' | 'completed';
   user_id: string;
   created_at: string;
+  additional_notes?: string; // เพิ่มหมายเหตุเพิ่มเติม
   profiles?: {
     full_name: string;
     avatar_url?: string;
@@ -215,6 +216,16 @@ export const JobFeed: React.FC<JobFeedProps> = ({
             <p className="text-muted-foreground line-clamp-2">
               {job.description}
             </p>
+            
+            {/* แสดงหมายเหตุเพิ่มเติมเฉพาะกรณีมีข้อมูล */}
+            {job.additional_notes && job.additional_notes.trim() && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-blue-800 mb-1">หมายเหตุเพิ่มเติม:</h4>
+                <p className="text-sm text-blue-700 whitespace-pre-wrap">
+                  {job.additional_notes}
+                </p>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">
