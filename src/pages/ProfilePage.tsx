@@ -483,11 +483,11 @@ province: "",
     }
 
     // ตรวจสอบประเภทไฟล์
-    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/webm'];
+    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/wmv', 'video/webm'];
     if (!allowedTypes.includes(videoFile.type)) {
       toast({ 
         title: "ประเภทไฟล์ไม่รองรับ", 
-        description: "รองรับไฟล์วิดีโอ: MP4, AVI, MOV, WMV, WebM", 
+        description: "รองรับไฟล์วิดีโอ: MP4, AVI, MOV (iPhone), WMV, WebM", 
         variant: "destructive" 
       });
       return;
@@ -1586,7 +1586,7 @@ console.log("New instruments after removal:", newInstruments);
                   <div className="mt-2">
                     <input
                       type="file"
-                      accept="video/mp4,video/avi,video/mov,video/wmv,video/webm"
+                      accept="video/mp4,video/avi,video/mov,video/quicktime,video/wmv,video/webm"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
@@ -1605,7 +1605,7 @@ console.log("New instruments after removal:", newInstruments);
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    รองรับไฟล์วีดีโอ: MP4, AVI, MOV, WMV, WebM (สูงสุด 50MB)
+                    รองรับไฟล์วีดีโอ: MP4, AVI, MOV (iPhone), WMV, WebM (สูงสุด 50MB)
                   </p>
                 </div>
                 <div className="flex gap-2">
