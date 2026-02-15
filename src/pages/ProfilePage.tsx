@@ -1659,7 +1659,7 @@ console.log("New instruments after removal:", newInstruments);
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {videoUrls.map((videoUrl: string, index: number) => (
                   <div key={index} className="relative group">
-                    <div className="aspect-video rounded-lg overflow-hidden bg-black border-border">
+                    <div className="aspect-video rounded-lg overflow-hidden bg-black border-border" style={{ position: 'relative' }}>
                       <video
                         src={`${videoUrl}#t=0.1`}
                         className="w-full h-full"
@@ -1681,8 +1681,14 @@ console.log("New instruments after removal:", newInstruments);
                     {isOwner && (
                       <button
                         onClick={() => handleRemoveVideo(index)}
-                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        className="absolute top-3 right-3 p-3 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
                         title="ลบวิดีโอ"
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          zIndex: 10
+                        }}
                       >
                         <X className="w-4 h-4" />
                       </button>
