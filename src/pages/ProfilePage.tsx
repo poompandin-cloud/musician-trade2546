@@ -519,10 +519,12 @@ province: "",
     try {
      // --- แก้ไขในฟังก์ชัน handleAddVideo ---
 
-// 1. สร้างชื่อไฟล์ใหม่เพื่อรองรับภาษาไทย (ใส่ไว้ก่อนบรรทัด .upload)
-const fileExt = videoFile.name.split('.').pop();
+// 1. แก้ตรงนี้เพื่อให้นามสกุลไฟล์เป็นตัวพิมพ์เล็กเสมอ (ป้องกันปัญหา .MP4 vs .mp4)
+const fileExt = videoFile.name.split('.').pop()?.toLowerCase(); 
+
+// 2. ส่วนที่เหลือใช้ตามเดิมที่พี่แก้ไว้ (แผนที่ 1)
 const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-const fullPath = `${profileUserId}/${fileName}`; // ✅ ใส่ profileUserId กลับมา
+const fullPath = `${profileUserId}/${fileName}`;
 
 // 2. ปรับการอัปโหลดให้ใช้ fullPath
 const { data: uploadData, error: uploadError } = await (supabase as any)
@@ -1658,12 +1660,16 @@ console.log("New instruments after removal:", newInstruments);
                   {videoUrls.map((videoUrl: string, index: number) => (
                   <div key={index} className="relative group">
                     <div className="aspect-video rounded-lg overflow-hidden bg-muted border border-border">
-                      <iframe
-                        src={getEmbedUrl(videoUrl)}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
+                      <video
+                        src={videoUrl}
+                        className="w-full h-full object-cover"
+                        controls
+                        playsInline
+                        muted
+                        preload="metadata"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
                     </div>
                     {isOwner && (
                       <button
