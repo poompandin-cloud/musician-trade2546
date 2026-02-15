@@ -1681,16 +1681,17 @@ console.log("New instruments after removal:", newInstruments);
                     {isOwner && (
                       <button
                         onClick={() => handleRemoveVideo(index)}
-                        className="absolute top-2 left-2 p-3 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20"
+                        className="absolute top-2 left-1/2 transform -translate-x-1/2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20"
                         title="ลบวิดีโอ"
                         style={{
                           position: 'absolute',
                           top: '8px',
-                          left: '8px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
                           zIndex: 20
                         }}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </button>
                     )}
                   </div>
