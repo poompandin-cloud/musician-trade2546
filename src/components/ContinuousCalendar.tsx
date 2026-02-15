@@ -27,8 +27,8 @@ interface Job {
 export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick, jobs, isOwner = true, dayMinHeight = 'min-h-[60px]' }) => {
   const today = new Date();
   const dayRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(0);
+  const [year, setYear] = useState<number>(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth());
   const monthOptions = monthNames.map((month, index) => ({ name: month, value: `${index}` }));
 
   // เพิ่มฟังก์ชันสำหรับควบคุมปฏิทิน
@@ -164,7 +164,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
               onClick={() => handleDayClick(day, month, year)}
               className={`relative z-10 m-[-0.5px] group w-full grow cursor-pointer rounded-xl border font-medium transition-all hover:z-20 hover:border-cyan-400 sm:-m-px sm:rounded-lg sm:border-2 lg:rounded-xl ${dayMinHeight}`}
             >
-              <span className={`absolute left-1 top-1 flex size-1 items-center justify-center rounded-full text-xs sm:size-2 sm:text-xs lg:left-1 lg:top-1 lg:size-3 lg:text-xs ${isToday ? 'bg-blue-500 font-semibold text-white' : ''} ${month < 0 ? 'text-slate-400' : 'text-slate-800'}`}>
+              <span className={`absolute left-1 top-1 flex size-1 items-center justify-center rounded-full text-xs sm:size-2 sm:text-xs lg:left-1 lg:top-1 lg:size-3 lg:text-xs ${isToday ? 'bg-blue-500 font-semibold text-white ring-2 ring-blue-300 ring-offset-2' : ''} ${month < 0 ? 'text-slate-400' : 'text-slate-800'}`}>
                 {day}
               </span>
               {/* 2. สร้างตะกร้าใบนี้ครอบส่วน jobs ไว้เพื่อตัดส่วนเกินเฉพาะแถบสีฟ้า */}
@@ -259,7 +259,8 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
   }, [year, selectedMonth, jobs]);
 
   useEffect(() => {
-    // ไม่ต้องใช้ IntersectionObserver แล้วเพราะแสดงแค่ 1 เดือน
+    // Auto-focus: เมื่อโหลดหน้าเว็บเสร็จให้เลื่อนไปยังวันปัจจุบัน
+    scrollToDay(today.getMonth(), today.getDate());
   }, []);
 
   return (
