@@ -1661,7 +1661,7 @@ console.log("New instruments after removal:", newInstruments);
                   <div key={index} className="relative group">
                     <div className="aspect-video rounded-lg overflow-hidden bg-black border-border">
                       <video
-                        src={videoUrl}
+                        src={`${videoUrl}#t=0.1`}
                         className="w-full h-full"
                         style={{
                           width: '100%',
@@ -1673,6 +1673,7 @@ console.log("New instruments after removal:", newInstruments);
                         playsInline
                         muted
                         preload="metadata"
+                        poster={`${videoUrl}#t=0.1`}
                       >
                         Your browser does not support the video tag.
                       </video>
