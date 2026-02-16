@@ -7,6 +7,7 @@ import { ArrowLeft, AlertCircle, Search, X, ChevronDown, HelpCircle, ExternalLin
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom"; // เพิ่ม import
 import { useRealTimeCredits } from "@/services/realTimeCreditService";
+import { Checkbox } from "@/components/ui/checkbox"; // เพิ่ม import Checkbox
 
 const instruments = [
   // กีตาร์
@@ -63,6 +64,9 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     expiryDate: "",
     additionalNotes: ""
   });
+
+  // State สำหรับการยอมรับเงื่อนไข
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Smart Line Link states
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -172,6 +176,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
         lineId: formData.lineId,
         phone: formData.phone,
         additional_notes: formData.additionalNotes, // เพิ่มหมายเหตุเพิ่มเติม
+        accepted_terms: acceptedTerms, // เพิ่มการยอมรับเงื่อนไข
         status: "open"
       };
 
@@ -413,11 +418,35 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
             ) : null
           )}
 
+          {/* ✅ กล่องยอมรับเงื่อนไข */}
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="accepted-terms"
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <Label 
+                  htmlFor="accepted-terms" 
+                  className="text-sm font-semibold text-red-800 leading-relaxed cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <span>ข้อตกลงสำคัญ:</span>
+                  </div>
+                  หากเกิดความผิดพลาดใดๆ ระหว่างการทำงาน ทางร้านและระบบจะไม่รับผิดชอบต่อความเสียหายที่เกิดขึ้นในทุกกรณี ผู้ลงประกาศและผู้รับงานต้องเป็นผู้ตกลงและรับผิดชอบร่วมกันเอง
+                </Label>
+              </div>
+            </div>
+          </div>
+
          {/* ✅ ปุ่มหลักที่คุณหาอยู่คือตรงนี้ครับ */}
           <Button 
             type={userId ? "submit" : "button"} // ถ้ายังไม่ login ให้เป็น button ธรรมดา
             className={`w-full h-14 rounded-2xl text-white text-lg font-bold shadow-lg ${
-              (!userId || !hasEnoughCredits || isSearching) 
+              (!userId || !hasEnoughCredits || isSearching || !acceptedTerms) 
                 ? "bg-gray-400" // เอา cursor-not-allowed ออกเพื่อให้กดได้
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
@@ -426,7 +455,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
                 navigate("/auth"); // ✅ สั่งให้วิ่งไปหน้าสไลด์ Login ที่คุณสร้าง
               }
             }}
-            disabled={userId && (!hasEnoughCredits || isSearching)} // สั่ง disabled เฉพาะตอนที่ล็อกอินแล้วแต่เครดิตไม่พอ
+            disabled={userId && (!hasEnoughCredits || isSearching || !acceptedTerms)} // สั่ง disabled เฉพาะตอนที่ล็อกอินแล้วแต่เครดิตไม่พอ หรือยังไม่ยอมรับเงื่อนไข
           >
             {isSearching 
               ? "กำลังประกาศ..." 

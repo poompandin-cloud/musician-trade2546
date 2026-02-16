@@ -75,6 +75,26 @@ const AboutSection = ({ onBack }: AboutSectionProps) => {
             </p>
           </div>
 
+          {/* Footer note - ย้ายมาไว้ข้างบนของหัวข้อ "ปัญหาที่เราแก้" */}
+<div className="mb-8 p-6 rounded-2xl bg-accent border border-primary/10 text-center animate-fade-in" style={{ animationDelay: "0.5s" }}>
+  <a 
+    href="https://line.me/ti/p/@121jhulh" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="block group"
+  >
+    <p className="text-accent-foreground font-bold mb-2 text-lg group-hover:text-orange-500 transition-colors">
+      🚀 ติดต่อ: <span className="underline decoration-orange-500/30">Line @121jhulh</span>
+    </p>
+    <p className="text-[11px] text-orange-600 font-semibold mb-2 bg-orange-100 py-1 px-3 rounded-full inline-block">
+      คลิกเพื่อเพิ่มเพื่อน
+    </p>
+  </a>
+  <p className="text-sm text-muted-foreground">
+    พร้อมเปลี่ยนวงการดนตรีกลางคืน
+  </p>
+</div>
+
           {/* Problem */}
           <section className="mb-12 animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <h2 className="text-xl font-bold text-foreground mb-4 font-display flex items-center gap-2">
@@ -188,16 +208,6 @@ const AboutSection = ({ onBack }: AboutSectionProps) => {
               ))}
             </div>
           </section>
-
-          {/* Footer note */}
-          <div className="mt-12 p-6 rounded-2xl bg-accent border border-primary/10 text-center animate-fade-in" style={{ animationDelay: "0.5s" }}>
-            <p className="text-accent-foreground font-medium mb-2">
-              🚀 พร้อมเปลี่ยนวงการดนตรีกลางคืน
-            </p>
-            <p className="text-sm text-muted-foreground">
-              ติดต่อ: hello@snowguin.app
-            </p>
-          </div>
         </div>
       </main>
     </div>
