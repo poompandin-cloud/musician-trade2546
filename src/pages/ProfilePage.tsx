@@ -710,20 +710,21 @@ const { data: urlData } = supabase.storage
     setUploading(true);
 
     try {
-     // 1. สร้างชื่อไฟล์ใหม่ โดยใช้เวลาปัจจุบัน (Timestamp) มาทำเป็นชื่อ
-// วิธีนี้จะช่วยให้ชื่อไฟล์เป็นภาษาอังกฤษเสมอ แม้ไฟล์ต้นฉบับจะเป็นภาษาไทยครับ
-// 1. สร้างชื่อไฟล์ใหม่ให้เป็นภาษาอังกฤษ/ตัวเลขเสมอ (แก้ปัญหาภาษาไทย)
-const fileExt = videoFile.name.split('.').pop();
-const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-const fullPath = `${profileUserId}/${fileName}`; // ใช้ตัวแปรนี้ตอน .upload()
-// 2. ตอนอัปโหลด ใช้ cleanFileName แทนชื่อเดิม
-const { data: uploadData, error: uploadError } = await (supabase as any)
-  .storage
-  .from('profile-videos')
-  .upload(fullPath, videoFile, {
-    contentType: videoFile.type,
-    upsert: false
-  });
+      // 1. สร้างชื่อไฟล์ใหม่ โดยใช้เวลาปัจจุบัน (Timestamp) มาทำเป็นชื่อ
+      // วิธีนี้จะช่วยให้ชื่อไฟล์เป็นภาษาอังกฤษเสมอ แม้ไฟล์ต้นฉบับจะเป็นภาษาไทย
+      // 1. สร้างชื่อไฟล์ใหม่ให้เป็นภาษาอังกฤษ/ตัวเลขเสมอ (แก้ปัญหาภาษาไทย)
+      const fileExt = file?.name?.split('.')?.pop() || 'jpg';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const fullPath = `${profileUserId}/${fileName}`; // ใช้ตัวแปรนี้ตอน .upload()
+      
+      // 2. ตอนอัปโหลด ใช้ fileName แทนชื่อเดิม
+      const { data: uploadData, error: uploadError } = await (supabase as any)
+        .storage
+        .from('avatars')
+        .upload(fullPath, file, {
+          contentType: file.type,
+          upsert: false
+        });
       if (uploadError) {
         console.error("Upload error:", uploadError);
         
@@ -757,11 +758,10 @@ const { data: uploadData, error: uploadError } = await (supabase as any)
       }
 
       // ดึง public URL
-      // 2. ตอนสั่ง getPublicUrl (บรรทัดที่ 758 ที่พี่ติด Error)
-// ให้เปลี่ยนจาก filePath เป็น fullPath ตามที่เราตั้งชื่อไว้ข้างบนครับ
-const { data: urlData } = supabase.storage
-  .from("avatars") // หรือ "profile-videos" ตามที่พี่ใช้งาน
-  .getPublicUrl(fullPath); // เปลี่ยนตรงนี้ให้เป็น fullPath ครับพี่!
+      const { data: urlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fullPath);
+        
       if (!urlData?.publicUrl) {
         toast({ 
           title: "ไม่สามารถสร้าง URL", 
@@ -806,10 +806,15 @@ const { data: urlData } = supabase.storage
           description: "อัปเดตรูปโปรไฟล์แล้ว" 
         });
         
-        // อัปเดต state
+        // อัปเดต state และ refresh ข้อมูลในหน้าจอทันที
         if (profile) {
           setProfile({ ...profile, avatar_url: publicUrl });
         }
+        
+        // Refresh ข้อมูล profile จาก database เพื่อให้แน่ใจว่าข้อมูลเป็นปัจจุบัน
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (err: any) {
       console.error("System Error details:", err);

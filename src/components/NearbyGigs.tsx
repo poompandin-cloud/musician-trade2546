@@ -48,12 +48,32 @@ const formatTimeAgo = (dateString: string) => {
 
 // 2. ฟังก์ชันจัดรูปแบบวันที่งานไทย (เช่น 22 ม.ค. 69)
 const formatThaiDate = (dateString: string) => {
-  if (!dateString) return "ไม่ระบุวันที่";
+  if (!dateString) return "";
   const date = new Date(dateString);
+  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   const day = date.getDate();
-  const month = date.toLocaleDateString('th-TH', { month: 'short' });
-  const year = (date.getFullYear() + 543).toString().slice(-2);
+  const month = thaiMonths[date.getMonth()];
+  const year = date.getFullYear() + 543; // แปลงเป็น พ.ศ.
   return `${day} ${month} ${year}`;
+};
+
+// 3. ฟังก์ชันสร้างลิงก์ Line
+const createLineLink = (lineId: string) => {
+  if (!lineId) return null;
+  
+  // ถ้าเป็น URL อยู่แล้ว ให้ใช้ค่านั้นเลย
+  if (lineId.includes('line.me')) {
+    return lineId;
+  }
+  
+  // ถ้าเป็น ID ธรรมดา ให้สร้างลิงก์
+  // กรณีมี @ นำหน้า (เช่น @121jhulh)
+  if (lineId.startsWith('@')) {
+    return `https://line.me/ti/p/${lineId}`;
+  }
+  
+  // กรณีไม่มี @ (เช่น poppypoom)
+  return `https://line.me/ti/p/~${lineId}`;
 };
 
 const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProps) => {
@@ -255,10 +275,31 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
     <Phone className="w-4 h-4" />
     <span className="text-[11px] font-bold truncate">{gig.phone || "ไม่มีเบอร์"}</span>
   </a>
-  <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 text-green-700 rounded-xl border border-green-100">
-    <MessageCircle className="w-4 h-4" />
-    <span className="text-[11px] font-bold truncate">{gig.lineId || "ไม่มีไอดี"}</span>
-  </div>
+  
+  {/* ปุ่มติดต่อ Line - แก้ไขให้สามารถคลิกเปิดแอป Line ได้ */}
+  {(() => {
+    const lineLink = createLineLink(gig.lineId);
+    if (lineLink) {
+      return (
+        <a 
+          href={lineLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 text-green-700 rounded-xl border border-green-100 hover:bg-green-100 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span className="text-[11px] font-bold truncate">ทัก Line</span>
+        </a>
+      );
+    } else {
+      return (
+        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-50 text-gray-400 rounded-xl border border-gray-100">
+          <MessageCircle className="w-4 h-4" />
+          <span className="text-[11px] font-bold truncate">ไม่ระบุ Line</span>
+        </div>
+      );
+    }
+  })()}
 </div>
 
 {/* 5. ปุ่มรับงาน: แก้ไข Logic เพื่อไม่ให้ปุ่มซ้อนกัน */}
