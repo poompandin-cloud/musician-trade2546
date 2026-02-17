@@ -25,7 +25,67 @@ const queryClient = new QueryClient();
 const App = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [session, setSession] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true); // ✅ ใช้เพียง loading state เดียว 
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastCreditReset, setLastCreditReset] = useState<any>(null);
+
+  // ตรวจสอบการรีเซ็ตเครดิตล่าสุด
+  const checkCreditReset = async () => {
+    try {
+      const response = await fetch('/api/reset-credits', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLastCreditReset(data.last_reset);
+        console.log('Last credit reset:', data.last_reset);
+      }
+    } catch (error) {
+      console.error('Error checking credit reset:', error);
+    }
+  };
+
+  // ตรวจสอบว่าต้องรีเซ็ตเครดิตหรือไม่
+  const shouldResetCredits = () => {
+    if (!lastCreditReset) return false;
+    
+    const lastResetDate = new Date(lastCreditReset.reset_date);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const resetMonth = lastResetDate.getMonth();
+    const resetYear = lastResetDate.getFullYear();
+    
+    // ถ้าเปลี่ยนเดือนแล้ว และยังไม่ได้รีเซ็ตในเดือนนี้
+    return currentMonth !== resetMonth || currentYear !== resetYear;
+  };
+
+  // รีเซ็ตเครดิตอัตโนมัติถ้าจำเป็นต้อง
+  const autoResetCredits = async () => {
+    if (shouldResetCredits()) {
+      try {
+        const response = await fetch('/api/reset-credits', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action: 'reset_monthly_credits' }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Auto credit reset completed:', data);
+          setLastCreditReset({ reset_date: new Date().toISOString() });
+          refetchProfile(session?.user?.id); // รีเฟรชข้อมูล profile
+        }
+      } catch (error) {
+        console.error('Error auto resetting credits:', error);
+      }
+    }
+  }; 
 
   const fetchJobs = async () => {
     try {

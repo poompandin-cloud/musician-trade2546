@@ -5,8 +5,7 @@ import React from 'react';
 interface Job {
   id: string;
   title: string;
-  starttime: string; // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
-  endtime: string;   // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
+  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -48,8 +47,7 @@ export const JobModal: React.FC<JobModalProps> = ({
     const newJob: Job = {
       id: Date.now().toString(),
       title: '',
-      starttime: '09:00', // ✅ เปลี่ยนเป็นตัวเล็ก
-      endtime: '10:00',   // ✅ เปลี่ยนเป็นตัวเล็ก
+      time: '09:00', // ✅ ใช้คอลัมน์ time แทน starttime/endtime
       location: '',
       date: selectedDate,
     };
@@ -137,27 +135,18 @@ export const JobModal: React.FC<JobModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        เวลาเริ่ม
+                        เวลา
                       </label>
                       <input
                         type="time"
-                        value={job.starttime}
-                        onChange={(e) => handleJobChange(job.id, 'starttime', e.target.value)}
+                        value={job.time}
+                        onChange={(e) => handleJobChange(job.id, 'time', e.target.value)}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         disabled={!isOwner}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        เวลาจบ
-                      </label>
-                      <input
-                        type="time"
-                        value={job.endtime}
-                        onChange={(e) => handleJobChange(job.id, 'endtime', e.target.value)}
-                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        disabled={!isOwner}
-                      />
+                      {/* ลบช่องเวลาจบออกเนื่องจากใช้คอลัมน์ time เดียว */}
                     </div>
                   </div>
                 </div>

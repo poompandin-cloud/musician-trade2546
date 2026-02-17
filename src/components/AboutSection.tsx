@@ -24,26 +24,6 @@ const AboutSection = ({ onBack }: AboutSectionProps) => {
     },
   ];
 
-  const roadmap = [
-    {
-      phase: "MVP",
-      title: "เปิดตัว",
-      items: ["ระบบค้นหานักดนตรี", "สมัครเป็นนักดนตรี", "การจับคู่แบบ Manual"],
-      status: "current",
-    },
-    {
-      phase: "Phase 2",
-      title: "ระบบอัตโนมัติ",
-      items: ["AI Matching Algorithm", "แจ้งเตือนอัตโนมัติ", "ระบบชำระเงิน"],
-      status: "upcoming",
-    },
-    {
-      phase: "Phase 3",
-      title: "ขยายตลาด",
-      items: ["รองรับหลายเมือง", "Rating & Review", "ระบบ Subscription"],
-      status: "future",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +64,7 @@ const AboutSection = ({ onBack }: AboutSectionProps) => {
     className="block group"
   >
     <p className="text-accent-foreground font-bold mb-2 text-lg group-hover:text-orange-500 transition-colors">
-      🚀 ติดต่อ: <span className="underline decoration-orange-500/30">Line @121jhulh</span>
+      🚀 ติดต่อแอดมิน: <span className="underline decoration-orange-500/30">Line @121jhulh</span>
     </p>
     <p className="text-[11px] text-orange-600 font-semibold mb-2 bg-orange-100 py-1 px-3 rounded-full inline-block">
       คลิกเพื่อเพิ่มเพื่อน
@@ -140,48 +120,7 @@ const AboutSection = ({ onBack }: AboutSectionProps) => {
             </div>
           </section>
 
-          {/* Roadmap */}
-          <section className="mb-12 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <h2 className="text-xl font-bold text-foreground mb-6 font-display flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center text-primary-foreground text-sm">
-                <TrendingUp className="w-4 h-4" />
-              </span>
-              Roadmap
-            </h2>
-            <div className="space-y-4">
-              {roadmap.map((phase, i) => (
-                <div
-                  key={i}
-                  className={`p-5 rounded-2xl border transition-all ${
-                    phase.status === "current"
-                      ? "bg-accent border-primary/30 shadow-soft"
-                      : "bg-card border-border"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        phase.status === "current"
-                          ? "gradient-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground"
-                      }`}
-                    >
-                      {phase.phase}
-                    </span>
-                    <h3 className="font-semibold text-foreground">{phase.title}</h3>
-                  </div>
-                  <ul className="space-y-1">
-                    {phase.items.map((item, j) => (
-                      <li key={j} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/* Roadmap section ถูกลบออกแล้ว */}
 
           {/* Tech Stack */}
           <section className="animate-fade-in" style={{ animationDelay: "0.4s" }}>

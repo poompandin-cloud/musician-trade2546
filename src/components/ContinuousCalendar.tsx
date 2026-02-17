@@ -18,8 +18,7 @@ interface ContinuousCalendarProps {
 interface Job {
   id: string;
   title: string;
-  starttime: string; // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
-  endtime: string;   // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
+  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -188,7 +187,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
           }}
         >
           <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
-          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.starttime} - {job.endtime}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.time}</div>
         </div>
       );
     })
@@ -215,7 +214,7 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
           }}
         >
           <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
-          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.starttime} - {job.endtime}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.time}</div>
         </div>
       );
     })

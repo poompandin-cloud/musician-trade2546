@@ -72,7 +72,7 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
   }, [jobs]);
 
  const filteredJobs = useMemo(() => {
-    let filtered = jobs.filter(job => job.job_type !== 'calendar');
+    let filtered = jobs.filter(job => !job.job_type || job.job_type !== 'calendar');
     if (currentUserId) {
       filtered = filtered.filter((job) => job.user_id === currentUserId || job.status === 'open');
     } else {
@@ -196,20 +196,40 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
   </div>
 </button>
 
-{/* 2. ส่วนเนื้อหา: เพิ่มจังหวัด (เหนือเครื่องดนตรี) */}
+{/* 2. ส่วนเนื้อหา: จังหวัด และเครื่องดนตรี */}
 <div className="mb-4">
-  {/* บรรทัดจังหวัด: ใส่ Badge สีอ่อนเพื่อให้ดูเด่นแต่ไม่แย่งซีน */}
-  <div className="flex items-center gap-1 mb-1">
+  {/* บรรทัดจังหวัด */}
+  <div className="flex items-center mb-1">
     <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
       จังหวัด {gig.province || "ไม่ระบุ"}
     </span>
   </div>
-  
-  <h3 className="text-xl font-bold text-orange-500 mb-1 leading-tight">{gig.instrument}</h3>
-  <p className="font-medium text-gray-700 flex items-start gap-1 text-sm break-words">
+
+  {/* บรรทัดเครื่องดนตรี */}
+  <div className="flex justify-between items-center mb-2">
+    <h3 className="text-xl font-bold text-orange-500 leading-tight">{gig.instrument}</h3>
+  </div>
+
+  {/* บรรทัดสถานที่ */}
+  <p className="font-medium text-gray-700 flex items-start gap-1 text-sm break-words mb-4">
     <span className="flex-shrink-0">📍</span> {gig.location}
   </p>
+
+  {/* --- 3. ส่วนตรงกลาง: แสดงเวลาที่เล่น (duration) --- */}
+  {gig.duration && (
+    <div className="flex items-center gap-2 mb-4 p-3 bg-orange-50 rounded-xl border border-dashed border-orange-100">
+      <div className="p-1.5 bg-orange rounded-lg shadow-sm">
+        <Clock className="w-4 h-4 text-orange-500" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-xs font-bold text-orange-600">เวลาที่เล่น</span>
+        <span className="text-sm font-semibold text-gray-700">{gig.duration}</span>
+      </div>
+    </div>
+  )}
 </div>
+
+
 
 {/* 3. ส่วนงบประมาณ: ดีไซน์ใหม่แบบ Card เพื่อความชัดเจน */}
 <div className="flex justify-between items-center mb-6 bg-orange-50/50 p-4 rounded-2xl border border-orange-100">

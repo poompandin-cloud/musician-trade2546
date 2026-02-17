@@ -56,8 +56,7 @@ interface Job {
 interface CalendarJob {
   id: string;
   title: string;
-  starttime: string; // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
-  endtime: string;   // ✅ เปลี่ยนเป็นตัวเล็กให้ตรงกับ Database
+  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -147,8 +146,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         const transformedData = (data || []).map(job => ({
           id: job.id,
           title: job.instrument, // ✅ แปลงจาก instrument เป็น title
-          starttime: job.time,   // ✅ แปลงจาก time เป็น starttime
-          endtime: job.time,    // ✅ ใช้ time เดียวกัน
+          time: job.time,       // ✅ ใช้คอลัมน์ time แทน starttime/endtime
           location: job.location || '',
           date: job.date,
         }));
@@ -203,11 +201,8 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
           // ✅ คอลัมน์ตามโครงสร้าง DB ใหม่
           user_id: profileUserId,
           instrument: job.title, // ✅ เปลี่ยนจาก title เป็น instrument
-          time: job.starttime,   // ✅ เปลี่ยนจาก starttime เป็น time
+          time: job.time,       // ✅ ใช้คอลัมน์ time แทน starttime
           date: job.date,
-          job_type: 'calendar', // ✅ เพิ่ม job_type เพื่อป้องกันการแสดงผลปนกับงานประกาศ
-          lineId: '', // ✅ เพิ่มคอลัมน์ lineId
-          status: 'active', // ✅ เพิ่มคอลัมน์ status
         };
 
         console.log('กำลังบันทึกข้อมูล:', jobData); // Debug log
@@ -1718,7 +1713,7 @@ console.log("New instruments after removal:", newInstruments);
     <DemoWrapper>
       <div className="pt-1 transform scale-30 origin-top">
         <ContinuousCalendar 
-          jobs={calendarJobs}
+          jobs={calendarJobs as any}
           onClick={handleDateClick}
           dayMinHeight="min-h-[100px]"
         />
@@ -1743,9 +1738,9 @@ console.log("New instruments after removal:", newInstruments);
     setIsModalOpen(false);
     setEditingJob([]);
   }}
-  onSave={handleSaveJob}
+  onSave={handleSaveJob as any}
   selectedDate={selectedDate}
-  editingJobs={editingJob}
+  editingJobs={editingJob as any}
   onDeleteJob={handleDeleteCalendarJob}
   isOwner={isOwner}
 />
@@ -1775,7 +1770,7 @@ console.log("New instruments after removal:", newInstruments);
         
            <div className="w-full max-w-full mx-auto">
              <ContinuousCalendar 
-               jobs={calendarJobs}
+               jobs={calendarJobs as any}
                onClick={handleDateClick}
                dayMinHeight="min-h-[100px]"
              />
