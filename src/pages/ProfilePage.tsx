@@ -139,15 +139,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     if (!profileUserId) return;
     
     try {
-      // ดึงจำนวน Like ทั้งหมดของโปรไฟล์ (เฉพาะที่ยังไม่หมดอายุ 7 วัน)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+      // ดึงจำนวน Like ทั้งหมดของโปรไฟล์ (All-time)
       const { data: likesData, error: likesError } = await (supabase as any)
         .from('profile_likes')
         .select('id')
-        .eq('profile_id', profileUserId)
-        .gte('created_at', sevenDaysAgo.toISOString());
+        .eq('profile_id', profileUserId);
       
       if (likesError) {
         console.error('Error fetching likes:', likesError);
@@ -156,8 +152,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
       
       setTotalLikes(likesData?.length || 0);
       
-      // ตรวจสอบว่าผู้ใช้ปัจจุบันกด Like แล้วหรือไม่ (และยังไม่หมดอายุ 7 วัน)
+      // ตรวจสอบว่าผู้ใช้ปัจจุบันกด Like แล้วหรือไม่ (เฉพาะที่ยังไม่หมดอายุ 7 วัน)
       if (currentUserId && currentUserId !== profileUserId) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
         const { data: userLike, error: userLikeError } = await (supabase as any)
           .from('profile_likes')
           .select('id, created_at')
