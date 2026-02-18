@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,6 +102,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
 
+  // State สำหรับระบบ Like Profile
+  const [totalLikes, setTotalLikes] = useState<number>(0);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [likeLoading, setLikeLoading] = useState<boolean>(false);
+
   // รายการจังหวัด
   const provinces = [
     "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
@@ -128,6 +133,146 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [selectedDate, setSelectedDate] = useState('');
   const [editingJob, setEditingJob] = useState<CalendarJob[]>([]);
   const [isFullscreenCalendar, setIsFullscreenCalendar] = useState(false); // เพิ่ม state สำหรับ fullscreen calendar
+
+  // ฟังก์ชันสำหรับจัดการ Like Profile
+  const fetchProfileLikes = async () => {
+    if (!profileUserId) return;
+    
+    try {
+      // ดึงจำนวน Like ทั้งหมดของโปรไฟล์ (เฉพาะที่ยังไม่หมดอายุ 7 วัน)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data: likesData, error: likesError } = await (supabase as any)
+        .from('profile_likes')
+        .select('id')
+        .eq('profile_id', profileUserId)
+        .gte('created_at', sevenDaysAgo.toISOString());
+      
+      if (likesError) {
+        console.error('Error fetching likes:', likesError);
+        return;
+      }
+      
+      setTotalLikes(likesData?.length || 0);
+      
+      // ตรวจสอบว่าผู้ใช้ปัจจุบันกด Like แล้วหรือไม่ (และยังไม่หมดอายุ 7 วัน)
+      if (currentUserId && currentUserId !== profileUserId) {
+        const { data: userLike, error: userLikeError } = await (supabase as any)
+          .from('profile_likes')
+          .select('id, created_at')
+          .eq('profile_id', profileUserId)
+          .eq('user_id', currentUserId)
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .single();
+        
+        if (userLikeError && userLikeError.code !== 'PGRST116') {
+          console.error('Error checking user like:', userLikeError);
+        } else {
+          setIsLiked(!!userLike);
+        }
+      }
+    } catch (error) {
+      console.error('Error in fetchProfileLikes:', error);
+    }
+  };
+
+  const handleLikeProfile = async () => {
+    if (!currentUserId || !profileUserId || isOwner || likeLoading) return;
+    
+    setLikeLoading(true);
+    
+    try {
+      if (isLiked) {
+        // ยกเลิก Like
+        const { error: unlikeError } = await (supabase as any)
+          .from('profile_likes')
+          .delete()
+          .eq('profile_id', profileUserId)
+          .eq('user_id', currentUserId);
+        
+        if (unlikeError) {
+          console.error('Error unliking profile:', unlikeError);
+          toast({ 
+            title: "เกิดข้อผิดพลาด", 
+            description: "ไม่สามารถยกเลิกถูกใจได้", 
+            variant: "destructive" 
+          });
+        } else {
+          setIsLiked(false);
+          setTotalLikes(prev => Math.max(0, prev - 1));
+          toast({ 
+            title: "ยกเลิกถูกใจ", 
+            description: "ยกเลิกถูกใจโปรไฟล์นี้แล้ว" 
+          });
+        }
+      } else {
+        // กด Like
+        const { error: likeError } = await (supabase as any)
+          .from('profile_likes')
+          .insert({
+            profile_id: profileUserId,
+            user_id: currentUserId
+          });
+        
+        if (likeError) {
+          console.error('Error liking profile:', likeError);
+          
+          // ตรวจสอบว่าเป็น Error จาก Cooldown หรือไม่
+          if (likeError.message && likeError.message.includes('cooldown') || 
+              likeError.message && likeError.message.includes('7 วัน') ||
+              likeError.message && likeError.message.includes('อาทิตย์')) {
+            toast({ 
+              title: "รออีกสักครู่", 
+              description: "ต้องรอให้ครบ 1 อาทิตย์ก่อนจะถูกใจซ้ำได้", 
+              variant: "destructive" 
+            });
+          } else if (likeError.message && likeError.message.includes('duplicate') || 
+                     likeError.message && likeError.message.includes('already')) {
+            toast({ 
+              title: "ถูกใจแล้ว", 
+              description: "คุณได้ถูกใจโปรไฟล์นี้ไปแล้วในช่วง 7 วันที่ผ่านมา", 
+              variant: "destructive" 
+            });
+          } else {
+            toast({ 
+              title: "เกิดข้อผิดพลาด", 
+              description: "ไม่สามารถถูกใจได้", 
+              variant: "destructive" 
+            });
+          }
+        } else {
+          setIsLiked(true);
+          setTotalLikes(prev => prev + 1);
+          toast({ 
+            title: "ถูกใจ", 
+            description: "ถูกใจโปรไฟล์นี้แล้ว" 
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error in handleLikeProfile:', error);
+      
+      // ตรวจสอบ Error จาก Database Trigger
+      if (error?.message && (error.message.includes('cooldown') || 
+          error.message.includes('7 วัน') ||
+          error.message.includes('อาทิตย์'))) {
+        toast({ 
+          title: "รออีกสักครู่", 
+          description: "ต้องรอให้ครบ 1 อาทิตย์ก่อนจะถูกใจซ้ำได้", 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: "เกิดข้อผิดพลาด", 
+          description: "เกิดข้อผิดพลาดที่ไม่คาดคิด", 
+          variant: "destructive" 
+        });
+      }
+    } finally {
+      setLikeLoading(false);
+    }
+  };
   
   // ดึงข้อมูลงานจาก Supabase สำหรับเจ้าของโปรไฟล์
   const fetchCalendarJobs = async () => {
@@ -410,6 +555,11 @@ province: "",
       }
     }
   }, [profileUserId, isOwner]);
+
+  // ดึงข้อมูล Like ของโปรไฟล์
+  useEffect(() => {
+    fetchProfileLikes();
+  }, [profileUserId, currentUserId]);
 
   // ปิด dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
@@ -1226,59 +1376,48 @@ console.log("New instruments after removal:", newInstruments);
               </div>
               {uploading && <p className="text-sm text-muted-foreground">กำลังอัปโหลด...</p>}
               
-              {/* Prestige Bar */}
+              {/* Like Profile Button */}
               <div className="w-full max-w-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm font-medium">ความมืออาชีพ</span>
+                    <Heart className={`w-4 h-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
+                    <span className="text-sm font-medium">ถูกใจ</span>
                   </div>
-                  <span className={`text-sm font-bold ${getPrestigeLevel(profile?.received_tokens || 0).textColor}`}>
-                    {getPrestigeLevel(profile?.received_tokens || 0).level}
+                  <span className="text-sm font-bold text-gray-600">
+                    {totalLikes} คน
                   </span>
                 </div>
                 
-                {/* Progress Bar Container */}
-                <div className="relative">
-                  <Progress 
-                    value={getPrestigeLevel(profile?.received_tokens || 0).progress} 
-                    className="h-3"
-                  />
-                  
-                  {/* Milestone Markers */}
-                  <div className="absolute inset-0 flex items-center">
-                    {milestones.map((milestone, index) => (
-                      <div
-                        key={index}
-                        className="absolute flex flex-col items-center"
-                        style={{ left: `${milestone.position}%`, transform: 'translateX(-50%)' }}
-                      >
-                        {/* Milestone Tick */}
-                        <div className="w-0.5 h-4 bg-border"></div>
-                        {/* Milestone Label */}
-                        <span className="text-[10px] text-muted-foreground mt-1 whitespace-nowrap">
-                          {milestone.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Current Points Display */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-medium text-white mix-blend-difference drop-shadow-sm">
-                      {profile?.received_tokens || 0} / 1000
-                    </span>
-                  </div>
-                </div>
+                {/* Like Button */}
+                {!isOwner && currentUserId && (
+                  <button
+                    onClick={handleLikeProfile}
+                    disabled={likeLoading}
+                    className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                      isLiked 
+                        ? 'bg-red-500 hover:bg-red-600 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    } ${likeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {likeLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        <span>กำลังดำเนินการ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                        <span>{isLiked ? 'ยกเลิกถูกใจ' : 'ถูกใจ'}</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 
-                {/* Points Scale */}
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0</span>
-                  <span>250</span>
-                  <span>500</span>
-                  <span>750</span>
-                  <span>1000</span>
-                </div>
+                {isOwner && (
+                  <div className="text-center text-sm text-muted-foreground">
+                    ไม่สามารถถูกใจโปรไฟล์ตัวเอง
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Trophy, Users, X } from "lucide-react";
+import { ArrowLeft, Search, Trophy, Users, X, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,29 +37,100 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const [allMusicians, setAllMusicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // โหลดข้อมูลนักดนตรีทั้งหมดเมื่อ component mount
+  // โหลดข้อมูลนักดนตรีทั้งหมดเมื่อ component mount และทุกครั้งที่หน้าจอแสดงผล
   useEffect(() => {
     fetchAllMusicians();
-  }, []);
+    
+    // เพิ่มการ refresh ทุก 30 วินาทีเพื่อให้มั่นใจว่าข้อมูลเป็นปัจจุบัน
+    const interval = setInterval(() => {
+      fetchAllMusicians();
+    }, 30000); // 30 วินาที
+    
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array = ทำงานเฉพาะตอน mount
 
   const fetchAllMusicians = async () => {
     setLoading(true);
     try {
-      // ดึงข้อมูลนักดนตรีทั้งหมด รวม province และ instruments
-      const { data, error } = await (supabase as any)
+      // ดึงข้อมูลนักดนตรีทั้งหมด รวมจำนวน Like รายสัปดาห์ (Direct Query)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      console.log("🔍 Fetching musicians with weekly likes...");
+      console.log("📅 7 days ago:", sevenDaysAgo.toISOString());
+      
+      // ใช้ Direct Query แทน RPC function เพื่อความน่าเชื่อถือ
+      const { data: profilesData, error: profilesError } = await (supabase as any)
         .from("profiles")
         .select("id, full_name, avatar_url, prestige_points, credits, province, instruments")
-        .not("full_name", "is", null)
-        .order("prestige_points", { ascending: false, nullsFirst: false })
-        .order("credits", { ascending: false, nullsFirst: false });
+        .not("full_name", "is", null);
 
-      if (error) {
-        console.error("Error fetching musicians:", error);
-      } else {
-        setAllMusicians(data || []);
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        setAllMusicians([]);
+        return;
       }
+
+      console.log("👥 Profiles fetched:", profilesData?.length || 0);
+
+      // ดึงจำนวน Like รายสัปดาห์สำหรับแต่ละ profile
+      const { data: likesData, error: likesError } = await (supabase as any)
+        .from("profile_likes")
+        .select("profile_id")
+        .gte("created_at", sevenDaysAgo.toISOString());
+
+      if (likesError) {
+        console.error("Error fetching likes:", likesError);
+      }
+
+      console.log("❤️ Likes fetched:", likesData?.length || 0);
+
+      // นับจำนวน Like สำหรับแต่ละ profile
+      const likeCounts: { [key: string]: number } = {};
+      (likesData || []).forEach(like => {
+        const profileId = like.profile_id;
+        likeCounts[profileId] = (likeCounts[profileId] || 0) + 1;
+      });
+
+      console.log("📊 Like counts:", likeCounts);
+
+      // รวมข้อมูล profiles กับจำนวน likes
+      const musiciansWithLikes = (profilesData || []).map(profile => ({
+        ...profile,
+        weekly_likes: likeCounts[profile.id] || 0
+      }));
+
+      console.log("🎵 Musicians with likes:", musiciansWithLikes.map(m => ({ 
+        name: m.full_name, 
+        likes: m.weekly_likes 
+      })));
+
+      // เรียงลำดับตาม weekly_likes จากมากไปน้อย
+      musiciansWithLikes.sort((a, b) => {
+        const weeklyLikesA = a.weekly_likes || 0;
+        const weeklyLikesB = b.weekly_likes || 0;
+        
+        // ถ้ามี weekly_likes ทั้งคู่ ให้เรียงตาม weekly_likes
+        if (weeklyLikesA > 0 || weeklyLikesB > 0) {
+          return weeklyLikesB - weeklyLikesA;
+        }
+        
+        // Fallback: ใช้ prestige_points หรือ credits
+        const tokensA = a.prestige_points || a.credits || 100;
+        const tokensB = b.prestige_points || b.credits || 100;
+        return tokensB - tokensA;
+      });
+
+      console.log("🏆 Final ranking:", musiciansWithLikes.map(m => ({ 
+        name: m.full_name, 
+        likes: m.weekly_likes 
+      })));
+
+      setAllMusicians(musiciansWithLikes);
+      
     } catch (err) {
       console.error("System Error:", err);
+      setAllMusicians([]);
     } finally {
       setLoading(false);
     }
@@ -100,11 +171,12 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
       });
     }
 
-    // เรียงลำดับตาม prestige_points (หรือ credits) จากมากไปน้อย
+    // ไม่ต้องเรียงลำดับใหม่ เพราะ fetchAllMusicians ได้เรียงไว้แล้ว
+    // แต่ถ้าต้องการเรียงใหม่ (เพื่อความปลอดภัย) ให้ใช้ weekly_likes เป็นหลัก
     filtered.sort((a, b) => {
-      const tokensA = a.prestige_points || a.credits || 100;
-      const tokensB = b.prestige_points || b.credits || 100;
-      return tokensB - tokensA; // Descending (มากไปน้อย)
+      const weeklyLikesA = a.weekly_likes || 0;
+      const weeklyLikesB = b.weekly_likes || 0;
+      return weeklyLikesB - weeklyLikesA; // Descending (มากไปน้อย)
     });
 
     return filtered;
@@ -204,14 +276,23 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
               <Users className="w-4 h-4" />
               พบ {filteredMusicians.length} คน
             </span>
-            {searchTerm.trim().length > 0 && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setSearchTerm("")}
-                className="text-orange-500 hover:text-orange-600 font-medium"
+                onClick={() => fetchAllMusicians()}
+                className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1"
               >
-                ล้างการค้นหา
+                <ArrowLeft className="w-4 h-4 transform rotate-180" />
+                รีเฟรช
               </button>
-            )}
+              {searchTerm.trim().length > 0 && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="text-orange-500 hover:text-orange-600 font-medium"
+                >
+                  ล้างการค้นหา
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -239,7 +320,7 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
         {!loading && filteredMusicians.length > 0 && (
           <div className="space-y-3 pb-4">
             {filteredMusicians.map((musician, index) => {
-              const tokens = musician.prestige_points || musician.credits || 100;
+              const weeklyLikes = musician.weekly_likes || 0;
               return (
                 <Card
                   key={musician.id}
@@ -267,9 +348,9 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
                           {musician.full_name}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Trophy className="w-3 h-3 md:w-4 md:h-4 text-orange-500 flex-shrink-0" />
+                          <Heart className="w-3 h-3 md:w-4 md:h-4 text-red-500 flex-shrink-0" />
                           <span className="text-xs md:text-sm text-muted-foreground">
-                            แต้มความมืออาชีพ: {tokens.toLocaleString()}
+                            ได้รับถูกใจสัปดาห์นี้: {weeklyLikes.toLocaleString()} ครั้ง
                           </span>
                         </div>
                       </div>
