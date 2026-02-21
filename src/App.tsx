@@ -18,6 +18,7 @@ import SearchForm from "./components/SearchForm";
 import NearbyGigs from "./components/NearbyGigs";
 import MusicianSearch from "./pages/MusicianSearch";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
+import CreditDetailsPage from "./pages/CreditDetailsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -381,6 +382,7 @@ const App = () => {
               <Route path="/nearby-gigs" element={<NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session?.user?.id} />} />
               <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
               <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
+              <Route path="/credits" element={<CreditDetailsPage />} />
               <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
               <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
               <Route path="/auth" element={<AuthPage />} />

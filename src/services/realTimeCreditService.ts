@@ -64,22 +64,23 @@ export function useRealTimeCredits(userId: string | null) {
     // ดึงข้อมูลเครดิตครั้งแรก
     const fetchInitialCredits = async () => {
       try {
-     // แทนที่บรรทัด 70 เป็นต้นไป ด้วยอันนี้ครับ
-const { data, error } = await supabase
-  .from('profiles')
-  .select('credits') // ดึงแค่เครดิตพอ
-  .eq('id', userId); // เอา .single() ออกก่อนเพื่อเช็ค
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('credits') // ดึงแค่เครดิตพอ
+          .eq('id', userId)
+          .single(); // ใช้ single() สำหรับผู้ใช้คนเดียว
 
-if (error) {
-  console.error('Error:', error);
-  setCredits(15); 
-} else if (data && data.length > 0) {
-  const creditAmount = data[0].credits; // ดึงจากอาเรย์ช่องแรก
-  setCredits(creditAmount);
-  globalCreditState.credits = creditAmount;
-} else {
-  setCredits(5); // ถ้าหาไม่เจอจริงๆ ให้โชว์ 5 จะได้รู้ว่าหาไม่เจอ
-}
+        if (error) {
+          console.error('Error fetching credits:', error);
+          setCredits(15); 
+        } else if (data) {
+          const creditAmount = data.credits || 0;
+          setCredits(creditAmount);
+          globalCreditState.credits = creditAmount;
+          console.log('📊 Initial credits loaded:', creditAmount);
+        } else {
+          setCredits(5); // ถ้าหาไม่เจอจริงๆ ให้โชว์ 5 จะได้รู้ว่าหาไม่เจอ
+        }
       } catch (error) {
         console.error('Error in fetchInitialCredits:', error);
         setCredits(15);

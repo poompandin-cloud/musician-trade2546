@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Coins } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useRealTimeCredits } from "@/services/realTimeCreditService";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,6 +11,7 @@ interface CreditWidgetProps {
 const CreditWidget = ({ userId }: CreditWidgetProps) => {
   // ✅ ใช้ Real-time Credit Service แทน useCredits เดิม
   const { credits, loading } = useRealTimeCredits(userId);
+  const navigate = useNavigate();
 
   // ไม่แสดง widget ถ้ายังไม่ login
   if (!userId || loading) {
@@ -21,11 +23,14 @@ const CreditWidget = ({ userId }: CreditWidgetProps) => {
 
   return (
     <div className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6 pb-safe">
-      <div className={`bg-gradient-to-br text-white rounded-2xl shadow-2xl border-2 px-3 py-2.5 sm:px-4 sm:py-3 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-300 hover:shadow-lg transition-shadow max-w-[220px] ${
-        isLowCredits 
-          ? 'from-red-500 to-red-600 border-red-400/30 hover:shadow-red-500/50' 
-          : 'from-orange-500 to-orange-600 border-orange-400/30 hover:shadow-orange-500/50'
-      }`}>
+      <div 
+        className={`bg-gradient-to-br text-white rounded-2xl shadow-2xl border-2 px-3 py-2.5 sm:px-4 sm:py-3 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-300 hover:shadow-lg transition-shadow max-w-[220px] cursor-pointer ${
+          isLowCredits 
+            ? 'from-red-500 to-red-600 border-red-400/30 hover:shadow-red-500/50' 
+            : 'from-orange-500 to-orange-600 border-orange-400/30 hover:shadow-orange-500/50'
+        }`}
+        onClick={() => navigate('/credits')}
+      >
         <div className="flex items-center gap-2 sm:gap-2.5">
           <div className="bg-white/20 p-1.5 sm:p-2 rounded-xl flex-shrink-0">
             <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
