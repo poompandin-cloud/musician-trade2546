@@ -10,14 +10,23 @@ export interface LiffProfile {
 
 class LiffService {
   private liffId = '2009193181-d1LDkPcT';
+  private redirectUri = 'https://www.musiciantradethai.com/';
   private isInitialized = false;
   private profile: LiffProfile | null = null;
 
   async init(): Promise<boolean> {
     try {
       console.log('🔧 Initializing LIFF with ID:', this.liffId);
+      console.log('🌐 Callback URL:', this.redirectUri);
       
-      await liff.init({ liffId: this.liffId });
+      // เพิ่ม cache busting parameter เพื่อให้แน่ใจว่าได้ค่าล่าสุด
+      const timestamp = Date.now();
+      const liffConfig = { 
+        liffId: this.liffId,
+        withLoginOnExternalBrowser: true
+      };
+      
+      await liff.init(liffConfig);
       
       this.isInitialized = true;
       console.log('✅ LIFF initialized successfully');
@@ -169,7 +178,12 @@ class LiffService {
 
       if (!liff.isLoggedIn()) {
         console.log('🔐 Logging in to LINE...');
-        liff.login();
+        console.log('🌐 Using redirect URI:', this.redirectUri);
+        
+        // ใช้ redirectUri ที่ตั้งค่าไว้ใน LINE Developers Console
+        liff.login({
+          redirectUri: this.redirectUri
+        });
       }
     } catch (error) {
       console.error('❌ Login failed:', error);
@@ -190,6 +204,54 @@ class LiffService {
       }
     } catch (error) {
       console.error('❌ Logout failed:', error);
+    }
+  }
+
+  // ฟังก์ชันสำหรับล้าง cache และ reinitialize
+  async clearCacheAndReinit(): Promise<boolean> {
+    try {
+      console.log('🧹 Clearing LIFF cache and reinitializing...');
+      
+      // ล้าง cache ของ localStorage
+      localStorage.removeItem('liff.accessToken');
+      localStorage.removeItem('liff.idToken');
+      localStorage.removeItem('liff.isLoggedIn');
+      localStorage.removeItem('liff.context');
+      
+      // Reset state
+      this.isInitialized = false;
+      this.profile = null;
+      
+      // Reinitialize
+      return await this.init();
+    } catch (error) {
+      console.error('❌ Failed to clear cache and reinitialize:', error);
+      return false;
+    }
+  }
+
+  // ฟังก์ชันสำหรับตรวจสอบและแก้ไขปัญหา callback URL
+  async validateCallbackUrl(): Promise<boolean> {
+    try {
+      console.log('🔍 Validating callback URL configuration...');
+      
+      // ตรวจสอบว่า redirectUri ตรงกับที่ตั้งค่าไว้
+      const expectedUrl = 'https://www.musiciantradethai.com/';
+      const currentUrl = this.redirectUri;
+      
+      console.log('📍 Expected URL:', expectedUrl);
+      console.log('📍 Current URL:', currentUrl);
+      
+      if (currentUrl !== expectedUrl) {
+        console.error('❌ Callback URL mismatch!');
+        return false;
+      }
+      
+      console.log('✅ Callback URL is correctly configured');
+      return true;
+    } catch (error) {
+      console.error('❌ Error validating callback URL:', error);
+      return false;
     }
   }
 

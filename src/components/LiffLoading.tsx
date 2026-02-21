@@ -6,7 +6,7 @@ interface LiffLoadingProps {
 }
 
 export const LiffLoading = ({ children, fallback }: LiffLoadingProps) => {
-  const { loading, error, isInClient, isLoggedIn } = useLiff();
+  const { loading, error, isInClient, isLoggedIn, clearCacheAndReinit } = useLiff();
 
   // ถ้ากำลังโหลด
   if (loading) {
@@ -32,12 +32,20 @@ export const LiffLoading = ({ children, fallback }: LiffLoadingProps) => {
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">เชื่อมต่อ LINE ไม่สำเร็จ</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            ลองใหม่
-          </button>
+          <div className="flex gap-2 justify-center">
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              ลองใหม่
+            </button>
+            <button 
+              onClick={clearCacheAndReinit}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            >
+              ล้างแคช
+            </button>
+          </div>
         </div>
       </div>
     );

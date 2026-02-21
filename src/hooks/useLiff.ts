@@ -15,6 +15,8 @@ export interface UseLiffReturn {
   closeWindow: () => Promise<void>;
   getOS: () => string;
   getVersion: () => string;
+  clearCacheAndReinit: () => Promise<boolean>;
+  validateCallbackUrl: () => Promise<boolean>;
 }
 
 export const useLiff = (): UseLiffReturn => {
@@ -32,6 +34,14 @@ export const useLiff = (): UseLiffReturn => {
         setError(null);
 
         console.log('🔧 Initializing LIFF in useLiff hook...');
+        
+        // ตรวจสอบ callback URL ก่อน initialize
+        const isValidUrl = await liffService.validateCallbackUrl();
+        if (!isValidUrl) {
+          setError('Callback URL configuration error');
+          return;
+        }
+        
         const success = await liffService.init();
         
         if (success) {
@@ -120,6 +130,16 @@ export const useLiff = (): UseLiffReturn => {
     return liffService.getVersion();
   };
 
+  // เพิ่มฟังก์ชันสำหรับ clear cache
+  const clearCacheAndReinit = async (): Promise<boolean> => {
+    return await liffService.clearCacheAndReinit();
+  };
+
+  // เพิ่มฟังก์ชันสำหรับ validate callback URL
+  const validateCallbackUrl = async (): Promise<boolean> => {
+    return await liffService.validateCallbackUrl();
+  };
+
   return {
     isInitialized,
     isLoggedIn,
@@ -134,5 +154,7 @@ export const useLiff = (): UseLiffReturn => {
     closeWindow,
     getOS,
     getVersion,
+    clearCacheAndReinit,
+    validateCallbackUrl,
   };
 };
