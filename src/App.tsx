@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster } from "@/components/ui/sonner";
 import { liffService } from "@/services/liffService";
+import LiffLoading from "@/components/LiffLoading";
 import Index from "./pages/Index";
 import ProfilePage from "./pages/ProfilePage";
 import AuthPage from "./pages/AuthPage";
@@ -358,69 +359,72 @@ const App = () => {
       <TooltipProvider>
         <ShadcnToaster />
         <Toaster />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col overflow-x-hidden">
-            <Navbar userId={session?.user?.id || null} />
-            
-            <Routes>
-              <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
+        <LiffLoading>
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col overflow-x-hidden">
+              <Navbar userId={session?.user?.id || null} />
               
-              <Route 
-                path="/profile" 
-                element={
-                  session ? (
-                    <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
-                  ) : (
-                    <Index jobs={activeJobs} onAddJob={addJob} /> 
-                  )
-                } 
-              />
-              
-              <Route 
-                path="/profile/:id" 
-                element={
-                  session ? (
-                    <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
-                  ) : (
-                    <Index jobs={activeJobs} onAddJob={addJob} /> 
-                  )
-                } 
-              />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
+                  
+                  <Route 
+                    path="/profile" 
+                    element={
+                      session ? (
+                        <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                      ) : (
+                        <Index jobs={activeJobs} onAddJob={addJob} /> 
+                      )
+                    } 
+                  />
+                  
+                  <Route 
+                    path="/profile/:id" 
+                    element={
+                      session ? (
+                        <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                      ) : (
+                        <Index jobs={activeJobs} onAddJob={addJob} /> 
+                      )
+                    } 
+                  />
 
-              // ✅ แบบใหม่: ใครก็เข้าได้ (แต่ตอนกดบันทึกงาน ระบบจะถาม login อีกทีตามที่คุณเขียนไว้)
-<Route 
-  path="/search" 
-  element={
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
-      <div className="w-full max-w-md">
-        <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
-        <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
-          <SearchForm 
-            onBack={() => window.history.back()} 
-            onAddJob={addJob}
-            userId={session?.user?.id}
-          /> 
-        </div>
-      </div>
-    </div>
-  } 
-/>
+                  <Route 
+                    path="/search" 
+                    element={
+                      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
+                        <div className="w-full max-w-md">
+                          <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
+                          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
+                          <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
+                            <SearchForm 
+                              onBack={() => window.history.back()} 
+                              onAddJob={addJob}
+                              userId={session?.user?.id}
+                            /> 
+                          </div>
+                        </div>
+                      </div>
+                    } 
+                  />
 
-              <Route path="/nearby-gigs" element={<NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session?.user?.id} />} />
-              <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
-              <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
-              <Route path="/credits" element={<CreditDetailsPage />} />
-              <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
-              <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            
-            <Footer />
-            <CreditWidget userId={session?.user?.id || null} />
-          </div>
-        </BrowserRouter>
+                  <Route path="/nearby-gigs" element={<NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session?.user?.id} />} />
+                  <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
+                  <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
+                  <Route path="/credits" element={<CreditDetailsPage />} />
+                  <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
+                  <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+
+              <Footer />
+              <CreditWidget userId={session?.user?.id || null} />
+            </div>
+          </BrowserRouter>
+        </LiffLoading>
       </TooltipProvider>
     </QueryClientProvider>
   );

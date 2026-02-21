@@ -30,9 +30,33 @@ class LiffService {
       const isLoggedIn = liff.isLoggedIn();
       console.log('🔐 Is logged in:', isLoggedIn);
       
-      if (isLoggedIn) {
+      // ตรวจสอบว่ากลับมาจากการ login หรือไม่ (จาก URL parameters)
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      
+      if (code && state) {
+        console.log('🔄 Returned from LINE login with code and state');
+        // รอสักครู่ให้ LIFF ประมวลผล
+        setTimeout(async () => {
+          if (liff.isLoggedIn()) {
+            await this.fetchProfile();
+            await this.syncWithSupabase();
+            // Redirect กลับไปหน้าหลัก
+            window.location.href = window.location.origin;
+          }
+        }, 1000);
+      } else if (isLoggedIn) {
         await this.fetchProfile();
         await this.syncWithSupabase();
+      } else {
+        // ถ้ายังไม่ได้ login และอยู่ใน LINE client ให้ login ทันที
+        if (liff.isInClient()) {
+          console.log('🔐 Auto-login in LINE client...');
+          liff.login();
+        } else {
+          console.log('🌐 Not in LINE client, login required');
+        }
       }
       
       return true;
