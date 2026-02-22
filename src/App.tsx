@@ -5,8 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster } from "@/components/ui/sonner";
-import { liffService } from "@/services/liffService";
-import LiffLoading from "@/components/LiffLoading";
 import Index from "./pages/Index";
 import ProfilePage from "./pages/ProfilePage";
 import AuthPage from "./pages/AuthPage";
@@ -30,32 +28,33 @@ const App = () => {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastCreditReset, setLastCreditReset] = useState<any>(null);
-  const [liffInitialized, setLiffInitialized] = useState(false);
 
   useEffect(() => {
-    // Initialize LIFF when app starts
-    const initializeLiff = async () => {
-      console.log('🚀 Starting LIFF initialization...');
-      const success = await liffService.init();
-      setLiffInitialized(success);
-      
-      if (success) {
-        console.log('✅ LIFF initialized successfully');
-        console.log('📱 LIFF OS:', liffService.getOS());
-        console.log('📱 LIFF Version:', liffService.getVersion());
-        console.log('📱 Is in LINE client:', liffService.isInClient());
-        console.log('📱 Is logged in:', liffService.isLoggedIn());
-        
-        const profile = liffService.getProfile();
-        if (profile) {
-          console.log('👤 LIFF Profile:', profile);
-        }
-      } else {
-        console.log('❌ LIFF initialization failed');
+    // Check for existing session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      // ✅ เรียก fetchJobs หลังจากมี session แล้ว
+      if (session) {
+        fetchJobs();
       }
     };
 
-    initializeLiff();
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("🔍 App.tsx: Auth state changed:", { event: _event, session });
+      setSession(session);
+      if (session) {
+        console.log("🔍 App.tsx: User logged in, fetching jobs...");
+        fetchJobs();
+      } else {
+        console.log("🔍 App.tsx: User logged out");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // ตรวจสอบการรีเซ็ตเครดิตล่าสุด
@@ -359,25 +358,24 @@ const App = () => {
       <TooltipProvider>
         <ShadcnToaster />
         <Toaster />
-        <LiffLoading>
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col overflow-x-hidden">
-              <Navbar userId={session?.user?.id || null} />
-              
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
-                  
-                  <Route 
-                    path="/profile" 
-                    element={
-                      session ? (
-                        <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
-                      ) : (
-                        <Index jobs={activeJobs} onAddJob={addJob} /> 
-                      )
-                    } 
-                  />
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col overflow-x-hidden">
+            <Navbar userId={session?.user?.id || null} />
+            
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
+                
+                <Route 
+                  path="/profile" 
+                  element={
+                    session ? (
+                      <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                    ) : (
+                      <Index jobs={activeJobs} onAddJob={addJob} /> 
+                    )
+                  } 
+                />
                   
                   <Route 
                     path="/profile/:id" 
@@ -424,7 +422,6 @@ const App = () => {
               <CreditWidget userId={session?.user?.id || null} />
             </div>
           </BrowserRouter>
-        </LiffLoading>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealTimeCredits, refetchProfile } from "@/services/realTimeCreditService";
-import { useLiff } from "@/hooks/useLiff";
 
 interface CreditTransaction {
   id: string;
@@ -36,14 +35,8 @@ const CreditDetailsPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   
-  // LIFF integration
-  const { isInClient, isLoggedIn, profile } = useLiff();
-  
-  // ถ้าอยู่ใน LINE และมี profile จาก LINE ให้ใช้ userId จาก LINE
-  const effectiveUserId = isInClient && profile ? profile.userId : userId;
-  
   // ใช้ Real-time Credits แทนการดึงข้อมูลใหม่
-  const { credits: currentCredits, loading: creditsLoading } = useRealTimeCredits(effectiveUserId);
+  const { credits: currentCredits, loading: creditsLoading } = useRealTimeCredits(userId);
 
   useEffect(() => {
     // ดึง userId จาก supabase auth
@@ -116,8 +109,8 @@ const CreditDetailsPage = () => {
     setRefreshing(true);
     
     // ใช้ refetchProfile จาก realTimeCreditService เพื่ออัปเดตข้อมูล
-    if (effectiveUserId) {
-      await refetchProfile(effectiveUserId);
+    if (userId) {
+      await refetchProfile(userId);
     }
     
     // ดึงข้อมูลอื่นๆ ใหม่

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealTimeCredits } from "@/services/realTimeCreditService";
-import { useLiff } from "@/hooks/useLiff";
 import { Badge } from "@/components/ui/badge";
 
 interface CreditWidgetProps {
@@ -13,23 +12,14 @@ const CreditWidget = ({ userId }: CreditWidgetProps) => {
   // ✅ ใช้ Real-time Credit Service แทน useCredits เดิม
   const { credits, loading } = useRealTimeCredits(userId);
   const navigate = useNavigate();
-  const { isInClient, isLoggedIn, profile } = useLiff();
-  
-  // ถ้าอยู่ใน LINE และมี profile จาก LINE ให้ใช้ userId จาก LINE
-  const effectiveUserId = isInClient && profile ? profile.userId : userId;
-  const { credits: liffCredits, loading: liffLoading } = useRealTimeCredits(effectiveUserId);
-  
-  // ใช้ credits จาก LIFF ถ้ามี ไม่งั้นใช้ credits ปกติ
-  const displayCredits = isInClient ? liffCredits : credits;
-  const displayLoading = isInClient ? liffLoading : loading;
 
-  // ไม่แสดง widget ถ้ายังไม่ login
-  if (!effectiveUserId || displayLoading) {
+  // ไม่แสดง widget ถ้ายังไม่ login หรือกำลังโหลด
+  if (!userId || loading) {
     return null;
   }
 
   // ตรวจสอบว่าเครดิตต่ำกว่า 5 หรือไม่
-  const isLowCredits = displayCredits <= 5;
+  const isLowCredits = credits <= 5;
 
   return (
     <div className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6 pb-safe">
@@ -57,10 +47,10 @@ const CreditWidget = ({ userId }: CreditWidgetProps) => {
               )}
             </div>
             <span className="text-base sm:text-lg font-bold leading-tight whitespace-nowrap">
-              {displayCredits}
+              {credits}
             </span>
             <span className="text-[9px] text-white/70 leading-tight">
-              {isInClient ? 'LINE' : 'Real-time'}
+              Real-time
             </span>
           </div>
         </div>

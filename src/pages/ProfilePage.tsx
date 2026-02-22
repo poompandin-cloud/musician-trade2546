@@ -16,6 +16,7 @@ import DemoWrapper from '@/components/DemoWrapper';
 import { ContinuousCalendar } from '@/components/ContinuousCalendar';
 import { JobModal } from '@/components/JobModal';
 import { Maximize2 } from 'lucide-react';
+import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 
 interface Profile {
   id: string;
@@ -78,25 +79,8 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const { id } = useParams<{ id?: string }>();
   const { toast, dismiss } = useToast();
   
-  // รายการเครื่องดนตรีสำหรับ dropdown
-  const instruments = [
-    { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
-    { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
-    { value: "bass", label: "เบส" },
-    { value: "drums-kit", label: "กลองชุด" },
-    { value: "keyboard-piano", label: "เปียโน" },
-    { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
-    { value: "vocal-lead", label: "นักร้องนำ" },
-    { value: "vocal-backup", label: "นักร้องประสาน" },
-    { value: "saxophone", label: "แซกโซโฟน" },
-    { value: "violin", label: "ไวโอลิน" },
-    { value: "trumpet", label: "ทรัมเป็ต" },
-    { value: "flute", label: "ฟลุต" },
-    { value: "ukulele", label: "อูคูเลเล่" }, // ✅ เพิ่มอูคูเลเล่
-    { value: "harmonica", label: "หมอนิกา" }, // ✅ เพิ่มหมอนิกา
-    { value: "drum-electric", label: "กลองไฟฟ้า" }, // ✅ เพิ่มกลองไฟฟ้า
-    { value: "acoustic-guitar", label: "กีตาร์อะคูสติก" }, // ✅ แก้ไขคำสะกด
-  ];
+  // รายการเครื่องดนตรีสำหรับ dropdown (ใช้จาก constants)
+  const instruments = INSTRUMENTS;
 
   // State สำหรับจัดการเครื่องดนตรีที่เลือก
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
@@ -481,9 +465,8 @@ province: "",
     console.log("String สำหรับบันทึก:", instrumentsString);
   };
 
-  const getInstrumentLabel = (value: string) => {
-    const instrument = instruments.find(inst => inst.value === value);
-    return instrument ? instrument.label : value;
+  const getInstrumentLabelFromValue = (value: string) => {
+    return getInstrumentLabel(value);
   };
 
   // แปลง selectedInstruments เป็น string สำหรับบันทึก

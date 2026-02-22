@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Trophy, Users, X, Heart } from "lucide-react";
+import { ArrowLeft, Search, MapPin, Music, Users, Star, Phone, MessageCircle, Calendar, Clock, Filter, X, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { INSTRUMENTS } from '@/constants/instruments';
 
 // รายชื่อจังหวัด
 const provinces = [
@@ -14,20 +18,8 @@ const provinces = [
   "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
 ];
 
-// รายชื่อเครื่องดนตรี
-const instruments = [
-  { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
-  { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
-  { value: "keyboard-piano", label: "เปียโน" },
-  { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
-  { value: "drums-kit", label: "กลองชุด" },
-  { value: "strings-violin", label: "ไวโอลิน" },
-  { value: "vocal-lead", label: "นักร้องนำ" },
-  { value: "vocal-backup", label: "นักร้องประสาน" },
-  { value: "ukulele", label: "อูคูเลเล่" },
-  { value: "harmonica", label: "หมอนิกา" },
-  { value: "drums-electric", label: "กลองไฟฟ้า" },
-];
+// รายชื่อเครื่องดนตรี (ใช้จาก constants)
+const instruments = INSTRUMENTS;
 
 const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const navigate = useNavigate();
@@ -219,11 +211,11 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
             <select
               value={selectedProvince}
               onChange={(e) => setSelectedProvince(e.target.value)}
-              className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+              className="w-full h-12 rounded-2xl border border-input bg-orange-500 text-white px-4 outline-none focus:ring-2 focus:ring-orange-600 appearance-none cursor-pointer hover:bg-orange-600 transition-colors"
             >
-              <option value="">เลือกจังหวัด...</option>
+              <option value="" className="text-gray-700">เลือกจังหวัด...</option>
               {provinces.map((province) => (
-                <option key={province} value={province}>
+                <option key={province} value={province} className="text-gray-700">
                   {province}
                 </option>
               ))}
@@ -235,11 +227,11 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
             <select
               value={selectedInstrument}
               onChange={(e) => setSelectedInstrument(e.target.value)}
-              className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+              className="w-full h-12 rounded-2xl border border-input bg-orange-500 text-white px-4 outline-none focus:ring-2 focus:ring-orange-600 appearance-none cursor-pointer hover:bg-orange-600 transition-colors"
             >
-              <option value="">เลือกเครื่องดนตรี...</option>
+              <option value="" className="text-gray-700">เลือกเครื่องดนตรี...</option>
               {instruments.map((instrument) => (
-                <option key={instrument.value} value={instrument.value}>
+                <option key={instrument.value} value={instrument.value} className="text-gray-700">
                   {instrument.label}
                 </option>
               ))}
