@@ -5,6 +5,7 @@ export interface UseLiffReturn {
   isInitialized: boolean;
   isLoggedIn: boolean;
   isInClient: boolean;
+  isExternalBrowser: boolean;
   profile: LiffProfile | null;
   loading: boolean;
   error: string | null;
@@ -17,12 +18,14 @@ export interface UseLiffReturn {
   getVersion: () => string;
   clearCacheAndReinit: () => Promise<boolean>;
   validateCallbackUrl: () => Promise<boolean>;
+  skipLiffAndUseNormalLogin: () => void;
 }
 
 export const useLiff = (): UseLiffReturn => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInClient, setIsInClient] = useState(false);
+  const [isExternalBrowser, setIsExternalBrowser] = useState(false);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,21 @@ export const useLiff = (): UseLiffReturn => {
         setError(null);
 
         console.log('🔧 Initializing LIFF in useLiff hook...');
+        
+        // ตรวจสอบว่าเป็น External Browser หรือไม่ก่อน
+        const isExternal = liffService.isExternalBrowser();
+        setIsExternalBrowser(isExternal);
+        
+        if (isExternal) {
+          console.log('🌐 Detected external browser - skipping LIFF initialization');
+          console.log('🔄 Will use normal web login system');
+          setIsInitialized(false);
+          setIsLoggedIn(false);
+          setIsInClient(false);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
         
         // ตรวจสอบ callback URL ก่อน initialize
         const isValidUrl = await liffService.validateCallbackUrl();
@@ -140,10 +158,21 @@ export const useLiff = (): UseLiffReturn => {
     return await liffService.validateCallbackUrl();
   };
 
+  // เพิ่มฟังก์ชันสำหรับข้าม LIFF และใช้ระบบปกติ
+  const skipLiffAndUseNormalLogin = (): void => {
+    liffService.skipLiffAndUseNormalLogin();
+    setIsInitialized(false);
+    setIsLoggedIn(false);
+    setIsInClient(false);
+    setProfile(null);
+    setError(null);
+  };
+
   return {
     isInitialized,
     isLoggedIn,
     isInClient,
+    isExternalBrowser,
     profile,
     loading,
     error,
@@ -156,5 +185,6 @@ export const useLiff = (): UseLiffReturn => {
     getVersion,
     clearCacheAndReinit,
     validateCallbackUrl,
+    skipLiffAndUseNormalLogin,
   };
 };

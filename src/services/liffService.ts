@@ -107,6 +107,17 @@ class LiffService {
         console.error('❌ CORS Error: Check your LIFF app settings');
       }
       
+      // ตรวจสอบว่าเป็น External Browser หรือไม่
+      if (error.message?.includes('external') || 
+          error.message?.includes('browser') ||
+          error.message?.includes('not in LINE') ||
+          !this.isInClient()) {
+        console.log('🌐 Detected external browser - skipping LIFF initialization');
+        console.log('🔄 Falling back to normal web login system');
+        this.isInitialized = false; // ตั้งค่าเป็น false เพื่อให้รู้ว่าไม่ได้ใช้ LIFF
+        return true; // คืนค่า true เพื่อให้แอปทำงานต่อได้
+      }
+      
       return false;
     }
   }
@@ -289,6 +300,31 @@ class LiffService {
       console.error('❌ Error validating callback URL:', error);
       return false;
     }
+  }
+
+  // ฟังก์ชันสำหรับตรวจสอบว่าเป็น External Browser หรือไม่
+  isExternalBrowser(): boolean {
+    try {
+      // ถ้า LIFF ยังไม่ถูก initialize ให้ตรวจสอบจาก userAgent
+      if (!this.isInitialized) {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isLineApp = userAgent.includes('line');
+        return !isLineApp;
+      }
+      
+      // ถ้า LIFF ถูก initialize แล้ว ให้ใช้ฟังก์ชันของ LIFF
+      return !liff.isInClient();
+    } catch (error) {
+      console.log('🌐 Cannot determine browser type, assuming external browser');
+      return true;
+    }
+  }
+
+  // ฟังก์ชันสำหรับข้าม LIFF และใช้ระบบปกติ
+  skipLiffAndUseNormalLogin(): void {
+    console.log('🔄 Skipping LIFF and using normal web login system');
+    this.isInitialized = false;
+    this.profile = null;
   }
 
   isLoggedIn(): boolean {

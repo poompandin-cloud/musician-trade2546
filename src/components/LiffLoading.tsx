@@ -6,7 +6,15 @@ interface LiffLoadingProps {
 }
 
 export const LiffLoading = ({ children, fallback }: LiffLoadingProps) => {
-  const { loading, error, isInClient, isLoggedIn, clearCacheAndReinit } = useLiff();
+  const { 
+    loading, 
+    error, 
+    isInClient, 
+    isLoggedIn, 
+    isExternalBrowser,
+    clearCacheAndReinit, 
+    skipLiffAndUseNormalLogin 
+  } = useLiff();
 
   // ถ้ากำลังโหลด
   if (loading) {
@@ -18,6 +26,12 @@ export const LiffLoading = ({ children, fallback }: LiffLoadingProps) => {
         </div>
       </div>
     );
+  }
+
+  // ถ้าเป็น External Browser ให้แสดง children ทันที (ใช้ระบบปกติ)
+  if (isExternalBrowser) {
+    console.log('🌐 External browser detected - using normal web system');
+    return <>{children}</>;
   }
 
   // ถ้ามีข้อผิดพลาด
@@ -57,6 +71,12 @@ export const LiffLoading = ({ children, fallback }: LiffLoadingProps) => {
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
               ล้างแคช
+            </button>
+            <button 
+              onClick={skipLiffAndUseNormalLogin}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              เข้าใช้งานปกติ
             </button>
           </div>
         </div>
