@@ -19,12 +19,22 @@ class LiffService {
       console.log('🔧 Initializing LIFF with ID:', this.liffId);
       console.log('🌐 Callback URL:', this.redirectUri);
       
+      // ตรวจสอบว่า liffId ถูกต้องหรือไม่
+      if (!this.liffId || this.liffId.trim() === '') {
+        console.error('❌ LIFF ID is missing or empty:', this.liffId);
+        return false;
+      }
+      
+      console.log('✅ LIFF ID validation passed:', this.liffId);
+      
       // เพิ่ม cache busting parameter เพื่อให้แน่ใจว่าได้ค่าล่าสุด
       const timestamp = Date.now();
       const liffConfig = { 
         liffId: this.liffId,
         withLoginOnExternalBrowser: true
       };
+      
+      console.log('🔧 LIFF Config:', liffConfig);
       
       await liff.init(liffConfig);
       
@@ -71,6 +81,32 @@ class LiffService {
       return true;
     } catch (error) {
       console.error('❌ LIFF initialization failed:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        liffId: this.liffId,
+        redirectUri: this.redirectUri
+      });
+      
+      // แสดงข้อความผิดพลาดที่ละเอียดขึ้น
+      if (error.message) {
+        console.error('❌ Error Message:', error.message);
+      }
+      
+      // ตรวจสอบกรณีพิเศษที่อาจเกิดขึ้น
+      if (error.message?.includes('liffId')) {
+        console.error('❌ LIFF ID Error: The LIFF ID might be invalid or not found');
+      }
+      
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        console.error('❌ Network Error: Check your internet connection');
+      }
+      
+      if (error.message?.includes('CORS')) {
+        console.error('❌ CORS Error: Check your LIFF app settings');
+      }
+      
       return false;
     }
   }
