@@ -968,6 +968,74 @@ const { data: urlData } = supabase.storage
     }
   };
 
+  // ฟังก์ชันสำหรับลบรูปโปรไฟล์
+  const handleAvatarDelete = async () => {
+    // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของโปรไฟล์เท่านั้นที่ลบได้
+    if (!isOwner) {
+      toast({
+        title: "ไม่มีสิทธิ์",
+        description: "คุณสามารถลบรูปโปรไฟล์ได้เฉพาะของตัวเองเท่านั้น",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!profile?.avatar_url) {
+      toast({
+        title: "ไม่มีรูปโปรไฟล์",
+        description: "ไม่พบรูปโปรไฟล์ที่จะลบ",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // 1. ลบไฟล์จาก Supabase Storage
+      const fileName = profile.avatar_url.split('/').pop();
+      if (fileName) {
+        const { error: deleteError } = await supabase.storage
+          .from('avatars')
+          .remove([fileName]);
+
+        if (deleteError) {
+          console.error("Error deleting avatar file:", deleteError);
+          // ถ้าลบไฟล์ไม่สำเร็จ แต่ยังอัปเดต database ได้ ก็ให้ทำต่อ
+        }
+      }
+
+      // 2. อัปเดต avatar_url เป็น null ใน database
+      const { error: updateError } = await (supabase as any)
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", profileUserId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // 3. อัปเดต state ในหน้าจอ
+      setProfile({ ...profile, avatar_url: null });
+      setFormData(prev => ({ ...prev, avatar_url: null }));
+
+      toast({
+        title: "ลบรูปโปรไฟล์สำเร็จ",
+        description: "รูปโปรไฟล์ของคุณถูกลบเรียบร้อยแล้ว",
+      });
+
+    } catch (error: any) {
+      console.error("Error deleting avatar:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถลบรูปโปรไฟล์ได้ กรุณาลองใหม่",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // ฟังก์ชันสำหรับจัดการเครื่องดนตรี
   const handleAddInstrument = (instrument: { value: string; label: string }) => {
     console.log("Adding instrument:", instrument);
@@ -1341,22 +1409,38 @@ console.log("New instruments after removal:", newInstruments);
                     {profile?.full_name?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors shadow-lg"
-                >
-                  <Camera className="w-5 h-5 text-white" />
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
+                
+                {/* ปุ่มอัปโหลดรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
+                {isOwner && (
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors shadow-lg"
+                  >
+                    <Camera className="w-5 h-5 text-white" />
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                )}
+                
+                {/* ปุ่มลบรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
+                {profile?.avatar_url && isOwner && (
+                  <button
+                    onClick={handleAvatarDelete}
                     disabled={uploading}
-                  />
-                </label>
+                    className="absolute top-0 right-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="ลบรูปโปรไฟล์"
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
+                )}
               </div>
-              {uploading && <p className="text-sm text-muted-foreground">กำลังอัปโหลด...</p>}
+              {uploading && <p className="text-sm text-muted-foreground">กำลังดำเนินการ...</p>}
               
               {/* Like Profile Button */}
               <div className="w-full max-w-xs space-y-3">

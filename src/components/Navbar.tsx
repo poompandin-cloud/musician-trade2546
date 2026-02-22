@@ -3,6 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowRight } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
@@ -14,6 +15,10 @@ const Navbar = ({ userId }: { userId: string | null }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // ตรวจสอบว่าผู้ใช้มีรูปโปรไฟล์หรือไม่
+  const hasProfilePicture = profile?.avatar_url && profile.avatar_url !== null && profile.avatar_url.trim() !== "";
+  const shouldShowProfileCTA = userId && !loading && !hasProfilePicture;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -75,25 +80,40 @@ const Navbar = ({ userId }: { userId: string | null }) => {
           </button>
 
           {/* ถ้าล็อกอินแล้วแสดงรูปโปรไฟล์ ถ้ายังไม่ล็อกอินแสดงปุ่มเข้าสู่ระบบ */}
-          <button
-            onClick={handleProfileClick}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            {loading ? (
-              <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
-            ) : userId ? (
-              <Avatar className="w-10 h-10 border-2 border-orange-500/20">
-                <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
-                <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
-                  {profile?.full_name?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <span className="text-sm font-medium text-orange-500 border border-orange-500 px-4 py-1.5 rounded-full hover:bg-orange-50">
-                เข้าสู่ระบบ
-              </span>
+          <div className="flex items-center gap-3">
+            {/* Call to Action สำหรับกรอกโปรไฟล์ */}
+            {shouldShowProfileCTA && (
+              <button
+                onClick={() => navigate("/profile")}
+                className="flex items-center gap-1 text-orange-500 hover:text-orange-600 transition-all duration-300 animate-pulse hover:animate-none group"
+              >
+                <span className="text-sm font-medium">
+                  กรอกโปรไฟล์ของคุณ
+                </span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </button>
             )}
-          </button>
+
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              {loading ? (
+                <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+              ) : userId ? (
+                <Avatar className="w-10 h-10 border-2 border-orange-500/20">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
+                  <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
+                    {profile?.full_name?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <span className="text-sm font-medium text-orange-500 border border-orange-500 px-4 py-1.5 rounded-full hover:bg-orange-50">
+                  เข้าสู่ระบบ
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </nav>
