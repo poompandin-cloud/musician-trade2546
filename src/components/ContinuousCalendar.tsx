@@ -18,7 +18,8 @@ interface ContinuousCalendarProps {
 interface Job {
   id: string;
   title: string;
-  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
+  start_time: string; // ✅ เปลี่ยนจาก time เป็น start_time
+  end_time: string; // ✅ เพิ่ม end_time
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -187,7 +188,27 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
           }}
         >
           <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
-          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.time}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">
+            {(() => {
+              // ✅ Validation: ถ้าไม่มี end_time ให้คำนวณจาก start_time + 1 ชั่วโมง
+              const startTime = job.start_time || '09:00';
+              let endTime = job.end_time;
+              
+              if (!endTime) {
+                const [hours, minutes] = startTime.split(':').map(Number);
+                let endHours = hours + 1;
+                let endMinutes = minutes;
+                
+                if (endHours >= 24) {
+                  endHours = endHours - 24;
+                }
+                
+                endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+              }
+              
+              return `${startTime} - ${endTime}`;
+            })()}
+          </div>
         </div>
       );
     })
@@ -214,7 +235,27 @@ export const ContinuousCalendar: React.FC<ContinuousCalendarProps> = ({ onClick,
           }}
         >
           <div className="truncate font-semibold text-[9px] leading-tight whitespace-nowrap">{job.title}</div>
-          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">{job.time}</div>
+          <div className="truncate text-[8px] opacity-90 leading-tight whitespace-nowrap">
+            {(() => {
+              // ✅ Validation: ถ้าไม่มี end_time ให้คำนวณจาก start_time + 1 ชั่วโมง
+              const startTime = job.start_time || '09:00';
+              let endTime = job.end_time;
+              
+              if (!endTime) {
+                const [hours, minutes] = startTime.split(':').map(Number);
+                let endHours = hours + 1;
+                let endMinutes = minutes;
+                
+                if (endHours >= 24) {
+                  endHours = endHours - 24;
+                }
+                
+                endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+              }
+              
+              return `${startTime} - ${endTime}`;
+            })()}
+          </div>
         </div>
       );
     })

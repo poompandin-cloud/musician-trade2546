@@ -58,7 +58,8 @@ interface Job {
 interface CalendarJob {
   id: string;
   title: string;
-  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
+  start_time: string; // ✅ เปลี่ยนจาก time เป็น start_time
+  end_time: string; // ✅ เพิ่ม end_time
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -275,7 +276,20 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         const transformedData = (data || []).map(job => ({
           id: job.id,
           title: job.instrument, // ✅ แปลงจาก instrument เป็น title
-          time: job.time,       // ✅ ใช้คอลัมน์ time แทน starttime/endtime
+          start_time: job.start_time || job.time || '09:00', // ✅ ใช้ start_time หรือ fallback ไป time
+          end_time: job.end_time || (() => {
+            // ✅ ถ้าไม่มี end_time ให้คำนวณจาก start_time + 1 ชั่วโมง
+            const startTime = job.start_time || job.time || '09:00';
+            const [hours, minutes] = startTime.split(':').map(Number);
+            let endHours = hours + 1;
+            let endMinutes = minutes;
+            
+            if (endHours >= 24) {
+              endHours = endHours - 24;
+            }
+            
+            return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+          })(),
           location: job.location || '',
           date: job.date,
         }));
@@ -317,24 +331,67 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
  const handleSaveJob = async (jobs: CalendarJob[]) => {
     if (!isOwner) return;
 
+    console.log('🔍 handleSaveJob called with jobs:', jobs);
+    console.log('📊 Jobs array length:', jobs.length);
+    console.log('🔍 Jobs details:', jobs.map((job, index) => ({
+      index,
+      id: job.id,
+      idType: typeof job.id,
+      title: job.title,
+      start_time: job.start_time,
+      end_time: job.end_time,
+      isTemp: String(job.id).startsWith('temp_')
+    })));
+
     try {
       // 1. ส่งข้อมูลไปที่ 'jobs' ตามโครงสร้าง DB ใหม่
       for (const job of jobs) {
         // ✅ ห้ามส่งฟิลด์ id เด็ดขาดถ้าเป็นงานใหม่
-        const isTempJob = job.id.startsWith('temp_');
+        const isTempJob = job.id && String(job.id).startsWith('temp_');
         
         // ✅ สร้าง Object สำหรับบันทึก โดยไม่รวม id ถ้าเป็นงานใหม่
+        // ✅ Validation: ถ้าไม่มี end_time ให้ใช้ start_time + 1 ชั่วโมง
+        const startTime = job.start_time || '09:00';
+        let endTime = job.end_time;
+        
+        if (!endTime) {
+          // ✅ Default: เวลาเลิก = เวลาเริ่ม + 1 ชั่วโมง
+          const [hours, minutes] = startTime.split(':').map(Number);
+          let endHours = hours + 1;
+          let endMinutes = minutes;
+          
+          // ✅ จัดการกรณีเกิน 23:00
+          if (endHours >= 24) {
+            endHours = endHours - 24;
+          }
+          
+          endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        }
+        
         const jobData = {
           // ✅ ห้ามส่ง id ถ้าเป็นงานใหม่ให้ Identity column ทำงาน
           ...(isTempJob ? {} : { id: job.id }),
           // ✅ คอลัมน์ตามโครงสร้าง DB ใหม่
           user_id: profileUserId,
           instrument: job.title, // ✅ เปลี่ยนจาก title เป็น instrument
-          time: job.time,       // ✅ ใช้คอลัมน์ time แทน starttime
+          start_time: job.start_time, // ✅ เปลี่ยนจาก time เป็น start_time
+          end_time: endTime, // ✅ ใช้ endTime ที่คำนวณแล้ว
           date: job.date,
         };
 
+        console.log('🔍 Processing job:', {
+          originalId: job.id,
+          isTempJob,
+          jobDataKeys: Object.keys(jobData),
+          hasStartTime: !!jobData.start_time,
+          hasEndTime: !!jobData.end_time,
+          startTime: jobData.start_time,
+          endTime: jobData.end_time
+        });
+
         console.log('กำลังบันทึกข้อมูล:', jobData); // Debug log
+        console.log('Original job data:', job); // Debug original job
+        console.log('Calculated end_time:', endTime); // Debug calculated end_time
 
         const { error } = await supabase
           .from('jobs')
@@ -342,6 +399,22 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
         if (error) {
           console.error('Supabase Error:', error); // ✅ Log แบบละเอียด
+          console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          
+          // ✅ จัดการ Error เฉพาะเรื่อง column ไม่พบ
+          if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+            console.error('❌ Column not found error. Please check table schema.');
+            console.error('📋 Expected columns: start_time, end_time, instrument, user_id, date');
+            console.error('🔍 Actual jobData being sent:', Object.keys(jobData));
+            alert(`❌ ฐานข้อมูลไม่รองรับคอลัมน์นี้: ${error.message}\nกรุณาตรวจสอบว่าตาราง jobs มีคอลัมน์ start_time และ end_time หรือไม่`);
+          } else {
+            alert(`บันทึกลงฐานข้อมูลไม่สำเร็จ: ${error.message || 'Unknown error'}`);
+          }
           throw error;
         }
       }

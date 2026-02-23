@@ -5,7 +5,8 @@ import React from 'react';
 interface Job {
   id: string;
   title: string;
-  time: string; // ✅ ใช้คอลัมน์ time แทน starttime/endtime
+  start_time: string; // ✅ เปลี่ยนจาก time เป็น start_time
+  end_time: string; // ✅ เพิ่ม end_time
   location: string;
   date: string; // format: "DD/MM/YYYY"
 }
@@ -45,9 +46,10 @@ export const JobModal: React.FC<JobModalProps> = ({
 
   const handleAddJob = () => {
     const newJob: Job = {
-      id: Date.now().toString(),
+      id: `temp_${Date.now()}`, // ✅ เพิ่ม prefix 'temp_' ให้ชัดเจน
       title: '',
-      time: '09:00', // ✅ ใช้คอลัมน์ time แทน starttime/endtime
+      start_time: '09:00', // ✅ เปลี่ยนจาก time เป็น start_time
+      end_time: '10:00', // ✅ เพิ่ม end_time ค่าเริ่มต้น
       location: '',
       date: selectedDate,
     };
@@ -135,18 +137,27 @@ export const JobModal: React.FC<JobModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        เวลา
+                        เวลาเริ่ม
                       </label>
                       <input
                         type="time"
-                        value={job.time}
-                        onChange={(e) => handleJobChange(job.id, 'time', e.target.value)}
+                        value={job.start_time}
+                        onChange={(e) => handleJobChange(job.id, 'start_time', e.target.value)}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         disabled={!isOwner}
                       />
                     </div>
                     <div>
-                      {/* ลบช่องเวลาจบออกเนื่องจากใช้คอลัมน์ time เดียว */}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        เวลาเลิก
+                      </label>
+                      <input
+                        type="time"
+                        value={job.end_time}
+                        onChange={(e) => handleJobChange(job.id, 'end_time', e.target.value)}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isOwner ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        disabled={!isOwner}
+                      />
                     </div>
                   </div>
                 </div>
