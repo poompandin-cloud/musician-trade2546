@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   line_id: string | null;
+  facebook_url: string | null;
   avatar_url: string | null;
   credits: number;
   received_tokens?: number;
@@ -391,11 +392,12 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   
   const [formData, setFormData] = useState({
     full_name: "",
-phone: "",
-line_id: "",
-instruments: "",
-province: "",
-});
+    phone: "",
+    line_id: "",
+    facebook_url: "",
+    instruments: "",
+    province: "",
+  });
 
   const [videoInput, setVideoInput] = useState("");
   const [showVideoInput, setShowVideoInput] = useState(false);
@@ -496,12 +498,13 @@ province: "",
         } else if (data) {
           setProfile(data);
           setFormData({
-  full_name: data.full_name || "",
-  phone: data.phone || "",
-  line_id: data.line_id || "",
-  instruments: Array.isArray(data.instruments) ? data.instruments.join(',') : (data.instruments || ""), // ✅ รองรับทั้ง array และ string
-  province: data.province || "",
-});
+            full_name: data.full_name || "",
+            phone: data.phone || "",
+            line_id: data.line_id || "",
+            facebook_url: data.facebook_url || "",
+            instruments: data.instruments || "",
+            province: data.province || "",
+          });
           // ✅ โหลดเครื่องดนตรีที่เลือกจาก DB
           const instrumentsArray = Array.isArray(data.instruments) 
             ? data.instruments 
@@ -1119,6 +1122,7 @@ console.log("New instruments after removal:", newInstruments);
         full_name: formData.full_name || null,
         phone: formData.phone || null,
         line_id: formData.line_id || null,
+        facebook_url: formData.facebook_url || null,
         instruments: instrumentsString, // ✅ แปลง array เป็น string คั่นด้วย comma
         province: formData.province || null,
         updated_at: new Date().toISOString(),
@@ -1637,6 +1641,20 @@ console.log("New instruments after removal:", newInstruments);
                 />
               </div>
 
+              {/* Facebook URL */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Facebook className="w-4 h-4" />
+                  Facebook Profile
+                </Label>
+                <Input
+                  value={formData.facebook_url}
+                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                  placeholder="username หรือ https://www.facebook.com/username"
+                  className="rounded-2xl h-12"
+                />
+              </div>
+
               {/* แสดงเครดิต */}
               {profile && (
                 <div className="pt-4 border-t border-border">
@@ -1707,6 +1725,24 @@ console.log("New instruments after removal:", newInstruments);
                 </Label>
                 <p className="text-foreground">{profile?.line_id || "-"}</p>
               </div>
+
+              {/* Facebook URL - แสดงให้ทุกคนเห็น */}
+              {profile?.facebook_url && profile.facebook_url.trim() !== '' && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Facebook className="w-4 h-4" />
+                    Facebook Profile
+                  </Label>
+                  <a
+                    href={profile.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {profile.facebook_url.replace('https://www.facebook.com/', '').replace('https://facebook.com/', '')}
+                  </a>
+                </div>
+              )}
             </div>
             )}
           </CardContent>
