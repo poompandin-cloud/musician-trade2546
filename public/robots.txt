@@ -12,3 +12,21 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap
+Sitemap: https://gigglide.com/sitemap.xml
+
+# Block common non-content paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow search engines to crawl musician profiles
+Allow: /profile/
+
+# Allow search engines to crawl search results
+Allow: /search
+
+# Allow search engines to browse musicians
+Allow: /musicians
