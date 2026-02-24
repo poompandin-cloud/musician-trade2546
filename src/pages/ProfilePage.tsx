@@ -266,6 +266,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         .from('jobs')
         .select('*')
         .eq('user_id', profileUserId)
+        .eq('is_calendar_entry', true) // ✅ ดึงเฉพาะข้อมูลจากปฏิทิน
         .order('date', { ascending: true });
       
       if (error) {
@@ -377,6 +378,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
           start_time: job.start_time, // ✅ เปลี่ยนจาก time เป็น start_time
           end_time: endTime, // ✅ ใช้ endTime ที่คำนวณแล้ว
           date: job.date,
+          is_calendar_entry: true, // ✅ ระบุว่าเป็นข้อมูลจากปฏิทิน
         };
 
         console.log('🔍 Processing job:', {
@@ -421,6 +423,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
       // ✅ หลัง .upsert() สำเร็จ เรียก fetchCalendarJobs() ทันที
       await fetchCalendarJobs();
+      
+      // ✅ รีเฟรชข้อมูลหน้างานที่ฉันประกาศเพื่ออัปเดตการแสดงผล
+      await fetchMyJobs();
 
       setIsModalOpen(false); // ปิดหน้าต่างบันทึก
       console.log("บันทึกสำเร็จและ Sync เรียบร้อย!");
@@ -453,7 +458,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         .eq('id', jobId);
         
       if (error) {
-        console.error('Error deleting job:', error);
+        console.error('Error deleting calendar job:', error);
+      } else {
+        // ✅ รีเฟรชข้อมูลหน้างานที่ฉันประกาศเพื่ออัปเดตการแสดงผล
+        await fetchMyJobs();
+        console.log('Calendar job deleted and My Jobs refreshed');
       }
     } catch (err) {
       console.error('Error:', err);
@@ -640,6 +649,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         .from("jobs")
         .select("*")
         .eq("user_id", profileUserId)
+        .eq("is_calendar_entry", false) // ✅ ดึงเฉพาะงานประกาศ ไม่ใช้ปฏิทิน
         .order("created_at", { ascending: false });
 
       if (error) {

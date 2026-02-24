@@ -318,7 +318,9 @@ const App = () => {
   const activeJobs = jobs.filter(job => {
     if (!job.created_at) return true;
     const jobTime = new Date(job.created_at).getTime();
-    return (Date.now() - jobTime) < (3 * 24 * 60 * 60 * 1000);
+    const isRecent = (Date.now() - jobTime) < (3 * 24 * 60 * 60 * 1000);
+    const isNotCalendarEntry = !job.is_calendar_entry; // ✅ กรองออก calendar entries
+    return isRecent && isNotCalendarEntry;
   });
 
   // ✅ หาก isLoading เป็น true ให้แสดงหน้า Loading เปล่าๆ ก่อน
