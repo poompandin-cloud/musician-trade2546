@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import "./AuthPage.css";
@@ -9,8 +9,42 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [showLineBrowserWarning, setShowLineBrowserWarning] = useState(false);
   
   const { toast } = useToast();
+
+  // ✅ ตรวจสอบ User Agent สำหรับ LINE In-App Browser
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+    const isLineBrowser = userAgent.toLowerCase().includes('line/');
+    
+    if (isLineBrowser) {
+      console.log('🔍 Detected LINE In-App Browser');
+      
+      // สำหรับ Android: พยายามเปิดใน Chrome
+      if (userAgent.toLowerCase().includes('android')) {
+        console.log('🔍 Android detected, trying to open in Chrome');
+        window.location.href = 'googlechrome://navigate?url=' + encodeURIComponent(window.location.href);
+      } 
+      // สำหรับ iOS และทั่วไป: เพิ่ม parameter
+      else {
+        console.log('🔍 iOS or other detected, adding parameter');
+        const currentUrl = new URL(window.location.href);
+        if (!currentUrl.searchParams.has('openExternalBrowser')) {
+          currentUrl.searchParams.set('openExternalBrowser', '1');
+          window.location.href = currentUrl.toString();
+        } else {
+          // ถ้ามี parameter อยู่แล้ว แสดง UI แจ้งเตือน
+          setShowLineBrowserWarning(true);
+        }
+      }
+    }
+  }, []);
+
+  // ✅ ฟังก์ชันสำหรับปิด warning
+  const closeLineBrowserWarning = () => {
+    setShowLineBrowserWarning(false);
+  };
 
   const handleAuth = async (e: React.FormEvent, type: 'signin' | 'signup') => {
     e.preventDefault();
@@ -117,6 +151,37 @@ const AuthPage = () => {
 
   return (
     <div className="auth-body">
+      {/* ✅ LINE Browser Warning Overlay */}
+      {showLineBrowserWarning && (
+        <div className="line-browser-warning-overlay">
+          <div className="line-browser-warning-card">
+            <div className="warning-icon">
+              <i className="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>กรุณาเปิดในเบราว์เซอร์ภายนอก</h3>
+            <p>
+              ตอนนี้คุณกำลังใช้งานผ่าน LINE In-App Browser ซึ่งอาจทำให้บางฟีเจอร์ไม่ทำงานได้เต็มที่
+            </p>
+            <div className="instruction-steps">
+              <div className="step">
+                <span className="step-number">1</span>
+                <span className="step-text">กดปุ่ม <strong>...</strong> ที่มุมขวาบน</span>
+              </div>
+              <div className="step">
+                <span className="step-number">2</span>
+                <span className="step-text">เลือก <strong>Open in Browser</strong></span>
+              </div>
+            </div>
+            <button 
+              className="close-warning-btn"
+              onClick={closeLineBrowserWarning}
+            >
+              ฉันเข้าใจแล้ว
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={`container ${isActive ? "active" : ""}`} id="container">
         {/* Registration Form */}
         <div className="form-container sign-up">
