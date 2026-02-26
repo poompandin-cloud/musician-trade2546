@@ -10,6 +10,7 @@ const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showLineBrowserWarning, setShowLineBrowserWarning] = useState(false);
+  const [showAndroidChromeButton, setShowAndroidChromeButton] = useState(false);
   
   const { toast } = useToast();
 
@@ -21,10 +22,26 @@ const AuthPage = () => {
     if (isLineBrowser) {
       console.log('🔍 Detected LINE In-App Browser');
       
-      // สำหรับ Android: พยายามเปิดใน Chrome
+      // สำหรับ Android: พยายามเปิดใน Chrome ด้วย Intent
       if (userAgent.toLowerCase().includes('android')) {
-        console.log('🔍 Android detected, trying to open in Chrome');
-        window.location.href = 'googlechrome://navigate?url=' + encodeURIComponent(window.location.href);
+        console.log('🔍 Android detected, trying to open in Chrome with Intent');
+        
+        // วิธีที่ 1: ใช้ Intent ส่งตรงไปที่ Chrome
+        try {
+          const currentUrl = window.location.href;
+          const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+          console.log('🔍 Trying Intent URL:', intentUrl);
+          window.location.href = intentUrl;
+          
+          // ถ้า Intent ไม่ทำงาน แสดงปุ่มหลัง 2 วินาที
+          setTimeout(() => {
+            setShowAndroidChromeButton(true);
+          }, 2000);
+        } catch (error) {
+          console.log('🔍 Intent failed, showing Chrome button');
+          // แสดงปุ่ม Chrome ทันทีถ้า Intent ล้มเหลว
+          setShowAndroidChromeButton(true);
+        }
       } 
       // สำหรับ iOS และทั่วไป: เพิ่ม parameter
       else {
@@ -44,6 +61,13 @@ const AuthPage = () => {
   // ✅ ฟังก์ชันสำหรับปิด warning
   const closeLineBrowserWarning = () => {
     setShowLineBrowserWarning(false);
+  };
+
+  // ✅ ฟังก์ชันสำหรับเปิดใน Chrome (สำหรับ Android)
+  const openInChrome = () => {
+    const chromeUrl = 'googlechrome://navigate?url=' + encodeURIComponent(window.location.href);
+    console.log('🔍 Opening in Chrome:', chromeUrl);
+    window.location.href = chromeUrl;
   };
 
   const handleAuth = async (e: React.FormEvent, type: 'signin' | 'signup') => {
@@ -151,6 +175,35 @@ const AuthPage = () => {
 
   return (
     <div className="auth-body">
+      {/* ✅ Android Chrome Button (เฉพาะตอนเปิดใน LINE Android) */}
+      {showAndroidChromeButton && (
+        <div className="android-chrome-button-overlay">
+          <div className="android-chrome-button-card">
+            <div className="chrome-icon">
+              <i className="fa-brands fa-chrome"></i>
+            </div>
+            <h3>กรุณาเปิดใน Chrome</h3>
+            <p>
+              ตอนนี้คุณกำลังใช้งานผ่าน LINE Browser บน Android<br />
+              คลิกปุ่มด้านล่างเพื่อเปิดใน Chrome และใช้งานได้เต็มประสิทธิภาพ
+            </p>
+            <button 
+              className="chrome-open-btn"
+              onClick={openInChrome}
+            >
+              <i className="fa-brands fa-chrome"></i>
+              คลิกที่นี่เพื่อเปิดใน Chrome
+            </button>
+            <button 
+              className="chrome-close-btn"
+              onClick={() => setShowAndroidChromeButton(false)}
+            >
+              ฉันจะใช้ใน LINE Browser ต่อ
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ✅ LINE Browser Warning Overlay */}
       {showLineBrowserWarning && (
         <div className="line-browser-warning-overlay">
