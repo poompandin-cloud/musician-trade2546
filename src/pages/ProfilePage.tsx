@@ -486,6 +486,124 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
+  // ✅ ฟังก์ชันสำหรับตรวจสอบและแปลง URL วิดีโอ
+  const validateAndConvertVideoUrl = (url: string) => {
+    if (!url || !url.trim()) {
+      return { isValid: false, error: "กรุณากรอก URL วิดีโอ", embedUrl: null };
+    }
+
+    const trimmedUrl = url.trim();
+
+    // ตรวจสอบ YouTube URL
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+    const youtubeMatch = trimmedUrl.match(youtubeRegex);
+    
+    if (youtubeMatch) {
+      const videoId = youtubeMatch[4];
+      return {
+        isValid: true,
+        error: null,
+        embedUrl: `https://www.youtube.com/embed/${videoId}`,
+        originalUrl: trimmedUrl
+      };
+    }
+
+    // ตรวจสอบ Facebook URL (ยืดหยุ่นที่สุด - รับอะไรก็ได้ที่มี facebook.com หรือ fb.watch)
+    const facebookRegex = /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.watch)\/.+/;
+    const facebookMatch = trimmedUrl.match(facebookRegex);
+    
+    if (facebookMatch) {
+      // ทำความสะอาด URL ก่อนเก็บ
+      const cleanedUrl = cleanFacebookUrl(trimmedUrl);
+      return {
+        isValid: true,
+        error: null,
+        embedUrl: cleanedUrl, // Facebook ใช้ URL ที่ทำความสะอาดแล้ว
+        originalUrl: cleanedUrl,
+        platform: 'facebook'
+      };
+    }
+
+    return {
+      isValid: false,
+      error: "รองรับเฉพาะลิงก์จาก YouTube หรือ Facebook เท่านั้น",
+      embedUrl: null
+    };
+  };
+
+  // ✅ ฟังก์ชันสำหรับทำความสะอาด URL ของ Facebook
+  const cleanFacebookUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      // ลบพารามิเตอร์ที่ไม่จำเป็น
+      const paramsToRemove = ['mibextid', 's', 'ref', 'fref', '__tn__', 'eid', 'utm_source', 'utm_medium', 'utm_campaign'];
+      paramsToRemove.forEach(param => {
+        urlObj.searchParams.delete(param);
+      });
+      return urlObj.toString();
+    } catch (error) {
+      // ถ้าไม่สามารถ parse URL ได้ ให้คืนค่าเดิม
+      return url;
+    }
+  };
+
+  // ✅ ฟังก์ชันสำหรับสร้าง embed HTML
+  const createVideoEmbed = (url: string, index: number) => {
+    const validation = validateAndConvertVideoUrl(url);
+    
+    if (!validation.isValid) {
+      return (
+        <div key={index} className="aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+          <div className="text-center p-4">
+            <p className="text-red-500 text-sm">URL ไม่ถูกต้อง</p>
+            <p className="text-gray-500 text-xs mt-1">{validation.error}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // ตรวจสอบว่าเป็น YouTube หรือไม่
+    if (validation.embedUrl?.includes('youtube.com/embed/')) {
+      return (
+        <div key={index} className="aspect-video rounded-lg overflow-hidden bg-black border-border">
+          <iframe
+            src={validation.embedUrl}
+            className="w-full h-full"
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none'
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="YouTube video player"
+          />
+        </div>
+      );
+    }
+
+    // สำหรับ Facebook (รองรับทุกรูปแบบ: videos, watch, reels)
+    return (
+      <div key={index} className="aspect-video rounded-lg overflow-hidden bg-black border-border">
+        <iframe
+          src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(validation.originalUrl)}&show_text=false&width=560&height=315`}
+          className="w-full h-full"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            overflow: 'hidden'
+          }}
+          scrolling="no"
+          frameBorder="0"
+          allowFullScreen={true}
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          title="Facebook video player"
+        />
+      </div>
+    );
+  };
+
   // ฟังก์ชันสำหรับจัดการเครื่องดนตรี
   const handleInstrumentSelect = (instrumentValue: string) => {
     console.log("handleInstrumentSelect called with:", instrumentValue); // ✅ Debug log
@@ -678,30 +796,19 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
-  // เพิ่มวิดีโอ (อัปโหลดไฟล์)
+  // เพิ่มวิดีโอ (จาก URL)
   const handleAddVideo = async () => {
-    if (!videoFile) {
-      toast({ title: "กรุณาเลือกไฟล์วิดีโอ", variant: "destructive" });
+    if (!videoInput.trim()) {
+      toast({ title: "กรุณากรอก URL วิดีโอ", variant: "destructive" });
       return;
     }
 
-    // ตรวจสอบขนาดไฟล์ (จำกัด 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (videoFile.size > maxSize) {
+    // ตรวจสอบรูปแบบ URL
+    const validation = validateAndConvertVideoUrl(videoInput);
+    if (!validation.isValid) {
       toast({ 
-        title: "ไฟล์ใหญ่เกินไป", 
-        description: "สามารถอัปโหลดวิดีโอได้สูงสุด 50MB เท่านั้น", 
-        variant: "destructive" 
-      });
-      return;
-    }
-
-    // ตรวจสอบประเภทไฟล์
-    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/wmv', 'video/webm'];
-    if (!allowedTypes.includes(videoFile.type)) {
-      toast({ 
-        title: "ประเภทไฟล์ไม่รองรับ", 
-        description: "รองรับไฟล์วิดีโอ: MP4, AVI, MOV (iPhone), WMV, WebM", 
+        title: "URL ไม่ถูกต้อง", 
+        description: validation.error, 
         variant: "destructive" 
       });
       return;
@@ -731,68 +838,36 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
     setUploadingVideo(true);
     try {
-     // --- แก้ไขในฟังก์ชัน handleAddVideo ---
+      // เตรียมรายการวิดีโอใหม่ โดยเอาของใหม่ไปต่อท้ายของเดิม
+      const newVideos = [...currentVideos, validation.originalUrl];
 
-// 1. แก้ตรงนี้เพื่อให้นามสกุลไฟล์เป็นตัวพิมพ์เล็กเสมอ (ป้องกันปัญหา .MP4 vs .mp4)
-const fileExt = videoFile.name.split('.').pop()?.toLowerCase(); 
-
-// 2. ส่วนที่เหลือใช้ตามเดิมที่พี่แก้ไว้ (แผนที่ 1)
-const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-const fullPath = `${profileUserId}/${fileName}`;
-
-// 2. ปรับการอัปโหลดให้ใช้ fullPath
-const { data: uploadData, error: uploadError } = await (supabase as any)
-  .storage
-  .from('profile-videos')
-  .upload(fullPath, videoFile, { // ✅ ใช้ fullPath
-    contentType: videoFile.type,
-    upsert: false
-  });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        toast({ title: "อัปโหลดไม่สำเร็จ", variant: "destructive" });
-        return;
-      }
-
-      // 1. ดึง Public URL ของไฟล์ที่เพิ่งอัปโหลด
-// ✅ ใช้ fullPath เหมือนกับที่อัปโหลด
-const { data: urlData } = supabase.storage
-  .from('profile-videos')
-  .getPublicUrl(fullPath); // ✅ ใช้ fullPath ตรงกับ upload
-      // 2. รับค่า URL มา (ประกาศแค่ครั้งเดียวพอ!)
-      const videoUrl = urlData.publicUrl;
-      
-      // 3. เตรียมรายการวิดีโอใหม่ โดยเอาของใหม่ไปต่อท้ายของเดิม
-      const newVideos = [...(profile?.video_urls || []), videoUrl];
-
-      // 4. อัปเดตข้อมูลลง Database (ตาราง profiles)
+      // อัปเดตข้อมูลลง Database (ตาราง profiles)
       const { error: updateError } = await (supabase as any)
         .from("profiles")
         .update({ video_urls: newVideos })
         .eq("id", profileUserId);
 
-      // 5. เช็คผลลัพธ์
+      // เช็คผลลัพธ์
       if (updateError) {
         console.error("Error updating videos:", updateError);
         throw updateError;
       } else {
-        // อัปโหลดสำเร็จ -> อัปเดต State หน้าจอให้วิดีโอเด้งขึ้นมาทันที
-        toast({ title: "อัปโหลดวิดีโอสำเร็จ" });
+        // บันทึกสำเร็จ -> อัปเดต State หน้าจอให้วิดีโอเด้งขึ้นมาทันที
+        toast({ title: "เพิ่มวิดีโอสำเร็จ" });
         
         if (profile) {
           setProfile({ ...profile, video_urls: newVideos as any });
         }
         
-        // ล้างสถานะการเลือกไฟล์และการเปิดช่อง Input
-        setVideoFile(null);
+        // ล้างสถานะการกรอก URL และการเปิดช่อง Input
+        setVideoInput("");
         setShowVideoInput(false);
       }
     } catch (err) {
       console.error("System Error:", err);
       toast({ 
-        title: "อัปโหลดวิดีโอไม่สำเร็จ", 
-        description: "กรุณาลองใหม่อีกครั้ง",
+        title: "เกิดข้อผิดพลาด", 
+        description: "ไม่สามารถเพิ่มวิดีโอได้ กรุณาลองใหม่", 
         variant: "destructive" 
       });
     } finally {
@@ -1907,55 +1982,73 @@ console.log("New instruments after removal:", newInstruments);
             {isOwner && showVideoInput && (
               <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
                 <div>
-                  <Label>อัปโหลดวีดีโอ</Label>
+                  <Label>เพิ่มลิงก์วิดีโอ</Label>
                   <div className="mt-2">
-                    <input
-                      type="file"
-                      accept="video/mp4,video/avi,video/mov,video/quicktime,video/wmv,video/webm"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setVideoFile(file);
-                        }
-                      }}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+                    <Input
+                      type="url"
+                      placeholder="วางลิงก์ YouTube หรือ Facebook ที่นี่..."
+                      value={videoInput}
+                      onChange={(e) => setVideoInput(e.target.value)}
+                      className="w-full"
                     />
-                    {videoFile && (
+                    {videoInput && (
                       <div className="mt-2 p-2 bg-white rounded-lg border">
-                        <p className="text-sm font-medium">{videoFile.name}</p>
-                        <p className="text-xs text-gray-500">
-                          ขนาด: {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
+                        <div className="flex items-center gap-2">
+                          {videoInput.includes('youtube') || videoInput.includes('youtu.be') ? (
+                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                              <i className="fab fa-youtube text-red-600 text-sm"></i>
+                            </div>
+                          ) : videoInput.includes('facebook') || videoInput.includes('fb.watch') ? (
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <i className="fab fa-facebook text-blue-600 text-sm"></i>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Video className="w-4 h-4 text-gray-600" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {videoInput.length > 50 ? videoInput.substring(0, 50) + '...' : videoInput}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {validateAndConvertVideoUrl(videoInput).isValid ? 
+                                (videoInput.includes('youtube') || videoInput.includes('youtu.be') ? 'YouTube' : 'Facebook') : 
+                                'ตรวจสอบ URL...'
+                              }
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    รองรับไฟล์วีดีโอ: MP4, AVI, MOV (iPhone), WMV, WebM (สูงสุด 50MB)
+                    รองรับลิงก์วิดีโอจาก YouTube และ Facebook ทุกรูปแบบ (สูงสุด 3 ลิงก์)
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleAddVideo}
-                    disabled={uploadingVideo || !videoFile}
+                    disabled={uploadingVideo || !videoInput.trim() || !validateAndConvertVideoUrl(videoInput).isValid}
                     size="sm"
                     className="flex-1"
                   >
                     {uploadingVideo ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        กำลังอัปโหลด...
+                        กำลังเพิ่ม...
                       </>
                     ) : (
                       <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        อัปโหลดวีดีโอ
+                        <Plus className="w-4 h-4 mr-2" />
+                        เพิ่มวิดีโอ
                       </>
                     )}
                   </Button>
                   <Button
                     onClick={() => {
                       setShowVideoInput(false);
-                      setVideoFile(null);
+                      setVideoInput("");
                     }}
                     variant="outline"
                     size="sm"
@@ -1984,25 +2077,7 @@ console.log("New instruments after removal:", newInstruments);
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {videoUrls.map((videoUrl: string, index: number) => (
                   <div key={index} className="relative group">
-                    <div className="aspect-video rounded-lg overflow-hidden bg-black border-border" style={{ position: 'relative' }}>
-                      <video
-                        src={`${videoUrl}#t=0.1`}
-                        className="w-full h-full"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          backgroundColor: 'black'
-                        }}
-                        controls
-                        playsInline
-                        muted
-                        preload="metadata"
-                        poster={`${videoUrl}#t=0.1`}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
+                    {createVideoEmbed(videoUrl, index)}
                     {isOwner && (
                       <button
                         onClick={() => handleRemoveVideo(index)}
