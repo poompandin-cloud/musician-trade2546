@@ -9,14 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { INSTRUMENTS } from '@/constants/instruments';
-
-// รายชื่อจังหวัด
-const provinces = [
-  "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
-  "พระนครศรีอยุธยา", "สระบุรี", "ลพบุรี", "ชลบุรี (พัทยา)", "ระยอง", "จันทบุรี", 
-  "เชียงใหม่", "เชียงราย", "พิษณุโลก", "นครสวรรค์", "ขอนแก่น", "นครราชสีมา", 
-  "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
-];
+import { ProvinceSelect } from '@/components/ProvinceSelect'; // เพิ่ม import ProvinceSelect
 
 // รายชื่อเครื่องดนตรี (ใช้จาก constants)
 const instruments = INSTRUMENTS;
@@ -208,18 +201,12 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {/* Province Filter */}
           <div className="relative">
-            <select
+            <ProvinceSelect
               value={selectedProvince}
-              onChange={(e) => setSelectedProvince(e.target.value)}
-              className="w-full h-12 rounded-2xl border border-input bg-orange-500 text-white px-4 outline-none focus:ring-2 focus:ring-orange-600 appearance-none cursor-pointer hover:bg-orange-600 transition-colors"
-            >
-              <option value="" className="text-gray-700">เลือกจังหวัด...</option>
-              {provinces.map((province) => (
-                <option key={province} value={province} className="text-gray-700">
-                  {province}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setSelectedProvince(value)}
+              placeholder="เลือกจังหวัด..."
+              className="w-full"
+            />
           </div>
 
           {/* Instrument Filter */}

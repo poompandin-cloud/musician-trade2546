@@ -17,6 +17,8 @@ import { ContinuousCalendar } from '@/components/ContinuousCalendar';
 import { JobModal } from '@/components/JobModal';
 import { Maximize2 } from 'lucide-react';
 import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
+import { PROVINCES } from '@/constants/provinces';
+import { ProvinceSelect } from '@/components/ProvinceSelect';
 
 interface Profile {
   id: string;
@@ -93,14 +95,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeLoading, setLikeLoading] = useState<boolean>(false);
 
-  // รายการจังหวัด
-  const provinces = [
-    "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
-    "พระนครศรีอยุธยา", "สระบุรี", "ลพบุรี", "ชลบุรี (พัทยา)", "ระยอง", "จันทบุรี", 
-    "เชียงใหม่", "เชียงราย", "พิษณุโลก", "นครสวรรค์", "ขอนแก่น", "นครราชสีมา", 
-    "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
-  ];
-  
+  // รายการจังหวัด (ใช้จากไฟล์ constants)
+  const provinces = PROVINCES;
+
   // userId คือ id ของโปรไฟล์ที่กำลังดู (จาก URL หรือ currentUserId)
   const profileUserId = id || currentUserId;
   const isOwner = profileUserId === currentUserId;
@@ -1760,16 +1757,11 @@ console.log("New instruments after removal:", newInstruments);
                   <MapPin className="w-4 h-4" />
                   จังหวัดที่อยู่
                 </Label>
-                <select 
-                  className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500"
+                <ProvinceSelect
                   value={formData.province}
-                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                >
-                  <option value="">เลือกจังหวัด</option>
-                  {provinces.map((province) => (
-                    <option key={province} value={province}>{province}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({ ...formData, province: value })}
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-2">

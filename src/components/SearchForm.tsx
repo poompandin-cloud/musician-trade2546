@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom"; // เพิ่ม import
 import { useRealTimeCredits } from "@/services/realTimeCreditService";
 import { Checkbox } from "@/components/ui/checkbox"; // เพิ่ม import Checkbox
+import { PROVINCES } from '@/constants/provinces'; // เพิ่ม import จังหวัด
+import { ProvinceSelect } from '@/components/ProvinceSelect'; // เพิ่ม import ProvinceSelect
 
 const instruments = [
   // กีตาร์
@@ -30,13 +32,6 @@ const instruments = [
   
   // อื่นๆ - Custom Input
   { value: "other-custom", label: "อื่นๆ (ระบุเอง)", category: "อื่นๆ" }
-];
-
-const provinces = [
-  "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", 
-  "พระนครศรีอยุธยา", "สระบุรี", "ลพบุรี", "ชลบุรี (พัทยา)", "ระยอง", "จันทบุรี", 
-  "เชียงใหม่", "เชียงราย", "พิษณุโลก", "นครสวรรค์", "ขอนแก่น", "นครราชสีมา", 
-  "อุดรธานี", "ภูเก็ต", "สุราษฎร์ธานี", "สงขลา (หาดใหญ่)"
 ];
 
 interface SearchFormProps {
@@ -299,15 +294,12 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold">จังหวัด</Label>
-              <select 
-                className="w-full h-12 rounded-2xl border border-input bg-background px-4 outline-none focus:ring-2 focus:ring-orange-500"
+              <ProvinceSelect
                 value={formData.province}
-                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                required
-              >
-                <option value="">ระบุจังหวัด</option>
-                {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+                onChange={(value) => setFormData({ ...formData, province: value })}
+                placeholder="ระบุจังหวัด"
+                className="w-full"
+              />
             </div>
           </div>
 
