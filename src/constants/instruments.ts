@@ -1,21 +1,39 @@
-// รายการเครื่องดนตรีที่ใช้ทั่วทั้งแอปพลิเคชัน
+// รายการเครื่องดนตรีที่ใช้ทั่วทั้งแอปพลิเคชัน (เรียงตามตัวอักษร)
 export const INSTRUMENTS = [
+  // เครื่องสาย (Strings)
   { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
   { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
   { value: "bass", label: "เบส" },
-  { value: "drums-kit", label: "กลองชุด" },
+  { value: "double-bass", label: "ดับเบิลเบส" },
+  { value: "violin", label: "ไวโอลิน" },
+  { value: "viola", label: "วิโอลา" },
+  { value: "cello", label: "เชลโล" },
+  { value: "ukulele", label: "อูคูเลเล่" },
+  
+  // คีย์บอร์ด (Keyboards)
   { value: "keyboard-piano", label: "เปียโน" },
   { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
+  
+  // เครื่องเป่า (Woodwinds & Brass)
+  { value: "saxophone", label: "แซกโซโฟน" },
+  { value: "clarinet", label: "คลาริเน็ต" },
+  { value: "flute", label: "ฟลุต" },
+  { value: "trumpet", label: "ทรัมเป็ต" },
+  { value: "trombone", label: "ทรอมโบน" },
+  { value: "tuba", label: "ทูบา" },
+  { value: "french-horn", label: "เฟรนช์ฮอร์น" },
+  
+  // กลอง (Drums & Percussion)
+  { value: "drums-kit", label: "กลองชุด" },
+  { value: "drum-electric", label: "กลองไฟฟ้า" },
+  { value: "percussion", label: "เพอร์คัสชัน" },
+  
+  // ร้อง (Vocals)
   { value: "vocal-lead", label: "นักร้องนำ" },
   { value: "vocal-backup", label: "นักร้องประสาน" },
-  { value: "saxophone", label: "แซกโซโฟน" },
-  { value: "violin", label: "ไวโอลิน" },
-  { value: "trumpet", label: "ทรัมเป็ต" },
-  { value: "flute", label: "ฟลุต" },
-  { value: "ukulele", label: "อูคูเลเล่" },
+  
+  // อื่นๆ (Others)
   { value: "harmonica", label: "หมอนิกา" },
-  { value: "drum-electric", label: "กลองไฟฟ้า" },
-  { value: "acoustic-guitar", label: "กีตาร์อะคูสติก" },
 ];
 
 // ฟังก์ชันสำหรับหา label จาก value
