@@ -19,12 +19,14 @@ import { Maximize2 } from 'lucide-react';
 import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
+import { LineConnectButton } from '@/components/LineConnectButton';
 
 interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
   line_id: string | null;
+  line_user_id: string | null; // เพิ่ม LINE User ID สำหรับการแจ้งเตือน
   facebook_url: string | null;
   avatar_url: string | null;
   credits: number;
@@ -678,6 +680,24 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     if (!instrumentsStr) return [];
     return instrumentsStr.split(',').filter(inst => inst.trim());
   };
+
+  // ตรวจสอบ hash สำหรับการแชร์งาน
+  useEffect(() => {
+    const hash = window.location.hash.slice(1); // ตัด # ออก
+    if (hash) {
+      // ถ้ามี hash (job id) ให้ scroll ไปหางานนั้น
+      setTimeout(() => {
+        const jobElement = document.getElementById(`job-card-${hash}`);
+        if (jobElement) {
+          jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          jobElement.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2');
+          setTimeout(() => {
+            jobElement.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2');
+          }, 3000);
+        }
+      }, 1000);
+    }
+  }, []);
 
   // โหลดข้อมูลโปรไฟล์
   useEffect(() => {
@@ -1491,6 +1511,23 @@ console.log("New instruments after removal:", newInstruments);
     }
   };
 
+  // ฟังก์ชันสำหรับจัดการการเชื่อมต่อ LINE
+  const handleLineConnectSuccess = async (lineUserId: string) => {
+    // อัปเดต profile state
+    if (profile) {
+      setProfile({
+        ...profile,
+        line_user_id: lineUserId
+      });
+    }
+    
+    // อัปเดต formData ด้วย
+    setFormData(prev => ({
+      ...prev,
+      line_user_id: lineUserId
+    }));
+  };
+
   // ออกจากระบบ
   const handleLogout = async () => {
     const confirmLogout = window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?");
@@ -1788,6 +1825,18 @@ console.log("New instruments after removal:", newInstruments);
                   onChange={(e) => setFormData({ ...formData, line_id: e.target.value })}
                   placeholder="กรุณากรอก Line ID"
                   className="rounded-2xl h-12"
+                />
+              </div>
+
+              {/* LINE Connect Button */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  การแจ้งเตือนงาน
+                </Label>
+                <LineConnectButton 
+                  lineUserId={profile?.line_user_id}
+                  onConnectSuccess={handleLineConnectSuccess}
                 />
               </div>
 

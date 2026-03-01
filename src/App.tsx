@@ -19,6 +19,7 @@ import NearbyGigs from "./components/NearbyGigs";
 import MusicianSearch from "./pages/MusicianSearch";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
 import CreditDetailsPage from "./pages/CreditDetailsPage";
+import LineCallback from "./pages/LineCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -254,6 +255,38 @@ const App = () => {
       if (insertError) throw insertError;
       console.log("✅ บันทึกงานสำเร็จ ID:", insertedJob.id);
 
+      // 3.5. ส่งการแจ้งเตือนงานใหม่ผ่าน LINE
+      try {
+        const notificationResponse = await fetch('/api/notify-new-job', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            jobData: {
+              id: insertedJob.id,
+              title: newJob.title,
+              instrument: newJob.instrument,
+              venue: newJob.location,
+              province: newJob.province,
+              date: newJob.date,
+              time: newJob.time,
+              budget: newJob.budget
+            }
+          }),
+        });
+        
+        if (notificationResponse.ok) {
+          const notificationResult = await notificationResponse.json();
+          console.log("📱 ส่งการแจ้งเตือน LINE:", notificationResult);
+        } else {
+          console.log("⚠️ ไม่สามารถส่งการแจ้งเตือน LINE ได้:", await notificationResponse.text());
+        }
+      } catch (notificationError) {
+        console.log("❌ เกิดข้อผิดพลาดในการส่งแจ้งเตือน LINE:", notificationError);
+        // ไม่ต้อง throw error เพราะการส่งแจ้งเตือนไม่ควรทำให้การสร้างงานล้มเหลว
+      }
+
       // 4. หลังจากบันทึกงานสำเร็จ ให้ทำการหักเครดิตออก 5
       const newBalance = currentCredits - 5;
       console.log("🔍 กำลังจะหักเครดิต:", { currentCredits, newBalance, userId });
@@ -318,7 +351,7 @@ const App = () => {
   const activeJobs = jobs.filter(job => {
     if (!job.created_at) return true;
     const jobTime = new Date(job.created_at).getTime();
-    const isRecent = (Date.now() - jobTime) < (3 * 24 * 60 * 60 * 1000);
+    const isRecent = (Date.now() - jobTime) < (7 * 24 * 60 * 60 * 1000); // ← เปลี่ยนเป็น 7 วัน (1 สัปดาห์)
     const isNotCalendarEntry = !job.is_calendar_entry; // ✅ กรองออก calendar entries
     return isRecent && isNotCalendarEntry;
   });
@@ -416,6 +449,7 @@ const App = () => {
                   <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
                   <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
                   <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/line-callback" element={<LineCallback />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

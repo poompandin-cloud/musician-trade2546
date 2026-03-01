@@ -11,8 +11,8 @@ export const JobShareButton: React.FC<JobShareButtonProps> = ({ job }) => {
 
   const handleShare = async () => {
     try {
-      // สร้างลิงก์สำหรับงานนี้
-      const jobUrl = `${window.location.origin}/job/${job.id}`;
+      // สร้างลิงก์สำหรับงานนี้ - ใช้ profile page แทน
+      const jobUrl = `${window.location.origin}/profile#${job.id}`;
       const shareText = `รับสมัครนักดนตรี: ${job.title}`;
       
       // ตรวจสอบว่าเป็นมือถือและมี Web Share API
@@ -39,7 +39,7 @@ export const JobShareButton: React.FC<JobShareButtonProps> = ({ job }) => {
       
       // ถ้า Web Share API ล้มเหลว ให้คัดลอกลิงก์แทน
       try {
-        const jobUrl = `${window.location.origin}/job/${job.id}`;
+        const jobUrl = `${window.location.origin}/profile#${job.id}`;
         await navigator.clipboard.writeText(jobUrl);
         
         toast({
