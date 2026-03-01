@@ -11,28 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox"; // เพิ่ม import C
 import { PROVINCES } from '@/constants/provinces'; // เพิ่ม import จังหวัด
 import { ProvinceSelect } from '@/components/ProvinceSelect'; // เพิ่ม import ProvinceSelect
 
-const instruments = [
-  // กีตาร์
-  { value: "guitar-acoustic", label: "กีตาร์โปร่ง", category: "กีตาร์" },
-  { value: "guitar-electric", label: "กีตาร์ไฟฟ้า", category: "กีตาร์" },
-  
-  // คีย์บอร์ด/เปียโน
-  { value: "keyboard-piano", label: "เปียโน", category: "คีย์บอร์ด" },
-  { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์", category: "คีย์บอร์ด" },
-  
-  // กลอง
-  { value: "drums-kit", label: "กลองชุด", category: "กลอง" },
-  
-  // เครื่องสาย
-  { value: "strings-violin", label: "ไวโอลิน", category: "เครื่องสาย" },
-  
-  // ร้อง
-  { value: "vocal-lead", label: "นักร้องนำ", category: "ร้อง" },
-  { value: "vocal-backup", label: "นักร้องประสาน", category: "ร้อง" },
-  
-  // อื่นๆ - Custom Input
-  { value: "other-custom", label: "อื่นๆ (ระบุเอง)", category: "อื่นๆ" }
-];
+import { INSTRUMENTS } from '@/constants/instruments';
+
+const instruments = INSTRUMENTS;
 
 interface SearchFormProps {
   onBack: () => void;

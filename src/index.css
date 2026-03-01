@@ -4,6 +4,154 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Print Styles */
+@media print {
+  /* ซ่อน element ที่ไม่จำเป็น */
+  header,
+  footer,
+  nav,
+  .no-print,
+  button,
+  .btn,
+  [role="button"],
+  .bg-gradient-to-r,
+  .hover\\:from-purple-600,
+  .hover\\:to-pink-600,
+  .hover\\:from-blue-600,
+  .hover\\:to-cyan-600,
+  .bg-orange-500,
+  .hover\\:bg-orange-600 {
+    display: none !important;
+  }
+
+  /* จัดหน้าเนื้อหาให้เต็มความกว้าง */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  /* ขยายส่วนรายละเอียดงาน */
+  .card,
+  .bg-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* ปรับสีข้อความให้เป็นสีดำทั้งหมด */
+  * {
+    color: black !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+  }
+
+  /* ปรับขนาดและสีหัวข้อ */
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+    font-weight: bold !important;
+    margin: 1rem 0 0.5rem 0 !important;
+  }
+
+  h1 { font-size: 18pt !important; }
+  h2 { font-size: 16pt !important; }
+  h3 { font-size: 14pt !important; }
+
+  /* ปรับข้อความทั่วไป */
+  p, span, div {
+    color: black !important;
+  }
+
+  /* แสดง QR Code สำหรับการปริ้น */
+  .qr-code-print-only {
+    display: block !important;
+    margin: 1rem 0 !important;
+    text-align: center !important;
+  }
+  
+  .qr-code-print-only.no-print {
+    display: block !important;
+  }
+
+  .qr-code-print-only img {
+    width: 150px !important;
+    height: 150px !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* จัดรูปแบบตารางข้อมูล */
+  .grid,
+  .flex {
+    display: block !important;
+  }
+
+  .flex-col {
+    flex-direction: column !important;
+  }
+
+  /* ปรับระยะห่าง */
+  .gap-2,
+  .gap-4,
+  .gap-8 {
+    gap: 0.5rem !important;
+  }
+
+  .mb-2,
+  .mb-4,
+  .mb-6 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* จัดการ badge และ labels */
+  .badge,
+  .bg-orange-100,
+  .text-orange-800 {
+    background: #f5f5f5 !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 10pt !important;
+  }
+
+  /* ปรับข้อมูลการจ่ายเงิน */
+  .text-green-600,
+  .text-green-700 {
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  /* จัดการ avatar และรูปภาพ */
+  .avatar,
+  .avatar-fallback {
+    background: #f5f5f5 !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* ปรับ card content */
+  .card-content {
+    padding: 1rem !important;
+  }
+
+  /* เพิ่มข้อมูลติดต่อสำหรับการปริ้น */
+  .print-contact-info {
+    display: block !important;
+    margin-top: 2rem !important;
+    padding: 1rem !important;
+    border-top: 1px solid #ccc !important;
+    font-size: 10pt !important;
+  }
+  
+  .print-contact-info.no-print {
+    display: block !important;
+  }
+}
+
 
 @layer base {
   :root {

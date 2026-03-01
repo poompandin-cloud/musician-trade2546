@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Clock, Users, Music } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { Music, MapPin, Calendar, Clock, DollarSign, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BookingService } from "@/services/bookingService";
-import { toast } from "@/hooks/use-toast";
+import { JobShareButton } from "@/components/JobShareButton";
+import { JobPrintButton } from "@/components/JobPrintButton";
 
 interface Job {
   id: string;
@@ -40,6 +43,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // ดึงรายการงานที่เปิดรับสมัครเท่านั้น
   const fetchJobs = async () => {
@@ -194,7 +198,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({
       </div>
       
       {jobs.map((job) => (
-        <Card key={job.id} className="hover:shadow-lg transition-shadow">
+        <Card key={job.id} id={`job-card-${job.id}`} className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -262,16 +266,47 @@ export const JobFeed: React.FC<JobFeedProps> = ({
               </div>
             </div>
             
-            <div className="flex justify-end">
+            <div className="flex gap-2">
+              <JobShareButton job={job} />
+              <JobPrintButton job={job} />
               <Button
                 onClick={() => handleApplyJob(job.id)}
                 disabled={applyingJobId === job.id || !currentUserId}
-                className="bg-orange-500 hover:bg-orange-600"
+                className="bg-orange-500 hover:bg-orange-600 px-4 py-2"
+                size="sm"
               >
                 {applyingJobId === job.id ? 'กำลังสมัคร...' : 'รับงานนี้'}
               </Button>
             </div>
           </CardContent>
+          
+          {/* QR Code สำหรับการปริ้นเท่านั้น */}
+          <div className="qr-code-print-only no-print" style={{ display: 'none' }}>
+            <h3>QR Code สำหรับดูรายละเอียดงาน</h3>
+            <p>สแกนเพื่อดูข้อมูลเพิ่มเติม</p>
+            <div style={{ 
+              width: '150px', 
+              height: '150px', 
+              border: '2px solid #ccc', 
+              margin: '1rem auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f5f5f5'
+            }}>
+              <span style={{ fontSize: '12px', textAlign: 'center' }}>
+                QR Code<br/>Job ID: {job.id}
+              </span>
+            </div>
+          </div>
+          
+          {/* ข้อมูลติดต่อสำหรับการปริ้น */}
+          <div className="print-contact-info no-print" style={{ display: 'none' }}>
+            <strong>ข้อมูลติดต่อ:</strong><br/>
+            วันที่ปริ้น: {new Date().toLocaleDateString('th-TH')}<br/>
+            จากเว็บไซต์: Gig Glide (หางานดนตรี)<br/>
+            ลิงก์: {window.location.origin}/job/{job.id}
+          </div>
         </Card>
       ))}
     </div>

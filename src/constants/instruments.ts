@@ -34,6 +34,7 @@ export const INSTRUMENTS = [
   
   // อื่นๆ (Others)
   { value: "harmonica", label: "หมอนิกา" },
+  { value: "sound-engineer", label: "ซาวด์เอนจิเนีย" },
 ];
 
 // ฟังก์ชันสำหรับหา label จาก value

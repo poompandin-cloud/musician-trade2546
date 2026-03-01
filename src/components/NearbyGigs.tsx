@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { ArrowLeft, MapPin, Timer, Phone, MessageCircle, Filter, ChevronDown, X, Users, ExternalLink, AlertCircle, Calendar, Clock } from "lucide-react"; 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Popover,
@@ -17,6 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { JobShareButton } from "@/components/JobShareButton";
+import { JobPrintButton } from "@/components/JobPrintButton";
 
 interface NearbyGigsProps {
   jobs: any[];
@@ -173,13 +176,9 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
               <p className="text-muted-foreground font-medium">ไม่มีประกาศงานในขณะนี้</p>
             </div>
           ) : (
-            filteredJobs.map((gig) => {
-              let profile = Array.isArray(gig.profiles) ? gig.profiles[0] : gig.profiles || {};
-              const posterName = profile.full_name || "ผู้ใช้";
-              const posterAvatar = profile.avatar_url || null;
-
-              return (
-                <div key={gig.id} className={`relative p-5 rounded-3xl bg-card border shadow-sm ${
+            filteredJobs.map((gig) => (
+              <Card key={gig.id} id={`job-card-${gig.id}`} className="hover:shadow-lg transition-shadow">
+                <div className={`relative p-5 rounded-3xl bg-card border shadow-sm ${
                   gig.user_id === currentUserId ? 'border-orange-200 bg-orange-50/30' : 'border-border'
                 }`}>
                   
@@ -207,11 +206,11 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
 {/* 1. ส่วนหัว: ข้อมูลผู้โพสต์ (เรียบง่าย ไม่ทับเวลา) */}
 <button onClick={() => navigate(`/profile/${gig.user_id}`)} className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50 hover:opacity-80 transition-opacity w-full text-left">
   <Avatar className="w-10 h-10 border border-orange-100">
-    <AvatarImage src={posterAvatar || undefined} />
-    <AvatarFallback className="bg-orange-100 text-orange-600">{posterName.charAt(0)}</AvatarFallback>
+    <AvatarImage src={gig.profiles?.avatar_url || undefined} />
+    <AvatarFallback className="bg-orange-100 text-orange-600">{gig.profiles?.full_name?.charAt(0) || '?'}</AvatarFallback>
   </Avatar>
   <div className="flex-1 min-w-0">
-    <p className="text-sm font-semibold text-foreground truncate">{posterName}</p>
+    <p className="text-sm font-semibold text-foreground truncate">{gig.profiles?.full_name || 'ไม่ระบุชื่อ'}</p>
     <p className="text-[10px] text-muted-foreground">คลิกดูโปรไฟล์</p>
   </div>
 </button>
@@ -304,19 +303,22 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
 
 {/* 5. ปุ่มรับงาน: แก้ไข Logic เพื่อไม่ให้ปุ่มซ้อนกัน */}
 {gig.user_id !== currentUserId && (
-  <Button
-    onClick={() => gig.status === 'open' ? handleAcceptJob(gig.id, gig.lineId) : null}
-    disabled={gig.status === 'closed'}
-    className={`w-full font-bold py-6 text-lg rounded-2xl shadow-md ${
-      gig.status === 'closed' 
-        ? "bg-gray-400 text-white" 
-        : "bg-orange-500 hover:bg-orange-600 text-white"
-    }`}
-  >
-    {gig.status === 'closed' ? "ปิดรับสมัครแล้ว" : "รับงานนี้"}
-  </Button>
+  <div className="flex gap-2">
+    <JobShareButton job={gig} />
+    <JobPrintButton job={gig} />
+    <Button
+      onClick={() => gig.status === 'open' ? handleAcceptJob(gig.id, gig.lineId) : null}
+      disabled={gig.status === 'closed'}
+      className={`flex-1 font-bold py-6 text-lg rounded-2xl shadow-md ${
+        gig.status === 'closed' 
+          ? "bg-gray-400 text-white" 
+          : "bg-orange-500 hover:bg-orange-600 text-white"
+      }`}
+    >
+      {gig.status === 'closed' ? "ปิดรับสมัครแล้ว" : "รับงานนี้"}
+    </Button>
+  </div>
 )}
-
 
                   {gig.user_id === currentUserId && (
                     <div className="mt-4 pt-4 border-t border-dashed flex justify-center">
@@ -326,8 +328,8 @@ const NearbyGigs = ({ onBack, jobs, onDeleteJob, currentUserId }: NearbyGigsProp
                     </div>
                   )}
                 </div>
-              );
-            })
+              </Card>
+            ))
           )}
         </div>
       </main>

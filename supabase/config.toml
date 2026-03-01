@@ -1,7 +1,0 @@
-project_id = "xknjzrtwdoyweujswazz"
-
-[auth.external.line]
-enabled = true
-client_id = "2009193181"
-secret = "553bccb2a8d7aed559770f11719fdd6c"
-redirect_uri = "https://xknjzrtwdoyweujswazz.supabase.co/auth/v1/callback"
