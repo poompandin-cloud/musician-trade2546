@@ -10,8 +10,8 @@ export async function POST(request: Request) {
     
     // สร้าง Supabase client เพื่อตรวจสอบ session
     const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     );
     
     // แลกเปลี่ยน authorization code กับ access token
@@ -23,9 +23,9 @@ export async function POST(request: Request) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: `${window.location.origin}/line-callback`,
-        client_id: import.meta.env.VITE_LINE_CLIENT_ID,
-        client_secret: import.meta.env.VITE_LINE_CLIENT_SECRET,
+        redirect_uri: `${process.env.VITE_APP_URL || 'https://musiciantradethai.com'}/line-callback`,
+        client_id: process.env.VITE_LINE_CLIENT_ID,
+        client_secret: process.env.VITE_LINE_CLIENT_SECRET,
       }),
     });
     

@@ -10,8 +10,8 @@ export async function POST(request: Request) {
     
     // สร้าง Supabase client
     const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     );
     
     // ดึงรายชื่อ line_user_id ทั้งหมดที่เชื่อมต่อ LINE ไว้
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
               type: 'button',
               action: {
                 type: 'uri',
-                uri: `${import.meta.env.VITE_APP_URL || 'https://musiciantradethai.com'}/profile#${jobData.id}`,
+                uri: `${process.env.VITE_APP_URL || 'https://musiciantradethai.com'}/profile#${jobData.id}`,
                 label: 'ดูรายละเอียดงาน'
               },
               style: 'primary',
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
               type: 'button',
               action: {
                 type: 'uri',
-                uri: import.meta.env.VITE_APP_URL || 'https://musiciantradethai.com',
+                uri: process.env.VITE_APP_URL || 'https://musiciantradethai.com',
                 label: 'เปิดแอป Gig Glide'
               },
               style: 'secondary'
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
     };
     
     // ส่งข้อความไปยังทุกคนที่เชื่อมต่อ LINE
-    const lineAccessToken = import.meta.env.VITE_LINE_ACCESS_TOKEN;
+    const lineAccessToken = process.env.VITE_LINE_ACCESS_TOKEN;
     
     if (!lineAccessToken) {
       console.log('LINE Access Token not found - skipping LINE notifications');

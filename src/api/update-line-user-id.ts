@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     
     // สร้าง Supabase client
     const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     );
     
     // ตรวจสอบ user token
