@@ -20,6 +20,7 @@ import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
 import { LineConnectButton } from '@/components/LineConnectButton';
+import { ProfileComments } from '@/components/ProfileComments';
 
 interface Profile {
   id: string;
@@ -2402,6 +2403,15 @@ console.log("New instruments after removal:", newInstruments);
             </Button>
           </div>
         )}
+
+        {/* Profile Comments Section */}
+        <div className="mt-8">
+          <ProfileComments 
+            profileId={profileUserId}
+            isOwner={isOwner}
+            currentUserId={currentUserId}
+          />
+        </div>
       </main>
     </div>
   );
