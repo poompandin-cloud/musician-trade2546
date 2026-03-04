@@ -1561,7 +1561,7 @@ console.log("New instruments after removal:", newInstruments);
     );
   }
 
-  // Visitor Tracking - Background Process (moved here to avoid white screen)
+  // Visitor Tracking - Background Process (safe initialization)
   React.useEffect(() => {
     try {
       // ตรวจสอบว่ามี profileId และไม่ใช่ loading state
@@ -1577,6 +1577,7 @@ console.log("New instruments after removal:", newInstruments);
     }
   }, [profileUserId, currentUserId, loading]);
 
+  
 return (
   <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50">
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
