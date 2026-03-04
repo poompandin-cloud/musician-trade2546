@@ -119,27 +119,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
     }
 
-    // ส่งข้อมูลคอมเมนต์กลับไป (โดยไม่รวม IP Address)
-    const { data: safeComment } = await supabase
-      .from('public_comments')
-      .select(`
-        id,
-        profile_id,
-        author_id,
-        content,
-        created_at,
-        updated_at,
-        author:profiles!author_id (
-          full_name,
-          avatar_url
-        )
-      `)
-      .eq('id', comment.id)
-      .single();
-
+    // ส่งข้อมูลคอมเมนต์กลับไป (ใช้ข้อมูลจาก comment ตรงๆ เพื่อป้องกันปัญหา view)
+    console.debug('Returning comment data directly (bypassing public_comments view)');
+    
     return NextResponse.json({ 
       success: true, 
-      comment: safeComment,
+      comment: {
+        id: comment.id,
+        profile_id: comment.profile_id,
+        author_id: comment.author_id,
+        content: comment.content,
+        created_at: comment.created_at,
+        updated_at: comment.updated_at,
+        author: comment.author
+      },
       message: 'Comment created successfully'
     });
 
