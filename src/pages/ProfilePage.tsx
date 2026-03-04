@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
 import { LineConnectButton } from '@/components/LineConnectButton';
-import { ProfileComments } from '@/components/ProfileComments';
+import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 
 interface Profile {
   id: string;
@@ -1561,40 +1561,83 @@ console.log("New instruments after removal:", newInstruments);
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border p-4">
-        <div className="max-w-lg mx-auto flex items-center gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+return (
+  <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50">
+    <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+      <div className="container py-4 max-w-lg mx-auto px-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/')}
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>กลับ</span>
-          </button>
-          
-          {/* Husky Animation Logo - Centered */}
-          <div className="flex-1 flex justify-center">
-            <HuskyAnimation />
-          </div>
-          
-          {isOwner && (
-            <button
-              onClick={handleShareProfile}
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
-              title="แชร์โปรไฟล์"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-          )}
+          </Button>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            โปรไฟล์
+          </h1>
         </div>
-      </header>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/search')}
+            className="rounded-full hover:bg-gray-100"
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/nearby-gigs')}
+            className="rounded-full hover:bg-gray-100"
+          >
+            <MapPin className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
+    </header>
 
-      <main className="container py-8 max-w-lg mx-auto px-4 space-y-6">
-        {/* ส่วนโปรไฟล์ */}
-        <Card>
-          <CardHeader>
-            <CardTitle>ข้อมูลส่วนตัว</CardTitle>
+    {/* Visitor Tracking - Background Process */}
+    {(() => {
+      useVisitorTracking({ 
+        profileId: profileUserId, 
+        userId: currentUserId 
+      });
+      return null;
+    })()}
+
+    <main className="container py-8 max-w-lg mx-auto px-4 space-y-6">
+      {/* ส่วนโปรไฟล์ */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ข้อมูลส่วนตัว</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* รูปโปรไฟล์ */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
+                <AvatarFallback className="bg-orange-100 text-orange-600 text-2xl">
+                  {profile?.full_name?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              
+              {/* ปุ่มอัปโหลดรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
+              {isOwner && (
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors shadow-lg"
+                >
+                  <Camera className="w-5 h-5 text-white" />
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
           </CardHeader>
           <CardContent className="space-y-6">
             {/* รูปโปรไฟล์ */}
@@ -2403,15 +2446,6 @@ console.log("New instruments after removal:", newInstruments);
             </Button>
           </div>
         )}
-
-        {/* Profile Comments Section */}
-        <div className="mt-8">
-          <ProfileComments 
-            profileId={profileUserId}
-            isOwner={isOwner}
-            currentUserId={currentUserId}
-          />
-        </div>
       </main>
     </div>
   );
