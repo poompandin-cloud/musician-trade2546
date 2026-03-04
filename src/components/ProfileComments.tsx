@@ -135,6 +135,29 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       console.debug('Profile ID target:', profileId);
       console.debug('Profile ID type:', typeof profileId);
       console.debug('User ID type:', typeof currentUserId);
+      console.debug('Profile ID is null/undefined:', profileId === null || profileId === undefined);
+      console.debug('User ID is null/undefined:', currentUserId === null || currentUserId === undefined);
+
+      // ถ้าเป็น null หรือ undefined ให้แสดง error ก่อน
+      if (!profileId || profileId === 'undefined' || profileId === '') {
+        console.error('Profile ID is missing or invalid:', profileId);
+        toast({
+          title: "ข้อผิดพลาด",
+          description: "ไม่พบข้อมูลโปรไฟล์ กรุณารีเฟรชหน้านี้",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!currentUserId || currentUserId === 'undefined' || currentUserId === '') {
+        console.error('User ID is missing or invalid:', currentUserId);
+        toast({
+          title: "ข้อผิดพลาด",
+          description: "ไม่พบข้อมูลผู้ใช้ กรุณาล็อกอินใหม่",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // ตรวจสอบว่าเป็น UUID ที่ถูกต้อง
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -143,7 +166,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         console.error('Invalid profileId format in frontend:', profileId);
         toast({
           title: "ข้อผิดพลาด",
-          description: "รูปแบบข้อมูลโปรไฟล์ไม่ถูกต้อง",
+          description: `รูปแบบข้อมูลโปรไฟล์ไม่ถูกต้อง: ${profileId}`,
           variant: "destructive",
         });
         return;
@@ -153,7 +176,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         console.error('Invalid currentUserId format in frontend:', currentUserId);
         toast({
           title: "ข้อผิดพลาด",
-          description: "รูปแบบข้อมูลผู้ใช้ไม่ถูกต้อง",
+          description: `รูปแบบข้อมูลผู้ใช้ไม่ถูกต้อง: ${currentUserId}`,
           variant: "destructive",
         });
         return;
