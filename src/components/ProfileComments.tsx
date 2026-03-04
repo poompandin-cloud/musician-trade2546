@@ -133,6 +133,31 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       console.debug('Session data:', session);
       console.debug('Current user ID:', currentUserId);
       console.debug('Profile ID target:', profileId);
+      console.debug('Profile ID type:', typeof profileId);
+      console.debug('User ID type:', typeof currentUserId);
+
+      // ตรวจสอบว่าเป็น UUID ที่ถูกต้อง
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (!uuidRegex.test(profileId)) {
+        console.error('Invalid profileId format in frontend:', profileId);
+        toast({
+          title: "ข้อผิดพลาด",
+          description: "รูปแบบข้อมูลโปรไฟล์ไม่ถูกต้อง",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!uuidRegex.test(currentUserId)) {
+        console.error('Invalid currentUserId format in frontend:', currentUserId);
+        toast({
+          title: "ข้อผิดพลาด",
+          description: "รูปแบบข้อมูลผู้ใช้ไม่ถูกต้อง",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // ส่งไปยัง API route ที่จัดการ IP Address
       const response = await fetch('/api/comments', {

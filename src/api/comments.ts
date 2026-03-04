@@ -83,6 +83,24 @@ export async function POST(request: NextRequest) {
     console.debug('Inserting comment with IP:', authorIp);
     console.debug('User ID from auth:', userId);
     console.debug('Profile ID target:', profile_id);
+    console.debug('Content length:', content.trim().length);
+    
+    // ตรวจสอบว่าเป็น UUID ที่ถูกต้อง
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(profile_id)) {
+      console.error('Invalid profile_id format:', profile_id);
+      return NextResponse.json({ 
+        error: 'Invalid profile_id format. Expected UUID.' 
+      }, { status: 400 });
+    }
+    
+    if (!uuidRegex.test(userId)) {
+      console.error('Invalid user_id format:', userId);
+      return NextResponse.json({ 
+        error: 'Invalid user_id format. Expected UUID.' 
+      }, { status: 400 });
+    }
     
     const { data: comment, error: insertError } = await supabase
       .from('profile_comments')
