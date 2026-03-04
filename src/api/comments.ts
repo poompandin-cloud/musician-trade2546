@@ -80,13 +80,15 @@ export async function POST(request: NextRequest) {
     }
 
     // สร้างคอมเมนต์ใหม่พร้อม IP Address
+    console.debug('Inserting comment with IP:', authorIp);
+    
     const { data: comment, error: insertError } = await supabase
       .from('profile_comments')
       .insert({
         profile_id: profile_id,
         author_id: userId,
         content: content.trim(),
-        author_ip: authorIp, // เพิ่ม IP Address
+        author_ip: authorIp || 'unknown', // เพิ่ม IP Address พร้อม fallback
       })
       .select(`
         id,
@@ -101,6 +103,8 @@ export async function POST(request: NextRequest) {
         )
       `)
       .single();
+
+    console.debug('Insert result:', { comment, insertError });
 
     if (insertError) {
       console.error('Error inserting comment:', insertError);
@@ -117,7 +121,7 @@ export async function POST(request: NextRequest) {
         content,
         created_at,
         updated_at,
-        author:profiles (
+        author:profiles!author_id (
           full_name,
           avatar_url
         )
