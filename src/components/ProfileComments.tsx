@@ -128,12 +128,18 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
     try {
       setIsSubmitting(true);
 
+      // ตรวจสอบ session ก่อนส่ง
+      const { data: session } = await supabase.auth.getSession();
+      console.debug('Session data:', session);
+      console.debug('Current user ID:', currentUserId);
+      console.debug('Profile ID target:', profileId);
+
       // ส่งไปยัง API route ที่จัดการ IP Address
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${session?.session?.access_token}`,
         },
         body: JSON.stringify({
           profile_id: profileId,
@@ -142,8 +148,15 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       });
 
       const result = await response.json();
+      console.debug('API response:', { status: response.status, result });
 
       if (!response.ok) {
+        console.error('API Error Response:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          result 
+        });
+        
         if (result.code === 'RATE_LIMIT_EXCEEDED') {
           toast({
             title: "ส่งคอมเมนต์ได้เร็วเกินไป",
@@ -152,7 +165,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
           });
           return;
         }
-        throw new Error(result.error || 'Failed to create comment');
+        throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       // เพิ่มคอมเมนต์ใหม่ลงใน list
