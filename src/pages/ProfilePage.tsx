@@ -1561,6 +1561,22 @@ console.log("New instruments after removal:", newInstruments);
     );
   }
 
+  // Visitor Tracking - Background Process (moved here to avoid white screen)
+  React.useEffect(() => {
+    try {
+      // ตรวจสอบว่ามี profileId และไม่ใช่ loading state
+      if (profileUserId && profileUserId !== 'undefined' && profileUserId !== '' && !loading) {
+        useVisitorTracking({ 
+          profileId: profileUserId, 
+          userId: currentUserId 
+        });
+      }
+    } catch (error) {
+      // Silent error - ไม่ให้ visitor tracking ทำให้หน้าขาว
+      console.debug('Visitor tracking initialization failed:', error);
+    }
+  }, [profileUserId, currentUserId, loading]);
+
 return (
   <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50">
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
@@ -1599,15 +1615,7 @@ return (
       </div>
     </header>
 
-    {/* Visitor Tracking - Background Process */}
-    {(() => {
-      useVisitorTracking({ 
-        profileId: profileUserId, 
-        userId: currentUserId 
-      });
-      return null;
-    })()}
-
+    
     <main className="container py-8 max-w-lg mx-auto px-4 space-y-6">
       {/* ส่วนโปรไฟล์ */}
       <Card>

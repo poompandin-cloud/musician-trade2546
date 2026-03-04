@@ -11,17 +11,25 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
   const logIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // ตรวจสอบว่ามี profileId และไม่ใช่ loading state
+    if (!profileId || profileId === 'undefined' || profileId === '') {
+      return;
+    }
+
     // สร้าง session ID สำหรับผู้เข้าชมที่ไม่ได้ล็อกอิน
     const sessionId = userId ? null : `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // ฟังก์ชันสำหรับ log การเข้าชม (background)
     const logVisit = async () => {
       try {
+        // ตรวจสอบว่า window มีอยู่ (SSR protection)
+        if (typeof window === 'undefined') return;
+
         const response = await fetch('/api/visitor-logs', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-landing-page': window.location.href,
+            'x-landing-page': window.location?.href || '',
           },
           body: JSON.stringify({
             profile_id: profileId,
@@ -30,8 +38,14 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
           }),
         });
 
+        // ตรวจสอบว่า response ถูกต้อง
+        if (!response.ok) {
+          console.debug('Visitor tracking API error:', response.status);
+          return;
+        }
+
         const result = await response.json();
-        if (result.success) {
+        if (result?.success && result?.log_id) {
           logIdRef.current = result.log_id;
         }
       } catch (error) {
@@ -48,6 +62,9 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
       const isBounce = visitDuration < 10; // ถ้าอยู่น้อยกว่า 10 วินาที ถือว่าเป็น bounce
 
       try {
+        // ตรวจสอบว่า window และ navigator มีอยู่ (SSR protection)
+        if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+
         // ใช้ sendBeacon สำหรับการส่งข้อมูลเมื่อ page unload
         const data = {
           log_id: logIdRef.current,
@@ -59,7 +76,7 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
           type: 'application/json',
         });
 
-        if (navigator.sendBeacon) {
+        if (navigator?.sendBeacon) {
           navigator.sendBeacon('/api/visitor-logs', blob);
         } else {
           // Fallback สำหรับ browser ที่ไม่รองรับ sendBeacon
@@ -77,8 +94,10 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
       }
     };
 
-    // เริ่ม tracking ทันทีที่ component mount
-    logVisit();
+    // เริ่ม tracking ทันทีที่ component mount (แต่ต้องแน่ใจว่าไม่ใช่ SSR)
+    if (typeof window !== 'undefined') {
+      logVisit();
+    }
 
     // ตั้งค่า event listeners สำหรับ page unload
     const handlePageUnload = () => {
@@ -86,21 +105,26 @@ export const useVisitorTracking = ({ profileId, userId }: UseVisitorTrackingProp
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document?.visibilityState === 'hidden') {
         updateVisitOnUnload();
       }
     };
 
-    // Event listeners สำหรับตรวจจับการออกจากหน้า
-    window.addEventListener('beforeunload', handlePageUnload);
-    window.addEventListener('pagehide', handlePageUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Event listeners สำหรับตรวจจับการออกจากหน้า (SSR protection)
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      window.addEventListener('beforeunload', handlePageUnload);
+      window.addEventListener('pagehide', handlePageUnload);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     // Cleanup
     return () => {
-      window.removeEventListener('beforeunload', handlePageUnload);
-      window.removeEventListener('pagehide', handlePageUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // ลบ event listeners (SSR protection)
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        window.removeEventListener('beforeunload', handlePageUnload);
+        window.removeEventListener('pagehide', handlePageUnload);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       
       // อัปเดตข้อมูลเมื่อ component unmount
       updateVisitOnUnload();
