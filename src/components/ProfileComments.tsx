@@ -54,7 +54,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         .from('profile_comments')
         .select(`
           *,
-          author:profiles!inner (
+          author:profiles!author_id (
             full_name,
             avatar_url
           )

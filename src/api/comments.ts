@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         content,
         created_at,
         updated_at,
-        author:profiles (
+        author:profiles!author_id (
           full_name,
           avatar_url
         )
