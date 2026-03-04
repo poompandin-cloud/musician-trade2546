@@ -99,7 +99,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
     }
   };
 
-  // ส่งคอมเมนต์ใหม่
+  // ส่งคอมเมนต์ใหม่ (ผ่าน API Route)
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !currentUserId) {
       toast({
@@ -110,44 +110,38 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       return;
     }
 
-    // Spam protection: ตรวจสอบว่าส่งคอมเมนต์เกิน 3 รายการใน 1 นาทีหรือไม่
-    const recentComments = comments.filter(
-      comment => comment.author_id === currentUserId && 
-      new Date(comment.created_at).getTime() > Date.now() - (60 * 60 * 1000)
-    );
-
-    if (recentComments.length >= 3) {
-      toast({
-        title: "ส่งคอมเมนต์ได้เร็วเกินไป",
-        description: "คุณสามารถส่งคอมเมนต์ได้สูงสุด 3 รายการใน 1 นาที",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
-      const { data, error } = await supabase
-        .from('profile_comments')
-        .insert({
+      // ส่งไปยัง API route ที่จัดการ IP Address
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
           profile_id: profileId,
-          author_id: currentUserId,
           content: newComment.trim(),
-        })
-        .select(`
-          *,
-          author:profiles!inner (
-            full_name,
-            avatar_url
-          )
-        `)
-        .single();
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result.code === 'RATE_LIMIT_EXCEEDED') {
+          toast({
+            title: "ส่งคอมเมนต์ได้เร็วเกินไป",
+            description: "คุณสามารถส่งคอมเมนต์ได้สูงสุด 3 รายการใน 1 นาที",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(result.error || 'Failed to create comment');
+      }
 
       // เพิ่มคอมเมนต์ใหม่ลงใน list
-      setComments(prev => [data!, ...prev]);
+      setComments(prev => [result.comment, ...prev]);
       setNewComment('');
 
       toast({
