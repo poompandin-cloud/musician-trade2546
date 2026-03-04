@@ -21,6 +21,7 @@ import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
 import { LineConnectButton } from '@/components/LineConnectButton';
 import { useVisitorTracking } from '@/hooks/useVisitorTracking';
+import { ProfileComments } from '@/components/ProfileComments';
 
 interface Profile {
   id: string;
@@ -2428,6 +2429,13 @@ return (
             </Button>
           </div>
         )}
+
+        {/* Profile Comments Section */}
+        <ProfileComments 
+          profileId={profileUserId}
+          isOwner={isOwner}
+          currentUserId={currentUserId}
+        />
       </main>
     </div>
   );
