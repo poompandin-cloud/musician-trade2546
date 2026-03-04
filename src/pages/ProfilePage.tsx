@@ -1638,35 +1638,10 @@ return (
                     accept="image/*"
                     onChange={handleAvatarUpload}
                     className="hidden"
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* รูปโปรไฟล์ */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
-                  <AvatarFallback className="bg-orange-100 text-orange-600 text-2xl">
-                    {profile?.full_name?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                
-                {/* ปุ่มอัปโหลดรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
-                {isOwner && (
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors shadow-lg"
-                  >
-                    <Camera className="w-5 h-5 text-white" />
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                  </label>
-                )}
+                    disabled={uploading}
+                  />
+                </label>
+              )}
                 
                 {/* ปุ่มลบรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
                 {profile?.avatar_url && isOwner && (
