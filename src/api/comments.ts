@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       // ลองดึงจาก x-forwarded-for ก่อน (สำหรับ reverse proxy อย่าง Vercel, Cloudflare)
       const forwardedFor = req.headers.get('x-forwarded-for');
       if (forwardedFor) {
-        // x-forwarded-for อาจมีหลาย IP เช่น "client, proxy1, proxy2"
+        // x-forwarded-forอาจมีหลาย IP เช่น "client, proxy1, proxy2"
         // เราจะเอา IP แรก (client IP)
         return forwardedFor.split(',')[0].trim();
       }
@@ -36,7 +36,29 @@ export async function POST(request: NextRequest) {
       return 'unknown';
     };
 
+    // ตรวจสอบว่าเป็น IP address ที่ถูกต้อง (basic validation)
+    const isValidIp = (ip: string): boolean => {
+      if (!ip || ip === 'unknown') return true; // ยอม 'unknown' เป็นค่า fallback
+      if (typeof ip !== 'string') return false;
+      
+      // Basic IPv4 validation
+      const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      // Basic IPv6 validation (simplified)
+      const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+      
+      return ipv4Regex.test(ip) || ipv6Regex.test(ip);
+    };
+
     const authorIp = getIpAddress(request);
+    console.debug('Extracted IP address:', authorIp);
+    
+    // ตรวจสอบว่า IP address ถูกต้อง
+    if (!isValidIp(authorIp)) {
+      console.error('Invalid IP address format:', authorIp);
+      return NextResponse.json({ 
+        error: 'Invalid IP address format detected' 
+      }, { status: 400 });
+    }
     
     // สร้าง Supabase client
     const supabase = createClient(
@@ -102,6 +124,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
+    console.debug('Preparing to insert comment with data:', {
+      profile_id: profile_id,
+      author_id: userId,
+      content: content.trim(),
+      author_ip: authorIp || 'unknown',
+      profile_id_type: typeof profile_id,
+      author_id_type: typeof userId,
+      content_length: content.trim().length
+    });
+
     const { data: comment, error: insertError } = await supabase
       .from('profile_comments')
       .insert({
