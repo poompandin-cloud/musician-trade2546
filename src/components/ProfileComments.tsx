@@ -159,28 +159,14 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         return;
       }
 
-      // ตรวจสอบว่าเป็น UUID ที่ถูกต้อง
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      // ทำความสะอาด ID โดยตรง ไม่ตรวจสอบ pattern
+      const cleanProfileId = profileId.toString().trim();
+      const cleanCurrentUserId = currentUserId.toString().trim();
       
-      if (!uuidRegex.test(profileId)) {
-        console.error('Invalid profileId format in frontend:', profileId);
-        toast({
-          title: "ข้อผิดพลาด",
-          description: `รูปแบบข้อมูลโปรไฟล์ไม่ถูกต้อง: ${profileId}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!uuidRegex.test(currentUserId)) {
-        console.error('Invalid currentUserId format in frontend:', currentUserId);
-        toast({
-          title: "ข้อผิดพลาด",
-          description: `รูปแบบข้อมูลผู้ใช้ไม่ถูกต้อง: ${currentUserId}`,
-          variant: "destructive",
-        });
-        return;
-      }
+      console.debug('Cleaned frontend IDs:', {
+        profileId: cleanProfileId,
+        currentUserId: cleanCurrentUserId
+      });
 
       // ส่งไปยัง API route ที่จัดการ IP Address
       const response = await fetch('/api/comments', {
@@ -190,7 +176,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
           'Authorization': `Bearer ${session?.session?.access_token}`,
         },
         body: JSON.stringify({
-          profile_id: profileId,
+          profile_id: cleanProfileId,
           content: newComment.trim(),
         }),
       });

@@ -36,29 +36,12 @@ export async function POST(request: NextRequest) {
       return 'unknown';
     };
 
-    // ตรวจสอบว่าเป็น IP address ที่ถูกต้อง (basic validation)
-    const isValidIp = (ip: string): boolean => {
-      if (!ip || ip === 'unknown') return true; // ยอม 'unknown' เป็นค่า fallback
-      if (typeof ip !== 'string') return false;
-      
-      // Basic IPv4 validation
-      const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-      // Basic IPv6 validation (simplified)
-      const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-      
-      return ipv4Regex.test(ip) || ipv6Regex.test(ip);
-    };
-
     const authorIp = getIpAddress(request);
     console.debug('Extracted IP address:', authorIp);
     
-    // ตรวจสอบว่า IP address ถูกต้อง
-    if (!isValidIp(authorIp)) {
-      console.error('Invalid IP address format:', authorIp);
-      return NextResponse.json({ 
-        error: 'Invalid IP address format detected' 
-      }, { status: 400 });
-    }
+    // ใช้ค่า IP แบบ raw text โดยตรง ไม่ตรวจสอบ pattern
+    const finalIp = (typeof authorIp === 'string' && authorIp.trim()) ? authorIp.trim() : 'unknown';
+    console.debug('Final IP to save:', finalIp);
     
     // สร้าง Supabase client
     const supabase = createClient(
@@ -107,40 +90,25 @@ export async function POST(request: NextRequest) {
     console.debug('Profile ID target:', profile_id);
     console.debug('Content length:', content.trim().length);
     
-    // ตรวจสอบว่าเป็น UUID ที่ถูกต้อง
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    // ทำความสะอาด UUID โดยตรง ไม่ตรวจสอบ pattern
+    const cleanProfileId = profile_id.toString().trim();
+    const cleanUserId = userId.toString().trim();
     
-    if (!uuidRegex.test(profile_id)) {
-      console.error('Invalid profile_id format:', profile_id);
-      return NextResponse.json({ 
-        error: 'Invalid profile_id format. Expected UUID.' 
-      }, { status: 400 });
-    }
-    
-    if (!uuidRegex.test(userId)) {
-      console.error('Invalid user_id format:', userId);
-      return NextResponse.json({ 
-        error: 'Invalid user_id format. Expected UUID.' 
-      }, { status: 400 });
-    }
-    
-    console.debug('Preparing to insert comment with data:', {
-      profile_id: profile_id,
-      author_id: userId,
+    console.debug('Cleaned IDs:', {
+      profile_id: cleanProfileId,
+      author_id: cleanUserId,
       content: content.trim(),
-      author_ip: authorIp || 'unknown',
-      profile_id_type: typeof profile_id,
-      author_id_type: typeof userId,
-      content_length: content.trim().length
+      author_ip: finalIp
     });
 
+    // ใช้วิธีง่ายๆ ส่งข้อมูลโดยตรง ไม่มี relationship
     const { data: comment, error: insertError } = await supabase
       .from('profile_comments')
       .insert({
-        profile_id: profile_id,
-        author_id: userId,
+        profile_id: cleanProfileId,
+        author_id: cleanUserId,
         content: content.trim(),
-        author_ip: authorIp || 'unknown', // เพิ่ม IP Address พร้อม fallback
+        author_ip: finalIp, // ใช้ค่า IP ที่ทำความสะอาดแล้ว
       })
       .select(`
         id,
@@ -148,11 +116,7 @@ export async function POST(request: NextRequest) {
         author_id,
         content,
         created_at,
-        updated_at,
-        author:profiles!author_id (
-          full_name,
-          avatar_url
-        )
+        updated_at
       `)
       .single();
 
@@ -169,8 +133,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
     }
 
-    // ส่งข้อมูลคอมเมนต์กลับไป (ใช้ข้อมูลจาก comment ตรงๆ เพื่อป้องกันปัญหา view)
-    console.debug('Returning comment data directly (bypassing public_comments view)');
+    // ดึงข้อมูล author แยกต่างหาก (2-step query)
+    const { data: author, error: authorError } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', comment.author_id)
+      .single();
+    
+    console.debug('Author query result:', { author, authorError });
+
+    // ส่งข้อมูลคอมเมนต์กลับไป (2-step approach)
+    console.debug('Returning comment data with author info');
     
     return NextResponse.json({ 
       success: true, 
@@ -181,7 +154,7 @@ export async function POST(request: NextRequest) {
         content: comment.content,
         created_at: comment.created_at,
         updated_at: comment.updated_at,
-        author: comment.author
+        author: author || { full_name: 'Unknown', avatar_url: null }
       },
       message: 'Comment created successfully'
     });
