@@ -47,6 +47,9 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       const from = (pageNum - 1) * COMMENTS_PER_PAGE;
       const to = from + COMMENTS_PER_PAGE - 1;
       
+      console.debug('Fetching comments for profile:', profileId);
+      console.debug('Query range:', from, 'to', to);
+      
       const { data, error } = await supabase
         .from('profile_comments')
         .select(`
@@ -60,7 +63,12 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (error) throw error;
+      console.debug('Supabase response:', { data, error });
+
+      if (error) {
+        console.error('Supabase error fetching comments:', error);
+        throw error;
+      }
 
       if (append) {
         setComments(prev => [...prev, ...(data || [])]);
@@ -73,9 +81,16 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
 
     } catch (error) {
       console.error('Error fetching comments:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถโหลดคอมเมนต์ได้ กรุณาลองใหม่",
+        description: `ไม่สามารถโหลดคอมเมนต์ได้: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
