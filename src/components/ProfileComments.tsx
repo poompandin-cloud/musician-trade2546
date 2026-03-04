@@ -180,9 +180,15 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
 
     } catch (error) {
       console.error('Error submitting comment:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถส่งคอมเมนต์ได้ กรุณาลองใหม่",
+        description: `ไม่สามารถส่งคอมเมนต์ได้: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
