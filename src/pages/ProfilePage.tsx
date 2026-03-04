@@ -682,21 +682,31 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     return instrumentsStr.split(',').filter(inst => inst.trim());
   };
 
-  // ตรวจสอบ hash สำหรับการแชร์งาน
+  // ตรวจสอบ hash สำหรับการแชร์งาน (SSR safe)
   useEffect(() => {
-    const hash = window.location.hash.slice(1); // ตัด # ออก
-    if (hash) {
-      // ถ้ามี hash (job id) ให้ scroll ไปหางานนั้น
-      setTimeout(() => {
-        const jobElement = document.getElementById(`job-card-${hash}`);
-        if (jobElement) {
-          jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          jobElement.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2');
+    // ตรวจสอบว่าอยู่บน browser ก่อน
+    if (typeof window !== 'undefined') {
+      try {
+        const hash = window.location.hash.slice(1); // ตัด # ออก
+        if (hash) {
+          // ถ้ามี hash (job id) ให้ scroll ไปหางานนั้น
           setTimeout(() => {
-            jobElement.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2');
-          }, 3000);
+            if (typeof document !== 'undefined') {
+              const element = document.getElementById(`job-card-${hash}`);
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // เพิ่ม highlight effect
+                element.classList.add('ring-4', 'ring-orange-400', 'ring-opacity-50');
+                setTimeout(() => {
+                  element.classList.remove('ring-4', 'ring-orange-400', 'ring-opacity-50');
+                }, 3000);
+              }
+            }
+          }, 1000);
         }
-      }, 1000);
+      } catch (error) {
+        console.debug('Hash check failed:', error);
+      }
     }
   }, []);
 
@@ -764,8 +774,11 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     fetchProfileLikes();
   }, [profileUserId, currentUserId]);
 
-  // ปิด dropdown เมื่อคลิกข้างนอก
+  // ปิด dropdown เมื่อคลิกข้างนอก (SSR safe)
   useEffect(() => {
+    // ตรวจสอบว่าอยู่บน browser ก่อน
+    if (typeof document === 'undefined') return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (showInstrumentDropdown) {
         setShowInstrumentDropdown(false);
@@ -1561,22 +1574,7 @@ console.log("New instruments after removal:", newInstruments);
     );
   }
 
-  // Visitor Tracking - Background Process (safe initialization)
-  React.useEffect(() => {
-    try {
-      // ตรวจสอบว่ามี profileId และไม่ใช่ loading state
-      if (profileUserId && profileUserId !== 'undefined' && profileUserId !== '' && !loading) {
-        useVisitorTracking({ 
-          profileId: profileUserId, 
-          userId: currentUserId 
-        });
-      }
-    } catch (error) {
-      // Silent error - ไม่ให้ visitor tracking ทำให้หน้าขาว
-      console.debug('Visitor tracking initialization failed:', error);
-    }
-  }, [profileUserId, currentUserId, loading]);
-
+  
   
 return (
   <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50">
