@@ -37,9 +37,17 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     budget: "",
     lineId: "", 
     phone: "",
-    expiryDate: "",
+    expiryDate: getDefaultExpiryDate(), // ✅ ตั้งค่าวันหมดอายุ default 30 วัน
     additionalNotes: ""
   });
+
+  // ✅ ฟังก์ชันคำนวณวันหมดอายุ default (30 วัน)
+  function getDefaultExpiryDate(): string {
+    const today = new Date();
+    const expiryDate = new Date(today);
+    expiryDate.setDate(today.getDate() + 30); // เพิ่ม 30 วัน
+    return expiryDate.toISOString().split('T')[0];
+  }
 
   // State สำหรับการยอมรับเงื่อนไข
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -311,7 +319,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
                 min={new Date().toISOString().split('T')[0]}
               />
               <p className="text-xs text-muted-foreground">
-                ประกาศจะถูกซ่อนหลังจากวันนี้
+                ประกาศจะถูกซ่อนหลังจากวันนี้ (ค่าเริ่มต้น: 30 วัน)
               </p>
             </div>
             <div className="space-y-2">
