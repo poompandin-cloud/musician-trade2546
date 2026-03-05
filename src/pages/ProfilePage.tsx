@@ -872,6 +872,33 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
+  // ฟังก์ชันแชร์โพสต์งาน (สำหรับ Social Media)
+  const handleShareJob = (job: Job) => {
+    // สร้าง URL สำหรับโพสต์งานโดยเฉพาะ
+    const jobUrl = `${window.location.origin}/job/${job.id}`;
+    const shareTitle = `หางาน${job.instrument} - ${job.location} - snowguin`;
+    const shareDescription = `หางาน${job.instrument} ที่${job.location} จังหวัด${job.province} ค่าจ้าง${job.budget} ${job.duration}`;
+    
+    console.debug('Sharing job URL:', jobUrl);
+    console.debug('Job ID:', job.id);
+    console.debug('Job details:', { instrument: job.instrument, location: job.location });
+    
+    if (navigator.share) {
+      navigator.share({
+        title: shareTitle,
+        text: shareDescription,
+        url: jobUrl,
+      }).catch((err) => console.error("Error sharing job:", err));
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(jobUrl);
+      toast({ 
+        title: "คัดลอกลิงก์งานแล้ว", 
+        description: `ลิงก์ ${jobUrl} ถูกคัดลอกไปยังคลิปบอร์ดแล้ว` 
+      });
+    }
+  };
+
   // เพิ่มวิดีโอ (จาก URL)
   const handleAddVideo = async () => {
     if (!videoInput.trim()) {
@@ -2361,13 +2388,23 @@ return (
                             {job.location}, {job.province}
                           </p>
                         </div>
-                        <button
-                          onClick={() => handleDeleteJob(job.id)}
-                          className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                          title="ลบประกาศ"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {/* Share Job Button */}
+                          <button
+                            onClick={() => handleShareJob(job)}
+                            className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                            title="แชร์ประกาศงาน"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteJob(job.id)}
+                            className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                            title="ลบประกาศ"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
