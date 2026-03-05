@@ -862,7 +862,10 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     } else {
       // Fallback: Copy to clipboard
       navigator.clipboard.writeText(profileUrl);
-      toast({ title: "คัดลอกลิงก์แล้ว", description: "ลิงก์โปรไฟล์ถูกคัดลอกไปยังคลิปบอร์ดแล้ว" });
+      toast({ 
+        title: "คัดลอกลิงก์แล้ว", 
+        description: "ลิงก์โปรไฟล์ถูกคัดลอกไปยังคลิปบอร์ดแล้ว" 
+      });
     }
   };
 
@@ -1703,7 +1706,7 @@ return (
               </div>
               {uploading && <p className="text-sm text-muted-foreground">กำลังดำเนินการ...</p>}
               
-              {/* Copy Link Button */}
+              {/* Copy Link & Share Buttons */}
               <div className="w-full max-w-xs space-y-3">
                 <button
                   onClick={handleCopyProfileLink}
@@ -1724,6 +1727,15 @@ return (
                       <span>คัดลอกลิงก์</span>
                     </>
                   )}
+                </button>
+                
+                {/* Share Button */}
+                <button
+                  onClick={handleShareProfile}
+                  className="w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>แชร์โปรไฟล์</span>
                 </button>
               </div>
               
