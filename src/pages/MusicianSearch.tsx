@@ -13,31 +13,36 @@ import { ProvinceSelect } from '@/components/ProvinceSelect'; // เพิ่ม
 
 if (typeof document !== 'undefined') {
   const styleId = 'musician-rank-styles';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-     @keyframes orange-glow-top {
-  0% { 
-    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
-    border-color: rgba(249, 115, 22, 0.4); 
+  let styleElement = document.getElementById(styleId);
+  if (!styleElement) {
+    styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    document.head.appendChild(styleElement);
   }
-  50% { 
-    /* --- เปลี่ยนสีตรงนี้เป็นสีเหลืองทองตอนสว่างที่สุด --- */
-    box-shadow: 0 0 40px rgba(250, 204, 21, 0.8); 
-    border-color: rgba(250, 204, 21, 1); 
-  }
-  100% { 
-    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
-    border-color: rgba(249, 115, 22, 0.4); 
-  }
-}
+  styleElement.textContent = `
+    @keyframes orange-glow-top {
+      0% { 
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
+        border-color: rgba(249, 115, 22, 0.4); 
       }
-      .rank-1-glow { animation: orange-glow-top 2s ease-in-out infinite; border-width: 2px !important; }
-      .rank-sub-glow { animation: orange-glow-sub 2s ease-in-out infinite; border-width: 2px !important; }
-    `;
-    document.head.appendChild(style);
-  }
+      50% { 
+        /* --- สีทองแบบพรีเมียม (Gold Metallic) --- */
+        box-shadow: 0 0 45px hsla(72, 58%, 70%, 0.80), inset 0 0 10px rgba(255, 215, 0, 0.3); 
+        border-color: rgba(212, 175, 55, 1); 
+      }
+      100% { 
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
+        border-color: rgba(249, 115, 22, 0.4); 
+      }
+    }
+    @keyframes orange-glow-sub {
+      0% { box-shadow: 0 0 5px rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(46, 223, 46, 0.4); border-color: rgba(249, 115, 22, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); }
+    }
+    .rank-1-glow { animation: orange-glow-top 4s ease-in-out infinite; border-width: 2px !important; }
+    .rank-sub-glow { animation: orange-glow-sub 4s ease-in-out infinite; border-width: 2px !important; }
+  `;
 }
 
 const glowStyles = `
