@@ -823,10 +823,13 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     console.debug('Copying profile URL:', profileUrl);
     console.debug('Current page URL:', window.location.href);
     console.debug('Profile ID:', profileUserId);
+    console.debug('Window location origin:', window.location.origin);
     
     try {
       await navigator.clipboard.writeText(profileUrl);
       setCopiedLink(true);
+      
+      // แสดง toast พร้อม URL ที่คัดลอกไป
       toast({ 
         title: "คัดลอกลิงก์โปรไฟล์นี้แล้ว!", 
         description: `ลิงก์ ${profileUrl} ถูกคัดลอกไปยังคลิปบอร์ดแล้ว` 
