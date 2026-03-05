@@ -899,109 +899,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
-  // ฟังก์ชันปริ้นงาน
-  const handlePrintJob = (job: Job) => {
-    try {
-      // สร้าง HTML สำหรับการปริ้น
-      const printContent = `
-        <html>
-          <head>
-            <title>ประกาศงาน - ${job.instrument}</title>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
-                line-height: 1.6;
-              }
-              .header {
-                text-align: center;
-                border-bottom: 2px solid #f97316;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-              }
-              .job-title {
-                color: #f97316;
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 10px;
-              }
-              .job-details {
-                margin-bottom: 15px;
-              }
-              .job-details p {
-                margin: 5px 0;
-              }
-              .job-details strong {
-                color: #333;
-              }
-              .footer {
-                margin-top: 30px;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-                border-top: 1px solid #ddd;
-                padding-top: 10px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>ประกาศงาน</h1>
-              <p>จากเว็บไซต์ Gig Glide (หางานดนตรี)</p>
-            </div>
-            
-            <div class="job-title">${job.instrument}</div>
-            
-            <div class="job-details">
-              <p><strong>สถานที่:</strong> ${job.location}, ${job.province}</p>
-              <p><strong>ระยะเวลา:</strong> ${job.duration || '-'}</p>
-              <p><strong>ค่าจ้าง:</strong> ${job.budget}</p>
-              ${job.additional_notes ? `<p><strong>หมายเหตุ:</strong><br>${job.additional_notes}</p>` : ''}
-              <p><strong>วันที่ประกาศ:</strong> ${new Date(job.created_at).toLocaleDateString('th-TH')}</p>
-            </div>
-            
-            <div class="footer">
-              <p>ลิงก์: ${window.location.origin}/job/${job.id}</p>
-              <p>พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')}</p>
-            </div>
-          </body>
-        </html>
-      `;
-      
-      // เปิดหน้าต่างใหม่สำหรับการปริ้น
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        
-        // รอให้หน้าต่างโหลดเสร็จก่อนปริ้น
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 500);
-        
-        toast({
-          title: "เปิดหน้าต่างปริ้นแล้ว",
-          description: "เลือกเครื่องปริ้นและตั้งค่าตามต้องการ",
-        });
-      } else {
-        toast({
-          title: "ไม่สามารถเปิดหน้าต่างปริ้นได้",
-          description: "กรุณาอนุญาตให้เปิดป็ปอัปหน้าต่าง",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Error printing job:', error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเปิดหน้าต่างปริ้นได้ กรุณาลองใหม่",
-        variant: "destructive",
-      });
-    }
-  };
-
+  
   // เพิ่มวิดีโอ (จาก URL)
   const handleAddVideo = async () => {
     if (!videoInput.trim()) {
@@ -2499,13 +2397,6 @@ return (
                             title="แชร์ประกาศงาน"
                           >
                             <Share2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handlePrintJob(job)}
-                            className="text-gray-500 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                            title="ปริ้นประกาศงาน"
-                          >
-                            <Printer className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteJob(job.id)}
