@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook, Search } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook, Search, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +98,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [totalLikes, setTotalLikes] = useState<number>(0);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeLoading, setLikeLoading] = useState<boolean>(false);
+
+  // State สำหรับการคัดลอกลิงก์
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
   // รายการจังหวัด (ใช้จากไฟล์ constants)
   const provinces = PROVINCES;
@@ -812,18 +815,47 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
   };
 
-  // ฟังก์ชันแชร์โปรไฟล์
+  // ฟังก์ชันคัดลอกลิงก์โปรไฟล์
+  const handleCopyProfileLink = async () => {
+    // ใช้ URL ปัจจุบันที่แสดงอยู่แทนการสร้างใหม่
+    const currentUrl = window.location.href;
+    
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      setCopiedLink(true);
+      toast({ 
+        title: "คัดลอกลิงก์โปรไฟล์นี้แล้ว!", 
+        description: `ลิงก์ ${currentUrl} ถูกคัดลอกไปยังคลิปบอร์ดแล้ว` 
+      });
+      
+      // Reset state หลัง 3 วินาที
+      setTimeout(() => setCopiedLink(false), 3000);
+    } catch (err) {
+      console.error("Error copying link:", err);
+      toast({ 
+        title: "คัดลอกลิงก์ไม่สำเร็จ", 
+        description: "กรุณาลองใหม่อีกครั้ง", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // ฟังก์ชันแชร์โปรไฟล์ (สำหรับ Social Media)
   const handleShareProfile = () => {
-    const profileUrl = `${window.location.origin}/profile/${profileUserId}`;
+    // ใช้ URL ปัจจุบันที่แสดงอยู่
+    const currentUrl = window.location.href;
+    const shareTitle = `${profile?.full_name || 'โปรไฟล์'} - snowguin`;
+    const shareDescription = `ดูโปรไฟล์ของ ${profile?.full_name || 'นักดนตรี'} - นักดนตรี${profile?.instruments ? ' ' + profile.instruments : ''} จาก${profile?.province || ''}`;
+    
     if (navigator.share) {
       navigator.share({
-        title: `${profile?.full_name || 'โปรไฟล์'} - snowguin`,
-        text: `ดูโปรไฟล์ของ ${profile?.full_name || 'นักดนตรี'}`,
-        url: profileUrl,
+        title: shareTitle,
+        text: shareDescription,
+        url: currentUrl,
       }).catch((err) => console.error("Error sharing:", err));
     } else {
       // Fallback: Copy to clipboard
-      navigator.clipboard.writeText(profileUrl);
+      navigator.clipboard.writeText(currentUrl);
       toast({ title: "คัดลอกลิงก์แล้ว", description: "ลิงก์โปรไฟล์ถูกคัดลอกไปยังคลิปบอร์ดแล้ว" });
     }
   };
@@ -1650,20 +1682,44 @@ return (
                   />
                 </label>
               )}
-                
-                {/* ปุ่มลบรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
-                {profile?.avatar_url && isOwner && (
-                  <button
-                    onClick={handleAvatarDelete}
-                    disabled={uploading}
-                    className="absolute top-0 right-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="ลบรูปโปรไฟล์"
-                  >
-                    <Trash2 className="w-4 h-4 text-white" />
-                  </button>
-                )}
+              
+              {/* ปุ่มลบรูป - แสดงเฉพาะเจ้าของโปรไฟล์เท่านั้น */}
+              {profile?.avatar_url && isOwner && (
+                <button
+                  onClick={handleAvatarDelete}
+                  disabled={uploading}
+                  className="absolute top-0 right-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="ลบรูปโปรไฟล์"
+                >
+                  <Trash2 className="w-4 h-4 text-white" />
+                </button>
+              )}
               </div>
               {uploading && <p className="text-sm text-muted-foreground">กำลังดำเนินการ...</p>}
+              
+              {/* Copy Link Button */}
+              <div className="w-full max-w-xs space-y-3">
+                <button
+                  onClick={handleCopyProfileLink}
+                  className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                    copiedLink 
+                      ? 'bg-green-500 hover:bg-green-600 text-white' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>คัดลอกลิงก์แล้ว</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>คัดลอกลิงก์</span>
+                    </>
+                  )}
+                </button>
+              </div>
               
               {/* Like Profile Button */}
               <div className="w-full max-w-xs space-y-3">
