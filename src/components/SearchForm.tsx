@@ -37,17 +37,8 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     budget: "",
     lineId: "", 
     phone: "",
-    expiryDate: getDefaultExpiryDate(), // ✅ ตั้งค่าวันหมดอายุ default 30 วัน
     additionalNotes: ""
   });
-
-  // ✅ ฟังก์ชันคำนวณวันหมดอายุ default (30 วัน)
-  function getDefaultExpiryDate(): string {
-    const today = new Date();
-    const expiryDate = new Date(today);
-    expiryDate.setDate(today.getDate() + 30); // เพิ่ม 30 วัน
-    return expiryDate.toISOString().split('T')[0];
-  }
 
   // State สำหรับการยอมรับเงื่อนไข
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -113,19 +104,8 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
       validationErrors.push("กรุณาระบุวันที่");
     }
     
-    if (!formData.expiryDate || formData.expiryDate.trim() === "") {
-      validationErrors.push("กรุณาระบุวันที่หมดอายุของประกาศ");
-    } else {
-      // ตรวจสอบว่าวันหมดอายุต้องไม่น้อยกว่าวันปัจจุบัน
-      const expiryDate = new Date(formData.expiryDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // ตั้งเวลาเป็น 00:00:00 เพื่อเปรียบเทียบเฉพาะวันที่
-      expiryDate.setHours(0, 0, 0, 0);
-      
-      if (expiryDate < today) {
-        validationErrors.push("วันที่หมดอายุต้องไม่น้อยกว่าวันปัจจุบัน");
-      }
-    }
+    // ✅ วันหมดอายุอัตโนมัติ 30 วัน - ไม่ต้องตรวจสอบ
+    // ระบบจะคำนวณวันหมดอายุอัตโนมัติเมื่อส่งข้อมูล
     
     if (!formData.location || formData.location.trim() === "") {
       validationErrors.push("กรุณาระบุสถานที่");
@@ -163,6 +143,12 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
     }
 
     try {
+      // ✅ คำนวณวันหมดอายุอัตโนมัติ 30 วัน
+      const today = new Date();
+      const expiryDate = new Date(today);
+      expiryDate.setDate(today.getDate() + 30);
+      const expiryDateStr = expiryDate.toISOString().split('T')[0];
+
       // ส่งข้อมูลโดยใช้ชื่อคอลัมน์ที่ตรงกับฐานข้อมูลของคุณเป๊ะๆ
       const jobData = {
         instrument: formData.instruments.join(", ").trim(), // แปลง array เป็น string
@@ -175,7 +161,7 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
         phone: formData.phone,
         additional_notes: formData.additionalNotes, // เพิ่มหมายเหตุเพิ่มเติม
         accepted_terms: acceptedTerms, // เพิ่มการยอมรับเงื่อนไข
-        expiry_date: formData.expiryDate, // เพิ่มวันที่หมดอายุ
+        expiry_date: expiryDateStr, // ✅ คำนวณวันหมดอายุอัตโนมัติ
         status: "open"
       };
 
@@ -307,31 +293,14 @@ const { credits, loading: loadingCredits } = useRealTimeCredits(userId);
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">วันที่หมดอายุประกาศ</Label>
-              <Input 
-                type="date" 
-                value={formData.expiryDate} 
-                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })} 
-                required 
-                className="rounded-2xl h-12 w-full" 
-                min={new Date().toISOString().split('T')[0]}
-              />
-              <p className="text-xs text-muted-foreground">
-                ประกาศจะถูกซ่อนหลังจากวันนี้ (ค่าเริ่มต้น: 30 วัน)
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">ระยะเวลาที่ประกาศ</Label>
-              <div className="flex items-center gap-2 h-12 px-3 rounded-2xl border border-input bg-muted/50">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {formData.expiryDate ? 
-                    `${Math.ceil((new Date(formData.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} วัน` : 
-                    'กรุณาเลือกวันหมดอายุ'
-                  }
-                </span>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-800">ระยะเวลาประกาศ</h4>
+                <p className="text-xs text-blue-600">
+                  ประกาศของคุณจะแสดงผลเป็นเวลา 30 วันนับจากวันที่โพสต์ และจะถูกซ่อนอัตโนมัติหลังจากหมดอายุ
+                </p>
               </div>
             </div>
           </div>
