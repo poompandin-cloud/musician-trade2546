@@ -1657,7 +1657,7 @@ return (
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
             className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeft className="w-5 h-5" />

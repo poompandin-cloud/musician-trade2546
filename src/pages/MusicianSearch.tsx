@@ -11,6 +11,46 @@ import { useToast } from "@/hooks/use-toast";
 import { INSTRUMENTS } from '@/constants/instruments';
 import { ProvinceSelect } from '@/components/ProvinceSelect'; // เพิ่ม import ProvinceSelect
 
+if (typeof document !== 'undefined') {
+  const styleId = 'musician-rank-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+     @keyframes orange-glow-top {
+  0% { 
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
+    border-color: rgba(249, 115, 22, 0.4); 
+  }
+  50% { 
+    /* --- เปลี่ยนสีตรงนี้เป็นสีเหลืองทองตอนสว่างที่สุด --- */
+    box-shadow: 0 0 40px rgba(250, 204, 21, 0.8); 
+    border-color: rgba(250, 204, 21, 1); 
+  }
+  100% { 
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); 
+    border-color: rgba(249, 115, 22, 0.4); 
+  }
+}
+      }
+      .rank-1-glow { animation: orange-glow-top 2s ease-in-out infinite; border-width: 2px !important; }
+      .rank-sub-glow { animation: orange-glow-sub 2s ease-in-out infinite; border-width: 2px !important; }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+const glowStyles = `
+  @keyframes glow-border {
+    0% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); border-color: rgba(250, 204, 21, 0.4); }
+    50% { box-shadow: 0 0 35px rgba(250, 204, 21, 0.7); border-color: rgba(250, 204, 21, 0.9); }
+    100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); border-color: rgba(250, 204, 21, 0.4); }
+  }
+  .champion-glow {
+    animation: glow-border 4s ease-in-out infinite;
+    border-width: 2px !important;
+  }
+`;
 // รายชื่อเครื่องดนตรี (ใช้จาก constants)
 const instruments = INSTRUMENTS;
 
@@ -295,17 +335,30 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
             {filteredMusicians.map((musician, index) => {
               const totalLikes = musician.total_likes || 0;
               return (
-                <Card
-                  key={musician.id}
-                  className="hover:bg-accent transition-colors cursor-pointer border-border hover:border-orange-200"
-                  onClick={() => navigate(`/profile/${musician.id}`)}
-                >
-                  <CardContent className="p-4 md:p-5">
-                    <div className="flex items-center gap-3 md:gap-4">
-                      {/* Ranking Badge */}
-                      <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold text-sm md:text-base shadow-lg">
-                        {index + 1}
-                      </div>
+               <Card
+  key={musician.id}
+  className={`transition-all duration-500 cursor-pointer 
+    ${index === 0 
+      ? "rank-1-glow bg-orange-500/5" 
+      : index < 3 
+        ? "rank-sub-glow bg-orange-500/[0.02]" 
+        : "border-border hover:border-orange-200 hover:bg-accent"
+    }`}
+  onClick={() => navigate(`/profile/${musician.id}`)}
+>
+
+  <CardContent className="p-4 md:p-5">
+    <div className="flex items-center gap-3 md:gap-4">
+     {/* Ranking Badge: ปรับสีให้เข้ากับออร่าส้ม */}
+<div className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full font-bold text-sm md:text-base shadow-lg text-white transition-all duration-500
+  ${index === 0 
+    ? "bg-gradient-to-br from-orange-400 to-orange-600 scale-110  to-slate-500ring-2 ring-orange-300 ring-offset-2" 
+    : index < 3 
+      ? "bg-gradient-to-br from-slate-300 to-orange-500" 
+      : "bg-gradient-to-br from-orange-600 to-blue-200"
+  }`}>
+  {index + 1}
+</div>
                       
                       {/* Avatar */}
                       <Avatar className="w-12 h-12 md:w-14 md:h-14 border-2 border-orange-200 flex-shrink-0">
