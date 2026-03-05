@@ -817,15 +817,19 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
   // ฟังก์ชันคัดลอกลิงก์โปรไฟล์
   const handleCopyProfileLink = async () => {
-    // ใช้ URL ปัจจุบันที่แสดงอยู่แทนการสร้างใหม่
-    const currentUrl = window.location.href;
+    // สร้าง URL สำหรับโปรไฟล์โดยเฉพาะ
+    const profileUrl = `${window.location.origin}/profile/${profileUserId}`;
+    
+    console.debug('Copying profile URL:', profileUrl);
+    console.debug('Current page URL:', window.location.href);
+    console.debug('Profile ID:', profileUserId);
     
     try {
-      await navigator.clipboard.writeText(currentUrl);
+      await navigator.clipboard.writeText(profileUrl);
       setCopiedLink(true);
       toast({ 
         title: "คัดลอกลิงก์โปรไฟล์นี้แล้ว!", 
-        description: `ลิงก์ ${currentUrl} ถูกคัดลอกไปยังคลิปบอร์ดแล้ว` 
+        description: `ลิงก์ ${profileUrl} ถูกคัดลอกไปยังคลิปบอร์ดแล้ว` 
       });
       
       // Reset state หลัง 3 วินาที
@@ -842,20 +846,22 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
 
   // ฟังก์ชันแชร์โปรไฟล์ (สำหรับ Social Media)
   const handleShareProfile = () => {
-    // ใช้ URL ปัจจุบันที่แสดงอยู่
-    const currentUrl = window.location.href;
+    // สร้าง URL สำหรับโปรไฟล์โดยเฉพาะ
+    const profileUrl = `${window.location.origin}/profile/${profileUserId}`;
     const shareTitle = `${profile?.full_name || 'โปรไฟล์'} - snowguin`;
     const shareDescription = `ดูโปรไฟล์ของ ${profile?.full_name || 'นักดนตรี'} - นักดนตรี${profile?.instruments ? ' ' + profile.instruments : ''} จาก${profile?.province || ''}`;
+    
+    console.debug('Sharing profile URL:', profileUrl);
     
     if (navigator.share) {
       navigator.share({
         title: shareTitle,
         text: shareDescription,
-        url: currentUrl,
+        url: profileUrl,
       }).catch((err) => console.error("Error sharing:", err));
     } else {
       // Fallback: Copy to clipboard
-      navigator.clipboard.writeText(currentUrl);
+      navigator.clipboard.writeText(profileUrl);
       toast({ title: "คัดลอกลิงก์แล้ว", description: "ลิงก์โปรไฟล์ถูกคัดลอกไปยังคลิปบอร์ดแล้ว" });
     }
   };
