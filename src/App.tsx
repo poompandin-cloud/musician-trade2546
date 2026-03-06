@@ -21,6 +21,8 @@ import MyApplicationsPage from "./pages/MyApplicationsPage";
 import CreditDetailsPage from "./pages/CreditDetailsPage";
 import LineCallback from "./pages/LineCallback";
 import NotFound from "./pages/NotFound";
+import JobDetail from "./pages/JobDetail"; // หรือ path ที่พี่เก็บไฟล์ไว้
+
 
 const queryClient = new QueryClient();
 
@@ -450,6 +452,8 @@ const App = () => {
                   <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/line-callback" element={<LineCallback />} />
+                  // วางไว้ก่อนหน้า path="*" เหมือนเดิมครับ
+<Route path="/job/:id" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

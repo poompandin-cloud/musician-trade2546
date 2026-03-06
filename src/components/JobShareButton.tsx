@@ -12,17 +12,18 @@ export const JobShareButton: React.FC<JobShareButtonProps> = ({ job }) => {
   const handleShare = async () => {
     try {
       // สร้างลิงก์สำหรับงานนี้ - ใช้ profile page แทน
-      const jobUrl = `${window.location.origin}/profile#${job.id}`;
+      // แก้ในไฟล์ JobShareButton.tsx
+const jobUrl = `${window.location.origin}/job/${job.id}`;
       const shareText = `รับสมัครนักดนตรี: ${job.title}`;
       
       // ตรวจสอบว่าเป็นมือถือและมี Web Share API
       if (navigator.share && /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
         // มือถือ: ใช้ Web Share API
         await navigator.share({
-          title: shareText,
-          text: `${shareText}\n\n${job.venue} - ${job.province}\n\nดูรายละเอียดเพิ่มเติม:`,
-          url: jobUrl,
-        });
+  title: shareText,
+  text: `🎸 งานด่วน! ${shareText}\n📍 สถานที่: ${job.venue} (${job.province})\n📅 ดูรายละเอียดงานนี้ได้ที่:`,
+  url: jobUrl,
+});
       } else {
         // คอม: คัดลอกลิงก์ลง Clipboard
         await navigator.clipboard.writeText(jobUrl);
