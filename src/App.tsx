@@ -21,7 +21,7 @@ import MyApplicationsPage from "./pages/MyApplicationsPage";
 import CreditDetailsPage from "./pages/CreditDetailsPage";
 import LineCallback from "./pages/LineCallback";
 import NotFound from "./pages/NotFound";
-import JobDetail from "./pages/JobDetail"; // หรือ path ที่พี่เก็บไฟล์ไว้
+
 
 
 const queryClient = new QueryClient();

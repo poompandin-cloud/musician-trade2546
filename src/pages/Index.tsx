@@ -1,148 +1,381 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch  } from "lucide-react";
+import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Calendar, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 
 const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const jobRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [fetchedJob, setFetchedJob] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current user ID for accept button logic
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
+
+  // Helper functions for date/time formatting
+  const formatThaiDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHours < 1) return 'เมื่อสักครู่';
+    if (diffHours < 24) return `${diffHours} ชม.`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} วัน`;
+  };
+
+  // JobCard component inline
+  const JobCard = ({ job, currentUserId }: { job: any; currentUserId?: string }) => {
+    const handleAcceptJob = (lineId?: string) => {
+      if (lineId) {
+        // ใช้ URL นี้เพื่อความชัวร์ในการเปิดแอป Line
+        window.open(`https://line.me/ti/p/~${lineId}`, '_blank');
+      } else {
+        alert('เจ้าของงานไม่ได้ลง Line ID ไว้ กรุณาติดต่อผ่านเบอร์โทรศัพท์แทนครับ');
+      }
+    };
+
+    return (
+      <Card id={`job-card-${job.id}`} className="hover:shadow-lg transition-shadow">
+        <div className={`relative p-5 rounded-3xl bg-card border shadow-sm ${
+          job.user_id === currentUserId ? 'border-orange-200 bg-orange-50/30' : 'border-border'
+        }`}>
+          
+          {/* --- มุมขวาบน: ข้อมูลเวลา --- */}
+          <div className="absolute top-5 right-5 text-right pointer-events-none">
+            <div className="flex items-center justify-end gap-1.5 text-[11px] font-bold text-orange-600 mb-0.5">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{formatThaiDate(job.date || job.event_date)}</span>
+            </div>
+            <div className="flex items-center justify-end gap-1 text-[9px] text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{formatTimeAgo(job.created_at)}</span>
+            </div>
+          </div>
+
+          {/* Badge */}
+          <div className="flex justify-start mb-2 gap-2">
+            {job.user_id === currentUserId && (
+              <span className="text-[10px] font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                ประกาศของคุณ
+              </span>
+            )}
+          </div>
+
+          {/* ส่วนหัว: ข้อมูลผู้โพสต์ */}
+          <button 
+            onClick={() => navigate(`/profile/${job.user_id}`)} 
+            className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50 hover:opacity-80 transition-opacity w-full text-left"
+          >
+            <Avatar className="w-10 h-10 border border-orange-100">
+              <AvatarImage src={job.profiles?.avatar_url || undefined} />
+              <AvatarFallback className="bg-orange-100 text-orange-600">
+                {job.profiles?.full_name?.charAt(0) || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">
+                {job.profiles?.full_name || 'ไม่ระบุชื่อ'}
+              </p>
+              <p className="text-[10px] text-muted-foreground">คลิกดูโปรไฟล์</p>
+            </div>
+          </button>
+
+          {/* ส่วนเนื้อหา */}
+          <div className="mb-4">
+            <div className="flex items-center mb-1">
+              <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                จังหวัด {job.province || "ไม่ระบุ"}
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              {job.title || 'หางานดนตรี'}
+            </h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>📍 {job.location || job.venue}</p>
+              <p>🗓️ {job.date || job.event_date} ⏰ {job.event_time || job.time}</p>
+              <p>💰 {job.budget || job.payment}</p>
+              
+              {/* เครื่องดนตรี */}
+              {job.instrument && (
+                <p className="flex items-center gap-2">
+                  <Music className="w-4 h-4" />
+                  <span>เครื่องดนตรี: {job.instrument}</span>
+                </p>
+              )}
+              
+              {/* เบอร์โทร */}
+              {job.phone && (
+                <p className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  <span>เบอร์โทร: {job.phone}</span>
+                </p>
+              )}
+            </div>
+            {job.description && (
+              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                {job.description}
+              </p>
+            )}
+          </div>
+
+          {/* ปุ่มรับงาน */}
+          {job.user_id !== currentUserId && (
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={() => handleAcceptJob(job.lineId)}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                รับงานนี้ (ติดต่อทาง Line)
+              </Button>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  };
+
+  // Fetch งานจาก Supabase ถ้าไม่พบใน jobs array
+  useEffect(() => {
+    const fetchJobById = async () => {
+      if (!id) return;
+      
+      // 1. เช็คก่อนว่ามีใน jobs แล้วหรือยัง
+      const existingJob = jobs.find(job => String(job.id) === String(id));
+      if (existingJob) {
+        console.log('🎯 มีงานใน jobs แล้ว:', existingJob.title);
+        return;
+      }
+      
+      // 2. ถ้าไม่มี ให้ fetch จาก Supabase
+      console.log('🔍 ไม่พบงานใน jobs กำลัง fetch จาก Supabase ID:', id);
+      setLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('id', id)
+        .single();
+        
+        if (error) {
+          console.error('❌ Supabase fetch error:', error);
+          setFetchedJob(null);
+        } else if (data) {
+          console.log('✅ Fetch job สำเร็จ:', data.title);
+          setFetchedJob(data);
+        } else {
+          console.warn('⚠️ ไม่พบงานใน Supabase ID:', id);
+          setFetchedJob(null);
+        }
+      } catch (err) {
+        console.error('❌ Fetch job error:', err);
+        setFetchedJob(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchJobById();
+  }, [id, jobs]);
 
   // ตรวจสอบและ auto-scroll ไปที่งานที่ต้องการ
   useEffect(() => {
-    if (id && jobs.length > 0) {
-      const targetJob = jobs.find(job => job.id === id);
+    if (!id) return;
+    
+    // 1. เช็คข้อมูล jobs ว่าโหลดมาหรือยัง
+    if (jobs.length > 0) {
+      // 2. เทียบ ID โดยแปลงเป็น String เพื่อป้องกัน Type mismatch
+      const targetJob = jobs.find(job => String(job.id) === String(id));
       
       if (targetJob) {
-        console.log('🎯 Found target job:', targetJob);
+        console.log('🎯 เจอละ! กำลังเลื่อนไปที่งาน:', targetJob.title);
         
-        // รอให้ DOM render เสร็จก่อน scroll
-        setTimeout(() => {
+        // 3. รอจังหวะ Render นิดนึง
+        const scrollTimer = setTimeout(() => {
           const jobElement = jobRefs.current[id];
           if (jobElement) {
-            console.log('📍 Scrolling to job element:', id);
             jobElement.scrollIntoView({ 
               behavior: 'smooth', 
               block: 'center' 
             });
             
-            // เพิ่ม highlight effect
-            jobElement.classList.add('ring-4', 'ring-orange-400', 'ring-offset-2');
+            // เพิ่มลูกเล่น Highlight ให้ User รู้ว่างานไหน
+            jobElement.classList.add('ring-4', 'ring-orange-500', 'ring-offset-2', 'transition-all');
             setTimeout(() => {
-              jobElement.classList.remove('ring-4', 'ring-orange-400', 'ring-offset-2');
+              jobElement.classList.remove('ring-4', 'ring-orange-500', 'ring-offset-2');
             }, 3000);
           } else {
-            console.log('⚠️ Job element not found for ID:', id);
+            console.error('❌ หา Element ในหน้าจอไม่เจอ (ลืมใส่ ref หรือเปล่า?)');
           }
-        }, 100);
+        }, 500); // เพิ่มเป็น 500ms เพื่อความชัวร์
+        
+        return () => clearTimeout(scrollTimer);
       } else {
-        console.log('⚠️ Job not found with ID:', id);
-        // ถ้าไม่พบงาน อาจจะแสดง toast หรือ redirect ไปหน้าอื่น
+        console.warn('⚠️ มี ID ใน URL แต่หาในรายการ jobs ไม่เจอ รอ fetch จาก Supabase');
       }
     }
-  }, [id, jobs]);
+    
+    // 4. ถ้ามี fetchedJob ให้ scroll ไปที่งานนั้น
+    if (fetchedJob) {
+      const scrollTimer = setTimeout(() => {
+        const jobElement = jobRefs.current[id];
+        if (jobElement) {
+          jobElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // เพิ่มลูกเล่น Highlight
+          jobElement.classList.add('ring-4', 'ring-orange-500', 'ring-offset-2', 'transition-all');
+          setTimeout(() => {
+            jobElement.classList.remove('ring-4', 'ring-orange-500', 'ring-offset-2');
+          }, 3000);
+        }
+      }, 500);
+      
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [id, jobs, fetchedJob]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      {/* 1. Header ส่วนหัวข้อ (ขยับขึ้นมาเป็นอันดับแรก) */}
-      <div className="flex flex-col items-center mb-12 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">หาคนเล่นแทน</h1>
-        <h2 className="text-3xl font-bold text-orange-500">ดนตรีกลางคืน</h2>
-        <p className="text-gray-500 mt-2">แบบด่วน ทันที 🎵</p>
-      </div>
-
-      {/* 2. ส่วนของเมนูต่างๆ */}
-      <div className="flex flex-col gap-4 w-full max-w-md">
-        <MenuCard 
-          title="หาคนแทนด่วน"
-          description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
-          icon={
-            <div className="p-2 bg-orange-100 rounded-xl">
-              <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-            </div>
-          }
-          onClick={() => navigate("/search")}
-          variant="primary"
-        />
-        <MenuCard 
-          title="งานที่ประกาศ"
-          description="ดูงานที่เปิดรับอยู่ตอนนี้"
-          icon={
-            <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
-              <ClipboardList className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-            </div>
-          }
-          onClick={() => navigate("/nearby-gigs")}
-          variant="primary"
-        />
-
-        {/* แสดงงานที่ตรงกับ ID ถ้ามี */}
-        {id && jobs.length > 0 && (
-          <div className="mt-8 w-full max-w-4xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
+      {/* ถ้ามี ID แสดงเฉพาะงานที่ค้นหา */}
+      {id ? (
+        <>
+          {/* แสดงเฉพาะส่วนงานที่ค้นหา */}
+          <div className="w-full max-w-4xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
               📍 งานที่คุณค้นหาอยู่ที่นี่
             </h2>
-            {jobs
-              .filter(job => job.id === id)
-              .map(job => (
-                <div
-                  key={job.id}
-                  ref={(el) => { jobRefs.current[job.id] = el; }}
-                  className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">
-                        🎸 {job.title || 'หางานดนตรี'}
-                      </h3>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <p>📍 สถานที่: {job.location || job.venue}</p>
-                        <p>🗓️ วันที่: {job.date || job.event_date}</p>
-                        <p>⏰ เวลา: {job.time || job.event_time}</p>
-                        <p>💰 ค่าจ้าง: {job.budget || job.payment}</p>
-                        {job.description && (
-                          <p className="mt-2">📝 {job.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <button
-                        onClick={() => navigate("/nearby-gigs")}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-gray-500">กำลังโหลดข้อมูลงาน...</p>
+              </div>
+            ) : (
+              <>
+                {jobs.length > 0 && jobs.find(job => String(job.id) === String(id)) ? (
+                  jobs
+                    .filter(job => String(job.id) === String(id))
+                    .map(job => (
+                      <div
+                        key={job.id}
+                        ref={(el) => { jobRefs.current[job.id] = el; }}
                       >
-                        ดูงานทั้งหมด
-                      </button>
-                    </div>
+                        <JobCard job={job} currentUserId={currentUserId} />
+                      </div>
+                    ))
+            ) : fetchedJob ? (
+                  <div
+                    key={fetchedJob.id}
+                    ref={(el) => { jobRefs.current[fetchedJob.id] = el; }}
+                  >
+                    <JobCard job={fetchedJob} currentUserId={currentUserId} />
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">ไม่พบงานที่ค้นหา</p>
+                    <button
+                      onClick={() => navigate("/")}
+                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                    >
+                      กลับหน้าแรก
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
-        <MenuCard 
-          title="ค้นหานักดนตรีใกล้คุณ"
-          description="ค้นหาจากชื่อนักดนตรี"
-          icon={
-            <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
-              <UserSearch className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-            </div>
-          }
-          onClick={() => navigate("/musicians")}
-          variant="primary"
-        />
-        <MenuCard 
-          title="ติดต่อเรา"
-          description="เกี่ยวกับเว็บไซต์หาคนแทน"
-          icon={<Info className="w-6 h-6 text-orange-600" />}
-          onClick={() => navigate("/about")}
-        />
-      </div>
+        </>
+      ) : (
+        <>
+          {/* แสดงหน้าแรกปกติ (Hero Section + Menu) */}
+          {/* 1. Header ส่วนหัวข้อ */}
+          <div className="flex flex-col items-center mb-12 text-center">
+            <h1 className="text-3xl font-bold text-gray-900">หาคนเล่นแทน</h1>
+            <h2 className="text-3xl font-bold text-orange-500">ดนตรีกลางคืน</h2>
+            <p className="text-gray-500 mt-2">แบบด่วน ทันที 🎵</p>
+          </div>
 
-      {/* 3. Husky Animation (ย้ายมาไว้ล่างสุดตรงนี้ครับ) */}
-      <div className="mt-12 opacity-90">
-        <HuskyAnimation />
-      </div>
+          {/* 2. ส่วนของเมนูต่างๆ */}
+          <div className="flex flex-col gap-4 w-full max-w-md">
+            <MenuCard 
+              title="หาคนแทนด่วน"
+              description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
+              icon={
+                <div className="p-2 bg-orange-100 rounded-xl">
+                  <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                </div>
+              }
+              onClick={() => navigate("/search")}
+              variant="primary"
+            />
+
+            <MenuCard 
+              title="งานที่ประกาศ"
+              description="ดูงานที่เปิดรับอยู่ตอนนี้"
+              icon={
+                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                  <ClipboardList className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                </div>
+              }
+              onClick={() => navigate("/nearby-gigs")}
+              variant="primary"
+            />
+
+            <MenuCard 
+              title="ค้นหานักดนตรีใกล้คุณ"
+              description="ค้นหาจากชื่อนักดนตรี"
+              icon={
+                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                  <UserSearch className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                </div>
+              }
+              onClick={() => navigate("/musicians")}
+              variant="primary"
+            />
+            <MenuCard 
+              title="ติดต่อเรา"
+              description="เกี่ยวกับเว็บไซต์หาคนแทน"
+              icon={<Info className="w-6 h-6 text-orange-600" />}
+              onClick={() => navigate("/about")}
+            />
+          </div>
+
+          {/* 3. Husky Animation */}
+          <div className="mt-12 opacity-90">
+            <HuskyAnimation />
+          </div>
+        </>
+      )}
     </div>
   );
 };
