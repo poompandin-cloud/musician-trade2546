@@ -114,7 +114,24 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
             </h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>📍 {job.location || job.venue}</p>
-              <p>🗓️ {job.date || job.event_date} ⏰ {job.event_time || job.time}</p>
+              <p>🗓️ {job.date || job.event_date}</p>
+              
+              {/* เวลาที่เล่น */}
+              {job.duration && (
+                <p className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>เวลาที่เล่น เริ่ม {job.duration}</span>
+                </p>
+              )}
+              
+              {/* เวลาเริ่มงาน */}
+              {job.event_time && (
+                <p className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>เวลาเริ่มงาน {job.event_time}</span>
+                </p>
+              )}
+              
               <p>💰 {job.budget || job.payment}</p>
               
               {/* เครื่องดนตรี */}
