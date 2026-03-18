@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Send, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -296,16 +295,18 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <Textarea
+              <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="เขียนคอมเมนต์..."
-                className="min-h-[80px] resize-none border-gray-200 focus:border-orange-500"
+                placeholder="เขียนคอมเมนต์... (รับภาษาไทยและภาษาอังกฤษ 100%)"
+                className="min-h-[80px] resize-none border-gray-200 focus:border-orange-500 rounded-xl p-3 w-full"
                 disabled={isSubmitting}
+                maxLength={1000}
+                style={{ resize: 'none' }}
               />
               <div className="flex justify-between items-center mt-2">
                 <span className="text-xs text-gray-500">
-                  {newComment.length}/500 ตัวอักษร
+                  {newComment.length}/1000 ตัวอักษร
                 </span>
                 <Button
                   onClick={handleSubmitComment}

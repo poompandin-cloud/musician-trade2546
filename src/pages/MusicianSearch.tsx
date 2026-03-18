@@ -67,16 +67,9 @@ const MusicianSearch = ({ onBack }: { onBack: () => void }) => {
   const [allMusicians, setAllMusicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // โหลดข้อมูลนักดนตรีทั้งหมดเมื่อ component mount และทุกครั้งที่หน้าจอแสดงผล
+  // โหลดข้อมูลนักดนตรีทั้งหมดเมื่อ component mount เท่านั้น
   useEffect(() => {
     fetchAllMusicians();
-    
-    // เพิ่มการ refresh ทุก 30 วินาทีเพื่อให้มั่นใจว่าข้อมูลเป็นปัจจุบัน
-    const interval = setInterval(() => {
-      fetchAllMusicians();
-    }, 30000); // 30 วินาที
-    
-    return () => clearInterval(interval);
   }, []); // Empty dependency array = ทำงานเฉพาะตอน mount
 
   const fetchAllMusicians = async () => {

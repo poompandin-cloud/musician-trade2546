@@ -47,13 +47,23 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
 
   // JobCard component inline
   const JobCard = ({ job, currentUserId }: { job: any; currentUserId?: string }) => {
-    const handleAcceptJob = (lineId?: string) => {
-      if (lineId) {
-        // ใช้ URL นี้เพื่อความชัวร์ในการเปิดแอป Line
-        window.open(`https://line.me/ti/p/~${lineId}`, '_blank');
+    const openLineChat = () => {
+      const lineId = job.line_id || job.lineid; // เช็คชื่อคอลัมน์ให้ถูก
+      if (lineId && lineId !== 'ไม่บอกครับ' && lineId !== '-') {
+        window.open('https://line.me/ti/p/~' + lineId, '_blank');
       } else {
-        alert('เจ้าของงานไม่ได้ลง Line ID ไว้ กรุณาติดต่อผ่านเบอร์โทรศัพท์แทนครับ');
+        alert('เจ้าของงานไม่ได้ระบุไอดีไลน์ไว้ครับ');
       }
+    };
+
+    const handlePhoneCall = (phone?: string) => {
+      if (!phone || phone.trim() === '') {
+        alert('ไม่มีเบอร์โทรศัพท์ติดต่อ');
+        return;
+      }
+      
+      // เปิดแอปโทรศัพท์
+      window.open(`tel:${phone}`, '_blank');
     };
 
     return (
@@ -157,15 +167,29 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
             )}
           </div>
 
-          {/* ปุ่มรับงาน */}
+          {/* ปุ่มติดต่อ */}
           {job.user_id !== currentUserId && (
             <div className="flex gap-2 mt-4">
+              {/* ปุ่ม LINE */}
               <Button
-                onClick={() => handleAcceptJob(job.lineId)}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={openLineChat}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white"
               >
-                รับงานนี้ (ติดต่อทาง Line)
+                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 6L12 10.5 8.5 8 11 5.5 12 6.5l1-1L15.5 8zM12 13.5L8.5 16 6 13.5l1-1 1 1 3.5-3.5 1 1 1-1L18 15.5l-2.5 2.5L12 13.5z"/>
+                </svg>
+                ติดต่อทาง LINE
               </Button>
+              
+              {/* ปุ่มโทรศัพท์ */}
+              {job.phone && (
+                <Button
+                  onClick={() => handlePhoneCall(job.phone)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           )}
         </div>

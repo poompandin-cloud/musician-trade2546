@@ -19,7 +19,6 @@ import { Maximize2 } from 'lucide-react';
 import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
-import { LineConnectButton } from '@/components/LineConnectButton';
 import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 import { ProfileComments } from '@/components/ProfileComments';
 
@@ -28,8 +27,7 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   line_id: string | null;
-  line_user_id: string | null; // เพิ่ม LINE User ID สำหรับการแจ้งเตือน
-  facebook_url: string | null;
+    facebook_url: string | null;
   avatar_url: string | null;
   credits: number;
   received_tokens?: number;
@@ -1598,23 +1596,7 @@ console.log("New instruments after removal:", newInstruments);
     }
   };
 
-  // ฟังก์ชันสำหรับจัดการการเชื่อมต่อ LINE
-  const handleLineConnectSuccess = async (lineUserId: string) => {
-    // อัปเดต profile state
-    if (profile) {
-      setProfile({
-        ...profile,
-        line_user_id: lineUserId
-      });
-    }
-    
-    // อัปเดต formData ด้วย
-    setFormData(prev => ({
-      ...prev,
-      line_user_id: lineUserId
-    }));
-  };
-
+  
   // ออกจากระบบ
   const handleLogout = async () => {
     const confirmLogout = window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?");
@@ -1960,18 +1942,7 @@ return (
                 />
               </div>
 
-              {/* LINE Connect Button */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  การแจ้งเตือนงาน
-                </Label>
-                <LineConnectButton 
-                  lineUserId={profile?.line_user_id}
-                  onConnectSuccess={handleLineConnectSuccess}
-                />
-              </div>
-
+              
               {/* Facebook URL */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">

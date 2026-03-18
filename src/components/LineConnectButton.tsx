@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { MessageCircle, CheckCircle, ExternalLink } from 'lucide-react';
+import { MessageCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LineConnectButtonProps {
   lineUserId: string | null;
@@ -19,120 +20,42 @@ export const LineConnectButton: React.FC<LineConnectButtonProps> = ({
     try {
       setIsLoading(true);
       
-      // สร้าง LINE Login URL
-      const lineClientId = import.meta.env.VITE_LINE_CLIENT_ID;
+      // ใช้ Supabase OAuth สำหรับ LINE Login
+      const { data, error } = await supabase.auth.signInWithOAuth({ 
+        provider: 'line',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
       
-      // Debug logging
-      console.log('🔍 LINE Client ID:', lineClientId);
-      console.log('🔍 Available env vars:', Object.keys(import.meta.env).filter(key => key.includes('LINE')));
-      
-      // ตรวจสอบว่ามี Client ID หรือไม่
-      if (!lineClientId || lineClientId === 'undefined' || lineClientId.trim() === '') {
-        setIsLoading(false);
+      if (error) {
+        console.error('LINE OAuth Error:', error);
         toast({
-          title: "การตั้งค่าไม่ถูกต้อง",
-          description: "ไม่พบ LINE Client ID กรุณาตรวจสอบไฟล์ .env และรีสตาร์ทเซิร์ฟเวอร์",
+          title: "เชื่อมต่อ LINE ไม่สำเร็จ",
+          description: error.message,
           variant: "destructive",
         });
-        return;
+      } else {
+        console.log('LINE OAuth initiated successfully');
+        toast({
+          title: "กำลังเชื่อมต่อ LINE",
+          description: "กรุณาทำตามขั้นตอนในแอป LINE",
+        });
       }
       
-      const redirectUri = `${window.location.origin}/line-callback`;
-      const state = Math.random().toString(36).substring(7); // สร้าง random state
-      
-      const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
-        `response_type=code&` +
-        `client_id=${lineClientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `state=${state}&` +
-        `scope=openid%20profile%20email`;
-      
-      console.log('🔍 LINE Auth URL:', lineAuthUrl);
-      
-      // เปิดหน้าต่าง LINE Login
-      const popup = window.open(
-        lineAuthUrl,
-        'line-login',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
-      
-      // รอการตอบกลับจาก popup
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          setIsLoading(false);
-        }
-      }, 1000);
-      
-      // รอรับข้อมูลจาก popup (ผ่าน postMessage)
-      const handleMessage = async (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
-        
-        if (event.data.type === 'LINE_LOGIN_SUCCESS') {
-          clearInterval(checkClosed);
-          popup?.close();
-          window.removeEventListener('message', handleMessage);
-          
-          // เรียก API อัปเดต line_user_id
-          await updateLineUserId(event.data.lineUserId);
-        } else if (event.data.type === 'LINE_LOGIN_ERROR') {
-          clearInterval(checkClosed);
-          popup?.close();
-          window.removeEventListener('message', handleMessage);
-          setIsLoading(false);
-          
-          toast({
-            title: "เชื่อมต่อ LINE ไม่สำเร็จ",
-            description: event.data.error || "กรุณาลองใหม่อีกครั้ง",
-            variant: "destructive",
-          });
-        }
-      };
-      
-      window.addEventListener('message', handleMessage);
-      
     } catch (error) {
-      setIsLoading(false);
+      console.error('Error connecting to LINE:', error);
       toast({
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองใหม่",
         variant: "destructive",
       });
-    }
-  };
-
-  const updateLineUserId = async (lineUserId: string) => {
-    try {
-      const response = await fetch('/api/update-line-user-id', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ lineUserId }),
-      });
-      
-      if (response.ok) {
-        onConnectSuccess(lineUserId);
-        setIsLoading(false);
-        
-        toast({
-          title: "เชื่อมต่อ LINE สำเร็จ!",
-          description: "คุณจะได้รับการแจ้งเตือนเมื่อมีงานใหม่",
-          duration: 3000,
-        });
-      } else {
-        throw new Error('ไม่สามารถอัปเดตข้อมูลได้');
-      }
-    } catch (error) {
+    } finally {
       setIsLoading(false);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถบันทึกข้อมูล LINE ได้ กรุณาลองใหม่",
-        variant: "destructive",
-      });
     }
   };
 
+  // ถ้าเชื่อมต่อแล้ว แสดงสถานะ
   if (lineUserId) {
     return (
       <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">

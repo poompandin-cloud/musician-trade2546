@@ -8,6 +8,13 @@ export async function POST(request: NextRequest) {
     if (!profile_id || !content?.trim()) {
       return NextResponse.json({ error: 'Profile ID and content are required' }, { status: 400 });
     }
+    
+    // รับภาษาไทยและภาษาอังกฤษ 100% - ไม่มี pattern validation
+    // ไม่มีการตรวจสอบ pattern ใดๆ ทั้งสิ้น
+    // รับข้อความทุกภาษา ทุกอักขระ ทุก emoji
+    if (content.length > 1000) {
+      return NextResponse.json({ error: 'Content too long. Maximum 1000 characters.' }, { status: 400 });
+    }
 
     // ดึง IP Address จาก request headers
     const getIpAddress = (req: NextRequest): string => {
@@ -90,7 +97,9 @@ export async function POST(request: NextRequest) {
     console.debug('Profile ID target:', profile_id);
     console.debug('Content length:', content.trim().length);
     
-    // ทำความสะอาด UUID โดยตรง ไม่ตรวจสอบ pattern
+    // รับภาษาไทยและภาษาอังกฤษ 100% - ไม่มี pattern validation
+    // ไม่มีการตรวจสอบ pattern ใดๆ ทั้งสิ้น
+    // รับข้อความทุกภาษา ทุกอักขระ ทุก emoji
     const cleanProfileId = profile_id.toString().trim();
     const cleanUserId = userId.toString().trim();
     
