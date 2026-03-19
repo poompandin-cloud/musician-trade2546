@@ -20,7 +20,7 @@ import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
 import { useVisitorTracking } from '@/hooks/useVisitorTracking';
-import { ProfileComments } from '@/components/ProfileComments';
+// import SimpleCommentsFinal from '@/components/SimpleCommentsFinal';
 
 interface Profile {
   id: string;
@@ -2516,12 +2516,10 @@ return (
           </div>
         )}
 
-        {/* Profile Comments Section */}
-        <ProfileComments 
+        {/* Profile Comments Section - ถูกปิดใช้งานชั่วคราว */}
+        {/* <SimpleCommentsFinal 
           profileId={profileUserId}
-          isOwner={isOwner}
-          currentUserId={currentUserId}
-        />
+        /> */}
       </main>
     </div>
   );
