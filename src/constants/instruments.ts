@@ -3,18 +3,19 @@ export const INSTRUMENTS = [
   // เครื่องสาย (Strings)
   { value: "sound-engineer", label: "ซาวด์เอนจิเนีย" },
   { value: "Technician", label: "เทคนีเชี่ยน" },
+   { value: "vocal-lead", label: "นักร้องนำ" },
+  { value: "vocal-backup", label: "นักร้องคอรัส" },
   { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
   { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
   { value: "bass", label: "เบส" },
-  { value: "double-bass", label: "ดับเบิลเบส" },
-  { value: "violin", label: "ไวโอลิน" },
-  { value: "viola", label: "วิโอลา" },
-  { value: "cello", label: "เชลโล" },
-  { value: "ukulele", label: "อูคูเลเล่" },
+   // กลอง (Drums & Percussion)
+  { value: "drums-kit", label: "กลองชุด" },
+  { value: "drum-electric", label: "กลองไฟฟ้า" },
+  
   
   // คีย์บอร์ด (Keyboards)
-  { value: "keyboard-piano", label: "เปียโน" },
   { value: "keyboard-synth", label: "คีย์บอร์ด/ซินธิไซเซอร์" },
+  { value: "keyboard-piano", label: "เปียโน" },
   
   // เครื่องเป่า (Woodwinds & Brass)
   { value: "saxophone", label: "แซกโซโฟน" },
@@ -24,15 +25,12 @@ export const INSTRUMENTS = [
   { value: "trombone", label: "ทรอมโบน" },
   { value: "tuba", label: "ทูบา" },
   { value: "french-horn", label: "เฟรนช์ฮอร์น" },
-  
-  // กลอง (Drums & Percussion)
-  { value: "drums-kit", label: "กลองชุด" },
-  { value: "drum-electric", label: "กลองไฟฟ้า" },
+  { value: "violin", label: "ไวโอลิน" },
+  { value: "viola", label: "วิโอลา" },
+  { value: "cello", label: "เชลโล" },
+  { value: "ukulele", label: "อูคูเลเล่" },
   { value: "percussion", label: "เพอร์คัสชัน" },
-  
-  // ร้อง (Vocals)
-  { value: "vocal-lead", label: "นักร้องนำ" },
-  { value: "vocal-backup", label: "นักร้องประสาน" },
+   { value: "double-bass", label: "ดับเบิลเบส" },
   
   // อื่นๆ (Others)
   { value: "harmonica", label: "หมอนิกา" },
