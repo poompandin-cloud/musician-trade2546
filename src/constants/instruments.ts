@@ -1,6 +1,8 @@
 // รายการเครื่องดนตรีที่ใช้ทั่วทั้งแอปพลิเคชัน (เรียงตามตัวอักษร)
 export const INSTRUMENTS = [
   // เครื่องสาย (Strings)
+  { value: "sound-engineer", label: "ซาวด์เอนจิเนีย" },
+  { value: "Technician", label: "เทคนีเชี่ยน" },
   { value: "guitar-acoustic", label: "กีตาร์โปร่ง" },
   { value: "guitar-electric", label: "กีตาร์ไฟฟ้า" },
   { value: "bass", label: "เบส" },
@@ -34,7 +36,6 @@ export const INSTRUMENTS = [
   
   // อื่นๆ (Others)
   { value: "harmonica", label: "หมอนิกา" },
-  { value: "sound-engineer", label: "ซาวด์เอนจิเนีย" },
 ];
 
 // ฟังก์ชันสำหรับหา label จาก value
