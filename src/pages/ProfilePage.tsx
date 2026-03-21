@@ -506,21 +506,24 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         isValid: true,
         error: null,
         embedUrl: `https://www.youtube.com/embed/${videoId}`,
-        originalUrl: trimmedUrl
+        originalUrl: trimmedUrl,
+        platform: 'youtube'
       };
     }
 
-    // ตรวจสอบ Facebook URL (ยืดหยุ่นที่สุด - รับอะไรก็ได้ที่มี facebook.com หรือ fb.watch)
-    const facebookRegex = /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.watch)\/.+/;
+    // ตรวจสอบ Facebook URL (รองรับ web.facebook.com/share/v/ และรูปแบบอื่นๆ)
+    const facebookRegex = /^(https?:\/\/)?(www\.)?(facebook\.com|web\.facebook\.com|fb\.watch)\/(share\/v\/|watch\/\?v=|videos\/|reel\/|[^\/]+\/videos\/|[^\/]+\/posts\/|[^\/]+\/permalink\/|share\/)([^&\?]*)/;
     const facebookMatch = trimmedUrl.match(facebookRegex);
     
     if (facebookMatch) {
       // ทำความสะอาด URL ก่อนเก็บ
       const cleanedUrl = cleanFacebookUrl(trimmedUrl);
+      // สร้าง embed URL สำหรับ Facebook
+      const embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanedUrl)}&show_text=false&width=640&height=360&autoplay=false&allowfullscreen=true&lazy=true`;
       return {
         isValid: true,
         error: null,
-        embedUrl: cleanedUrl, // Facebook ใช้ URL ที่ทำความสะอาดแล้ว
+        embedUrl: embedUrl, // ใช้ embed URL ที่ถูกแปลงแล้ว
         originalUrl: cleanedUrl,
         platform: 'facebook'
       };
@@ -550,27 +553,19 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   };
 
   // ✅ ฟังก์ชันสำหรับสร้าง embed HTML
-  const createVideoEmbed = (url: string, index: number) => {
-    const validation = validateAndConvertVideoUrl(url);
+  const createVideoEmbed = (videoUrl: string, index: number) => {
+    console.log(`🎬 Creating video embed for: ${videoUrl} (index: ${index})`);
+    const validation = validateAndConvertVideoUrl(videoUrl);
+    console.log('🔍 Validation result:', validation);
     
-    if (!validation.isValid) {
+    // ถ้าเป็น YouTube -> แสดง iframe เพื่อดูวิดีโอได้เลย
+    if (validation.platform === 'youtube') {
+      console.log('📺 Creating YouTube embed with URL:', validation.embedUrl);
       return (
-        <div key={index} className="aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-          <div className="text-center p-4">
-            <p className="text-red-500 text-sm">URL ไม่ถูกต้อง</p>
-            <p className="text-gray-500 text-xs mt-1">{validation.error}</p>
-          </div>
-        </div>
-      );
-    }
-
-    // ตรวจสอบว่าเป็น YouTube หรือไม่
-    if (validation.embedUrl?.includes('youtube.com/embed/')) {
-      return (
-        <div key={index} className="aspect-video rounded-lg overflow-hidden bg-black border-border">
-          <iframe
-            src={validation.embedUrl}
-            className="w-full h-full"
+        <div key={index} className="aspect-video bg-black rounded-lg overflow-hidden border border-border">
+          <iframe 
+            src={validation.embedUrl} 
+            className="w-full h-full" 
             style={{
               width: '100%',
               height: '100%',
@@ -578,30 +573,46 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
             }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            title="YouTube video player"
+            title={`YouTube video ${index}`}
+            onError={(e) => console.error('❌ YouTube iframe error:', e)}
+            onLoad={() => console.log('✅ YouTube iframe loaded successfully')}
           />
         </div>
       );
     }
-
-    // สำหรับ Facebook (รองรับทุกรูปแบบ: videos, watch, reels)
+    
+    // ถ้าเป็น Facebook -> แสดง Link Card เพื่อป้องกันปัญหาจอดำ
+    if (validation.platform === 'facebook') {
+      console.log('📘 Creating Facebook link card for URL:', videoUrl);
+      return (
+        <a 
+          key={index}
+          href={videoUrl} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="block aspect-video p-6 bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg hover:bg-blue-100 transition-all group flex flex-col items-center justify-center text-center"
+          onClick={() => console.log('🖱️ Facebook link clicked:', videoUrl)}
+        >
+          <div className="bg-[#1877F2] text-white p-4 rounded-2xl shadow-md group-hover:scale-110 transition-transform mb-3">
+            <i className="fab fa-facebook text-2xl"></i>
+          </div>
+          <p className="font-bold text-blue-900">คลิกเพื่อดูวิดีโบน Facebook</p>
+          <p className="text-xs text-blue-600 mt-1 opacity-70 truncate max-w-[200px]">{videoUrl}</p>
+          <div className="mt-3 text-blue-500 font-medium text-sm flex items-center gap-1">
+            เปิดวิดีโอ <span className="group-hover:translate-x-1 transition-transform">↗</span>
+          </div>
+        </a>
+      );
+    }
+    
+    // ถ้าไม่รู้จัก platform -> แสดง error
+    console.log('❌ Unknown video platform for URL:', videoUrl);
     return (
-      <div key={index} className="aspect-video rounded-lg overflow-hidden bg-black border-border">
-        <iframe
-          src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(validation.originalUrl)}&show_text=false&width=560&height=315`}
-          className="w-full h-full"
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            overflow: 'hidden'
-          }}
-          scrolling="no"
-          frameBorder="0"
-          allowFullScreen={true}
-          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-          title="Facebook video player"
-        />
+      <div key={index} className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
+        <div className="text-center p-4">
+          <p className="text-red-500 text-sm">ไม่รองรับวิดีโอจากลิงก์นี้</p>
+          <p className="text-gray-500 text-xs mt-1">{videoUrl}</p>
+        </div>
       </div>
     );
   };
@@ -916,7 +927,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
       return;
     }
 
-    // ดึง video_urls จาก profile
+    // ดึง video_urls จาก profile และ state ปัจจุบันเพื่อความถูกต้อง
     let currentVideos: string[] = [];
     if (Array.isArray(profile?.video_urls)) {
       currentVideos = profile.video_urls;
@@ -929,6 +940,9 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     }
 
     // ตรวจสอบจำนวนวิดีโอปัจจุบัน (จำกัด 3 คลิป)
+    console.log('🔍 Current videos count:', currentVideos.length);
+    console.log('🔍 Current videos:', currentVideos);
+    
     if (currentVideos.length >= 3) {
       toast({ 
         title: "เพิ่มวิดีโอไม่ได้", 
@@ -942,6 +956,8 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     try {
       // เตรียมรายการวิดีโอใหม่ โดยเอาของใหม่ไปต่อท้ายของเดิม
       const newVideos = [...currentVideos, validation.originalUrl];
+      console.log('🔍 Adding video:', validation.originalUrl);
+      console.log('🔍 New videos array:', newVideos);
 
       // อัปเดตข้อมูลลง Database (ตาราง profiles)
       const { error: updateError } = await (supabase as any)
@@ -955,15 +971,18 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
         throw updateError;
       } else {
         // บันทึกสำเร็จ -> อัปเดต State หน้าจอให้วิดีโอเด้งขึ้นมาทันที
+        console.log('✅ Video added successfully, updating state');
         toast({ title: "เพิ่มวิดีโอสำเร็จ" });
         
         if (profile) {
           setProfile({ ...profile, video_urls: newVideos as any });
+          console.log('✅ Profile state updated with new videos');
         }
         
         // ล้างสถานะการกรอก URL และการเปิดช่อง Input
         setVideoInput("");
         setShowVideoInput(false);
+        console.log('✅ Input cleared and hidden');
       }
     } catch (err) {
       console.error("System Error:", err);
