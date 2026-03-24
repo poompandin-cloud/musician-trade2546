@@ -196,23 +196,19 @@ const App = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("🔍 App.tsx: Initial session:", session);
       setSession(session);
-      setIsLoading(false); // ✅ หยุด loading หลังตรวจสอบ session
-      // ✅ เรียก fetchJobs หลังจากมี session แล้ว
-      if (session) {
-        fetchJobs();
-      }
+      setIsLoading(false); 
+      
+      // ✅ เรียกเสมอ ไม่ว่าจะมี session หรือไม่
+      fetchJobs(); 
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("🔍 App.tsx: Auth state changed:", { event: _event, session });
       setSession(session);
-      setIsLoading(false); // ✅ หยุด loading เมื่อมีการเปลี่ยนแปลง
-      if (session) {
-        console.log("🔍 App.tsx: User logged in, fetching jobs...");
-        fetchJobs();
-      } else {
-        console.log("🔍 App.tsx: User logged out");
-      }
+      setIsLoading(false);
+      
+      // ✅ เรียกเสมอเมื่อมีการเปลี่ยนแปลงสถานะ
+      fetchJobs(); 
     });
 
     return () => subscription.unsubscribe();
