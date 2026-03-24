@@ -21,6 +21,7 @@ import MyApplicationsPage from "./pages/MyApplicationsPage";
 import CreditDetailsPage from "./pages/CreditDetailsPage";
 import LineCallback from "./pages/LineCallback";
 import NotFound from "./pages/NotFound";
+import FindMusiciansPage from "./pages/FindMusiciansPage";
 
 
 
@@ -289,34 +290,23 @@ const App = () => {
         // ไม่ต้อง throw error เพราะการส่งแจ้งเตือนไม่ควรทำให้การสร้างงานล้มเหลว
       }
 
-      // 4. หลังจากบันทึกงานสำเร็จ ให้ทำการหักเครดิตออก 5
-      const newBalance = currentCredits - 5;
-      console.log("🔍 กำลังจะหักเครดิต:", { currentCredits, newBalance, userId });
-      
-      const { data: updateData, error: updateError } = await supabase
+   // 1. คำนวณยอดเครดิตใหม่ (หักออก 5)
+      const newBalance = (profile?.credits || 0) - 5;
+
+      // 2. สั่ง Update ลงฐานข้อมูล Supabase ตรงๆ
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ credits: newBalance })
-        .eq('id', userId)
-        .select()
-        .single();
+        .eq('id', userId);
 
-      console.log("🔍 ผลการอัปเดตเครดิต:", { updateData, updateError });
-
-      // 5. จัดการ Error: หากการหักเครดิตล้มเหลว ให้ทำการลบ (Rollback) งานที่เพิ่งสร้างทิ้ง
       if (updateError) {
         console.error("❌ หักเครดิตล้มเหลว:", updateError);
-        // ลบงานที่เพิ่งสร้างทิ้งเพื่อป้องกันการลงงานฟรี
-        await supabase.from('jobs').delete().eq('id', insertedJob.id);
-        throw new Error("หักเครดิตไม่สำเร็จ: " + updateError.message);
-      } else {
-        console.log("✅ หักเครดิตสำเร็จ! ยอดคงเหลือ:", newBalance);
-        
-        // 6. Real-time Update: เมื่อหักเครดิตสำเร็จ ให้อัปเดตหน้าจอทันที
-        console.log("🔄 กำลังอัปเดตหน้าจอทันที...");
-        await refetchProfile(userId); // อัปเดต Credit Widget และหน้า Profile
-        await fetchJobs();            // รีเฟรชรายการงานหน้าแรก
-        console.log("✅ อัปเดตหน้าจอสำเร็จ!");
+        throw new Error("บันทึกงานสำเร็จแต่หักเครดิตไม่สำเร็จ");
       }
+
+      // 3. อัปเดตหน้าจอให้เลขวิ่ง
+      await refetchProfile(userId); 
+      await fetchJobs();
        
     } catch (err: any) {
       console.error("❌ เกิดข้อผิดพลาดใน addJob:", err.message);
@@ -376,20 +366,7 @@ const App = () => {
     );
   }
 
-  // ✅ ถ้าไม่มี session ให้แสดงหน้า AuthPage (หน้าสีส้ม) เท่านั้น
-  if (!session) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ShadcnToaster />
-          <Toaster />
-          <AuthPage />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
-
-  // ✅ แสดงหน้าหลักทันทีเมื่อมี session ไม่ต้องรอ jobs
+  // ✅ แสดงหน้าหลักทันที - ทั้ง login และไม่ login สามารถเข้าถึงได้
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -401,67 +378,95 @@ const App = () => {
             
             <main className="flex-1">
               <Routes>
+                {/* Public Routes - ทุกคนเข้าถึงได้ */}
                 <Route path="/" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
+                <Route path="/search" element={<MusicianSearch onBack={() => window.history.back()} />} />
+                <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
+                <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
+                <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/line-callback" element={<LineCallback />} />
+                <Route path="/job/:id" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
                 
+                {/* Find Musicians Page - สำหรับหานักดนตรีแทน */}
+                <Route 
+                  path="/find-musicians" 
+                  element={
+                    session ? (
+                      <SearchForm onBack={() => window.history.back()} onAddJob={addJob} userId={session?.user?.id} />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                {/* Public Profile Routes - ทุกคนสามารถดูโปรไฟล์ได้ */}
+                <Route path="/profile/:id" element={<ProfilePage currentUserId={session?.user?.id} onDeleteJob={deleteJob} />} />
+                
+                {/* Protected Routes - ต้อง login */}
                 <Route 
                   path="/profile" 
                   element={
                     session ? (
                       <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
                     ) : (
-                      <Index jobs={activeJobs} onAddJob={addJob} /> 
+                      <AuthPage />
                     )
                   } 
                 />
-                  
-                  <Route 
-                    path="/profile/:id" 
-                    element={
-                      session ? (
-                        <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
-                      ) : (
-                        <Index jobs={activeJobs} onAddJob={addJob} /> 
-                      )
-                    } 
-                  />
+                
+                <Route 
+                  path="/edit-profile" 
+                  element={
+                    session ? (
+                      <ProfilePage currentUserId={session.user.id} onDeleteJob={deleteJob} />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/my-applications" 
+                  element={
+                    session ? (
+                      <MyApplicationsPage currentUserId={session.user.id} />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/credits" 
+                  element={
+                    session ? (
+                      <CreditDetailsPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/nearby-gigs" 
+                  element={
+                    session ? (
+                      <NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session.user.id} />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
 
-                  <Route 
-                    path="/search" 
-                    element={
-                      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex flex-col items-center pt-10 overflow-x-hidden">
-                        <div className="w-full max-w-md">
-                          <button onClick={() => window.history.back()} className="mb-6 text-orange-500 font-bold">← ย้อนกลับ</button>
-                          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-gray-900">หาคนแทนด่วน 🎵</h2>
-                          <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-xl border border-gray-100">
-                            <SearchForm 
-                              onBack={() => window.history.back()} 
-                              onAddJob={addJob}
-                              userId={session?.user?.id}
-                            /> 
-                          </div>
-                        </div>
-                      </div>
-                    } 
-                  />
-
-                  <Route path="/nearby-gigs" element={<NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session?.user?.id} />} />
-                  <Route path="/musicians" element={<MusicianSearch onBack={() => window.history.back()} />} />
-                  <Route path="/my-applications" element={<MyApplicationsPage currentUserId={session?.user?.id || null} />} />
-                  <Route path="/credits" element={<CreditDetailsPage />} />
-                  <Route path="/join" element={<MusicianSignup onBack={() => window.history.back()} />} />
-                  <Route path="/about" element={<AboutSection onBack={() => window.history.back()} />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/line-callback" element={<LineCallback />} />
-                  // วางไว้ก่อนหน้า path="*" เหมือนเดิมครับ
-<Route path="/job/:id" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-
-              <Footer />
-              <CreditWidget userId={session?.user?.id || null} />
-            </div>
-          </BrowserRouter>
+            <Footer />
+            <CreditWidget userId={session?.user?.id || null} />
+          </div>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );

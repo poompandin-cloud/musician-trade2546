@@ -3,7 +3,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, User, LogOut, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Profile {
   full_name: string | null;
@@ -63,8 +71,16 @@ const Navbar = ({ userId }: { userId: string | null }) => {
     if (userId) {
       navigate("/profile");
     } else {
-      // ✅ ถ้ายังไม่ล็อกอิน ให้ไปหน้า Auth ที่เราเพิ่งสร้าง
       navigate("/auth"); 
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
     }
   };
 
@@ -79,8 +95,8 @@ const Navbar = ({ userId }: { userId: string | null }) => {
             หาคนแทน
           </button>
 
-          {/* ถ้าล็อกอินแล้วแสดงรูปโปรไฟล์ ถ้ายังไม่ล็อกอินแสดงปุ่มเข้าสู่ระบบ */}
-          <div className="flex items-center gap-3">
+          {/* ถ้าล็อกอินแล้วแสดงรูปโปรไฟล์ Dropdown ถ้ายังไม่ล็อกอินแสดงปุ่มเข้าสู่ระบบ */}
+          <div className="flex items-center gap-4">
             {/* Call to Action สำหรับกรอกโปรไฟล์ */}
             {shouldShowProfileCTA && (
               <button
@@ -94,25 +110,43 @@ const Navbar = ({ userId }: { userId: string | null }) => {
               </button>
             )}
 
-            <button
-              onClick={handleProfileClick}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              {loading ? (
-                <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
-              ) : userId ? (
-                <Avatar className="w-10 h-10 border-2 border-orange-500/20">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
-                  <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
-                    {profile?.full_name?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <span className="text-sm font-medium text-orange-500 border border-orange-500 px-4 py-1.5 rounded-full hover:bg-orange-50">
-                  เข้าสู่ระบบ
-                </span>
-              )}
-            </button>
+            {loading ? (
+              <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+            ) : userId ? (
+              /* Logged in - Show Avatar with Dropdown */
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <Avatar className="w-10 h-10 border-2 border-orange-500/20">
+                      <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
+                      <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
+                        {profile?.full_name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+                    <User className="w-4 h-4 mr-2" />
+                    โปรไฟล์ของฉัน
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    ออกจากระบบ
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              /* Not logged in - Show Login Button */
+              <Button
+                onClick={() => navigate("/auth")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full shadow-sm transition-all hover:shadow-md"
+              >
+                เข้าสู่ระบบ
+              </Button>
+            )}
           </div>
         </div>
       </div>

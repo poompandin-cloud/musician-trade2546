@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music } from "lucide-react";
+import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music, Plus } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
 import { useEffect, useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 
 const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }) => {
@@ -17,6 +18,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
   const [fetchedJob, setFetchedJob] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Get current user ID for accept button logic
   useEffect(() => {
@@ -26,6 +28,25 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
     };
     getCurrentUser();
   }, []);
+
+  // ฟังก์ชันตรวจสอบการ login ก่อนหานักดนตรี
+  const handleFindMusiciansClick = () => {
+    if (!currentUserId) {
+      toast({
+        title: "กรุณาเข้าสู่ระบบก่อนหานักดนตรี",
+        description: "เข้าสู่ระบบเพื่อค้นหานักดนตรีมืออาชีพ",
+        variant: "destructive",
+        action: (
+          <Button onClick={() => navigate("/auth")} className="bg-blue-600 hover:bg-blue-700">
+            เข้าสู่ระบบ
+          </Button>
+        ),
+      });
+      return;
+    }
+    // ถ้า login แล้วให้ไปหน้าหานักดนตรีแทน
+    navigate("/find-musicians");
+  };
 
   // Helper functions for date/time formatting
   const formatThaiDate = (dateString: string) => {
@@ -172,7 +193,22 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
             <div className="flex gap-2 mt-4">
               {/* ปุ่ม LINE */}
               <Button
-                onClick={openLineChat}
+                onClick={() => {
+                  if (!currentUserId) {
+                    toast({
+                      title: "กรุณาเข้าสู่ระบบก่อนติดต่อ",
+                      description: "เข้าสู่ระบบเพื่อติดต่อผู้ประกาศงาน",
+                      variant: "destructive",
+                      action: (
+                        <Button onClick={() => navigate("/auth")} className="bg-blue-600 hover:bg-blue-700">
+                          เข้าสู่ระบบ
+                        </Button>
+                      ),
+                    });
+                    return;
+                  }
+                  openLineChat();
+                }}
                 className="flex-1 bg-green-500 hover:bg-green-600 text-white"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -184,7 +220,22 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
               {/* ปุ่มโทรศัพท์ */}
               {job.phone && (
                 <Button
-                  onClick={() => handlePhoneCall(job.phone)}
+                  onClick={() => {
+                    if (!currentUserId) {
+                      toast({
+                        title: "กรุณาเข้าสู่ระบบก่อนติดต่อ",
+                        description: "เข้าสู่ระบบเพื่อติดต่อผู้ประกาศงาน",
+                        variant: "destructive",
+                        action: (
+                          <Button onClick={() => navigate("/auth")} className="bg-blue-600 hover:bg-blue-700">
+                            เข้าสู่ระบบ
+                          </Button>
+                        ),
+                      });
+                      return;
+                    }
+                    handlePhoneCall(job.phone);
+                  }}
                   className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   <Phone className="w-4 h-4" />
@@ -376,7 +427,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
                   <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
                 </div>
               }
-              onClick={() => navigate("/search")}
+              onClick={handleFindMusiciansClick}
               variant="primary"
             />
 
