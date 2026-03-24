@@ -449,15 +449,16 @@ const App = () => {
                 />
                 
                 <Route 
-                  path="/nearby-gigs" 
-                  element={
-                    session ? (
-                      <NearbyGigs jobs={activeJobs} onBack={() => window.history.back()} onDeleteJob={deleteJob} currentUserId={session.user.id} />
-                    ) : (
-                      <AuthPage />
-                    )
-                  } 
-                />
+  path="/nearby-gigs" 
+  element={
+    <NearbyGigs 
+      jobs={activeJobs} 
+      onBack={() => window.history.back()} 
+      onDeleteJob={deleteJob} 
+      currentUserId={session?.user?.id || null} 
+    />
+  } 
+/>
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
