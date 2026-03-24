@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, Trash2, User } from 'lucide-react';
+import { MessageCircle, Send, Trash2, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Comment {
@@ -35,10 +36,21 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const COMMENTS_PER_PAGE = 10;
 
-  // ดึงข้อมูลคอมเมนต์
+  // ฟังก์ชันไปหน้า login
+  const handleLogin = () => {
+    window.location.href = '/login';
+  };
+
+  // ฟังก์ชันไปหน้าโปรไฟล์ของคนคอมเมนต์
+  const handleAuthorClick = (authorId: string) => {
+    navigate(`/profile/${authorId}`);
+  };
+
+  // ดึงข้อมูลคอมเมนต์ (join กับตาราง profiles)
   const fetchComments = async (pageNum = 1, append = false) => {
     try {
       setIsLoading(true);
@@ -49,6 +61,7 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
       console.debug('Fetching comments for profile:', profileId);
       console.debug('Query range:', from, 'to', to);
       
+      // ดึงข้อมูลคอมเมนต์พร้อมข้อมูลผู้เขียนจากตาราง profiles
       const { data, error } = await supabase
         .from('profile_comments')
         .select(`
@@ -69,10 +82,16 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
         throw error;
       }
 
+      // จัดการข้อมูลที่ได้มา (ดึงข้อมูลจริงจากตาราง profiles)
+      const commentsWithAuthors = (data || []).map(comment => ({
+        ...comment,
+        author: comment.author || null // ใช้ null แทน fallback จะจัดการใน UI
+      }));
+
       if (append) {
-        setComments(prev => [...prev, ...(data || [])]);
+        setComments(prev => [...prev, ...commentsWithAuthors]);
       } else {
-        setComments(data || []);
+        setComments(commentsWithAuthors);
       }
 
       // ตรวจสอบว่ามีข้อมูลเพิ่มเติมหรือไม่
@@ -113,9 +132,9 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
     }
   };
 
-  // ส่งคอมเมนต์ใหม่ (ผ่าน API Route)
+  // ส่งคอมเมนต์ใหม่ (ตรงไปยัง Supabase)
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !currentUserId) {
+    if (!newComment.trim()) {
       toast({
         title: "กรุณากรอกข้อความ",
         description: "กรุณากรอกคอมเมนต์ก่อนส่ง",
@@ -127,82 +146,68 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
     try {
       setIsSubmitting(true);
 
-      // ตรวจสอบ session ก่อนส่ง
-      const { data: session } = await supabase.auth.getSession();
-      console.debug('Session data:', session);
-      console.debug('Current user ID:', currentUserId);
-      console.debug('Profile ID target:', profileId);
-      console.debug('Profile ID type:', typeof profileId);
-      console.debug('User ID type:', typeof currentUserId);
-      console.debug('Profile ID is null/undefined:', profileId === null || profileId === undefined);
-      console.debug('User ID is null/undefined:', currentUserId === null || currentUserId === undefined);
-
-      // ถ้าเป็น null หรือ undefined ให้แสดง error ก่อน
-      if (!profileId || profileId === 'undefined' || profileId === '') {
-        console.error('Profile ID is missing or invalid:', profileId);
-        toast({
-          title: "ข้อผิดพลาด",
-          description: "ไม่พบข้อมูลโปรไฟล์ กรุณารีเฟรชหน้านี้",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!currentUserId || currentUserId === 'undefined' || currentUserId === '') {
-        console.error('User ID is missing or invalid:', currentUserId);
-        toast({
-          title: "ข้อผิดพลาด",
-          description: "ไม่พบข้อมูลผู้ใช้ กรุณาล็อกอินใหม่",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // ทำความสะอาด ID โดยตรง ไม่ตรวจสอบ pattern
-      const cleanProfileId = profileId.toString().trim();
-      const cleanCurrentUserId = currentUserId.toString().trim();
+      // ตรวจสอบ session และดึง user ID จาก auth.getUser()
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      console.debug('Cleaned frontend IDs:', {
-        profileId: cleanProfileId,
-        currentUserId: cleanCurrentUserId
-      });
-
-      // ส่งไปยัง API route ที่จัดการ IP Address
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.session?.access_token}`,
-        },
-        body: JSON.stringify({
-          profile_id: cleanProfileId,
-          content: newComment.trim(),
-        }),
-      });
-
-      const result = await response.json();
-      console.debug('API response:', { status: response.status, result });
-
-      if (!response.ok) {
-        console.error('API Error Response:', { 
-          status: response.status, 
-          statusText: response.statusText,
-          result 
+      if (authError || !user) {
+        console.error('Auth error:', authError);
+        toast({
+          title: "กรุณาเข้าสู่ระบบ",
+          description: "กรุณาล็อกอินก่อนคอมเมนต์",
+          variant: "destructive",
         });
-        
-        if (result.code === 'RATE_LIMIT_EXCEEDED') {
-          toast({
-            title: "ส่งคอมเมนต์ได้เร็วเกินไป",
-            description: "คุณสามารถส่งคอมเมนต์ได้สูงสุด 3 รายการใน 1 นาที",
-            variant: "destructive",
-          });
-          return;
-        }
-        throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
+        return;
       }
 
-      // เพิ่มคอมเมนต์ใหม่ลงใน list
-      setComments(prev => [result.comment, ...prev]);
+      console.debug('Authenticated user:', {
+        id: user.id,
+        email: user.email,
+        profileId,
+        content: newComment.trim()
+      });
+
+      // ตรวจสอบว่า currentUserId ตรงกับ user.id จริงๆ
+      if (currentUserId !== user.id) {
+        console.error('User ID mismatch:', { currentUserId, authUserId: user.id });
+        toast({
+          title: "ข้อผิดพลาดการยืนยันตัวตน",
+          description: "กรุณารีเฟรชหน้าและล็อกอินใหม่",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ส่งคอมเมนต์ตรงไปยัง Supabase (join กับตาราง profiles)
+      const { data: commentData, error } = await supabase
+        .from('profile_comments')
+        .insert({
+          profile_id: profileId,
+          author_id: user.id, // ใช้ ID จาก auth.getUser() แทน currentUserId
+          content: newComment.trim(),
+        })
+        .select(`
+          *,
+          author:profiles!author_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('Supabase error inserting comment:', error);
+        throw error;
+      }
+
+      console.debug('Comment inserted successfully:', commentData);
+
+      // เพิ่มคอมเมนต์ใหม่ทันที (พร้อมข้อมูล author จริง)
+      const newCommentWithAuthor = {
+        ...commentData,
+        author: commentData.author || null // ใช้ข้อมูลจริงจากตาราง profiles
+      };
+
+      setComments(prev => [newCommentWithAuthor, ...prev]);
       setNewComment('');
 
       toast({
@@ -213,11 +218,6 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
 
     } catch (error) {
       console.error('Error submitting comment:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
       
       toast({
         title: "เกิดข้อผิดพลาด",
@@ -285,41 +285,41 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
   return (
     <div className="space-y-4">
       {/* ส่วนเพิ่มคอมเมนต์ใหม่ */}
-      {currentUserId && (
+      {currentUserId ? (
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex gap-3">
-            <Avatar className="w-8 h-8">
+            <Avatar className="w-10 h-10">
               <AvatarImage src={null} />
               <AvatarFallback>
-                <User className="w-4 h-4" />
+                <User className="w-5 h-5" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="เขียนคอมเมนต์... (รับภาษาไทยและภาษาอังกฤษ 100%)"
-                className="min-h-[80px] resize-none border-gray-200 focus:border-orange-500 rounded-xl p-3 w-full"
+                placeholder="เขียนคอมเมนต์..."
+                className="min-h-[60px] resize-none border-gray-200 focus:border-blue-500 rounded-xl p-3 w-full text-sm"
                 disabled={isSubmitting}
                 maxLength={1000}
                 style={{ resize: 'none' }}
               />
               <div className="flex justify-between items-center mt-2">
                 <span className="text-xs text-gray-500">
-                  {newComment.length}/1000 ตัวอักษร
+                  {newComment.length}/1000
                 </span>
                 <Button
                   onClick={handleSubmitComment}
                   disabled={!newComment.trim() || isSubmitting}
                   size="sm"
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   {isSubmitting ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-1" />
-                      ส่งคอมเมนต์
+                      ส่ง
                     </>
                   )}
                 </Button>
@@ -327,46 +327,67 @@ export const ProfileComments: React.FC<ProfileCommentsProps> = ({
             </div>
           </div>
         </div>
+      ) : (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+          <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p className="text-gray-600 mb-4">เข้าสู่ระบบเพื่อคอมเมนต์</p>
+          <Button onClick={handleLogin} className="bg-blue-500 hover:bg-blue-600 text-white">
+            <LogIn className="w-4 h-4 mr-2" />
+            เข้าสู่ระบบเพื่อคอมเมนต์
+          </Button>
+        </div>
       )}
 
-      {/* รายการคอมเมนต์ */}
+      {/* รายการคอมเมนต์ - สไตล์ Facebook พร้อม Navigation */}
       <div className="space-y-3">
         {comments.map((comment) => (
-          <div key={comment.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex gap-3">
-              <Avatar className="w-8 h-8">
+          <div key={comment.id} className="flex gap-3">
+            {/* Avatar คลิกได้ - ไปหน้าโปรไฟล์ */}
+            <button
+              onClick={() => handleAuthorClick(comment.author_id)}
+              className="flex-shrink-0 hover:opacity-80 transition-opacity"
+              title={`ไปหน้าโปรไฟล์ของ ${comment.author?.full_name || 'ผู้ใช้งานทั่วไป'}`}
+            >
+              <Avatar className="w-10 h-10">
                 <AvatarImage src={comment.author?.avatar_url || null} />
-                <AvatarFallback>
-                  {comment.author?.full_name?.charAt(0) || '?'}
+                <AvatarFallback className="bg-gray-200 text-gray-600">
+                  {comment.author?.full_name?.charAt(0) || comment.author_id?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="font-medium text-gray-900">
-                      {comment.author?.full_name || 'ผู้ใช้งาน'}
-                    </span>
-                    <span className="text-gray-500 text-sm ml-2">
-                      {formatTimeAgo(comment.created_at)}
-                    </span>
-                  </div>
-                  
-                  {/* ปุ่มลบคอมเมนต์ */}
-                  {(isOwner || currentUserId === comment.author_id) && (
-                    <Button
-                      onClick={() => handleDeleteComment(comment.id, comment.author_id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
+            </button>
+            
+            <div className="flex-1">
+              <div className="bg-gray-100 rounded-2xl p-3">
+                <div className="flex items-center justify-between mb-1">
+                  {/* ชื่อคลิกได้ - ไปหน้าโปรไฟล์ */}
+                  <button
+                    onClick={() => handleAuthorClick(comment.author_id)}
+                    className="font-medium text-gray-900 text-sm hover:underline cursor-pointer"
+                    title={`ไปหน้าโปรไฟล์ของ ${comment.author?.full_name || 'ผู้ใช้งานทั่วไป'}`}
+                  >
+                    {comment.author?.full_name || 'ผู้ใช้งานทั่วไป'}
+                  </button>
+                  <span className="text-gray-500 text-xs ml-2">
+                    {formatTimeAgo(comment.created_at)}
+                  </span>
                 </div>
-                <p className="text-gray-700 whitespace-pre-wrap break-words">
+                <p className="text-gray-800 text-sm whitespace-pre-wrap break-words">
                   {comment.content}
                 </p>
               </div>
+              
+              {/* ปุ่มลบคอมเมนต์ */}
+              {(isOwner || currentUserId === comment.author_id) && (
+                <Button
+                  onClick={() => handleDeleteComment(comment.id, comment.author_id)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-red-500 hover:bg-red-50 mt-1 text-xs"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  ลบ
+                </Button>
+              )}
             </div>
           </div>
         ))}

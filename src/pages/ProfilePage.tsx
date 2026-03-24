@@ -20,6 +20,7 @@ import { INSTRUMENTS, getInstrumentLabel } from '@/constants/instruments';
 import { PROVINCES } from '@/constants/provinces';
 import { ProvinceSelect } from '@/components/ProvinceSelect';
 import { useVisitorTracking } from '@/hooks/useVisitorTracking';
+import { ProfileComments } from '@/components/ProfileComments';
 // import SimpleCommentsFinal from '@/components/SimpleCommentsFinal';
 
 interface Profile {
@@ -2535,10 +2536,22 @@ return (
           </div>
         )}
 
-        {/* Profile Comments Section - ถูกปิดใช้งานชั่วคราว */}
-        {/* <SimpleCommentsFinal 
-          profileId={profileUserId}
-        /> */}
+        {/* Profile Comments Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              คอมเมนต์
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProfileComments 
+              profileId={profileUserId}
+              isOwner={isOwner}
+              currentUserId={currentUserId}
+            />
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
