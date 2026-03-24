@@ -2349,6 +2349,23 @@ return (
   </div>
 )}
 
+        {/* Profile Comments Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              คอมเมนต์
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProfileComments 
+              profileId={profileUserId}
+              isOwner={isOwner}
+              currentUserId={currentUserId}
+            />
+          </CardContent>
+        </Card>
+
 {/* ส่วน My Jobs List - แสดงเฉพาะเจ้าของ */}
         {isOwner && (
         <Card>
@@ -2536,23 +2553,7 @@ return (
           </div>
         )}
 
-        {/* Profile Comments Section */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              คอมเมนต์
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProfileComments 
-              profileId={profileUserId}
-              isOwner={isOwner}
-              currentUserId={currentUserId}
-            />
-          </CardContent>
-        </Card>
-      </main>
+        </main>
     </div>
   );
 };
