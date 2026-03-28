@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music, Plus } from "lucide-react";
+import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music, Plus, MessageSquare } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
 import { useEffect, useRef, useState } from 'react';
@@ -454,6 +454,19 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
               onClick={() => navigate("/musicians")}
               variant="primary"
             />
+
+            <MenuCard 
+              title="แชทสาธารณะ"
+              description="ห้องพูดคุย แลกเปลี่ยนประสบการณ์ดนตรี"
+              icon={
+                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                  <MessageSquare className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                </div>
+              }
+              onClick={() => navigate("/public-chat")}
+              variant="primary"
+            />
+
             <MenuCard 
               title="ติดต่อเรา"
               description="เกี่ยวกับเว็บไซต์หาคนแทน"

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "./pages/Index";
-import ProfilePage from "./pages/ProfilePage";
-import AuthPage from "./pages/AuthPage";
+import PublicChat from "@/pages/PublicChat";
+import ProfilePage from "@/pages/ProfilePage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CreditWidget from "./components/CreditWidget";
@@ -20,8 +20,9 @@ import MusicianSearch from "./pages/MusicianSearch";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
 import CreditDetailsPage from "./pages/CreditDetailsPage";
 import LineCallback from "./pages/LineCallback";
-import NotFound from "./pages/NotFound";
+import AuthPage from "@/pages/AuthPage";
 import FindMusiciansPage from "./pages/FindMusiciansPage";
+import NotFound from "./pages/NotFound";
 
 
 
@@ -383,6 +384,7 @@ const App = () => {
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/line-callback" element={<LineCallback />} />
                 <Route path="/job/:id" element={<Index jobs={activeJobs} onAddJob={addJob} />} />
+                <Route path="/public-chat" element={<PublicChat />} />
                 
                 {/* Find Musicians Page - สำหรับหานักดนตรีแทน */}
                 <Route 
