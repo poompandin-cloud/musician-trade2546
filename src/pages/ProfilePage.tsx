@@ -1390,6 +1390,12 @@ console.log("New instruments after removal:", newInstruments);
 
   // บันทึกข้อมูลโปรไฟล์
   const handleSave = async () => {
+    // ป้องกันการส่ง request ซ้ำซ้อน
+    if (saving) {
+      console.log("⚠️ Already saving, ignoring duplicate request");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -1410,14 +1416,50 @@ console.log("New instruments after removal:", newInstruments);
 
       console.log("Saving profile data:", updateData);
 
+      // เพิ่ม AbortController สำหรับการยกเลิก request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 วินาที timeout
+
       const { data, error } = await (supabase as any)
         .from("profiles")
         .update(updateData)
         .eq("id", profileUserId)
         .select();
 
+      clearTimeout(timeoutId); // ยกเลิก timeout เมื่อเสร็จสิ้น
+
       if (error) {
         console.error("Update error details:", error);
+        
+        // ดักจับ AbortError โดยเฉพาะ
+        if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+          console.log("⚠️ Request was aborted, retrying...");
+          
+          // ลองใหม่อัตโนมัติ 1 ครั้ง
+          try {
+            const { data: retryData, error: retryError } = await (supabase as any)
+              .from("profiles")
+              .update(updateData)
+              .eq("id", profileUserId)
+              .select();
+              
+            if (!retryError) {
+              console.log("✅ Retry successful");
+              toast({ title: "บันทึกสำเร็จ", description: "ข้อมูลโปรไฟล์ถูกอัปเดตแล้ว" });
+              return;
+            } else {
+              throw retryError;
+            }
+          } catch (retryError) {
+            console.error("❌ Retry failed:", retryError);
+            toast({ 
+              variant: "destructive",
+              title: "บันทึกไม่สำเร็จ", 
+              description: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง" 
+            });
+            return;
+          }
+        }
         
         // ตรวจสอบประเภทของ error และแสดงข้อความที่เหมาะสม
         let errorMessage = error.message || "ไม่สามารถบันทึกข้อมูลได้";

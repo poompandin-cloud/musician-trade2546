@@ -103,10 +103,22 @@ const AuthPage = () => {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    // ป้องกันการส่ง request ซ้ำซ้อน
+    if (loading) {
+      console.log(`⚠️ Already logging in with ${provider}, ignoring duplicate request`);
+      return;
+    }
+
+    setLoading(true);
+    
     try {
       console.log(`🔍 Starting ${provider} OAuth...`);
       console.log("🔍 Current origin:", window.location.origin);
       console.log("🔍 Redirect URL:", window.location.origin);
+      
+      // เพิ่ม AbortController สำหรับการยกเลิก request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 วินาที timeout
       
       const { data, error } = await supabase.auth.signInWithOAuth({ 
         provider,
@@ -115,10 +127,43 @@ const AuthPage = () => {
         }
       });
       
+      clearTimeout(timeoutId); // ยกเลิก timeout เมื่อเสร็จสิ้น
+      
       console.log(`🔍 ${provider} OAuth Response:`, { data, error });
       
       if (error) {
         console.error(`❌ ${provider} OAuth Error:`, error);
+        
+        // ดักจับ AbortError โดยเฉพาะ
+        if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+          console.log(`⚠️ ${provider} OAuth was aborted, retrying...`);
+          
+          // ลองใหม่อัตโนมัติ 1 ครั้ง
+          try {
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithOAuth({ 
+              provider,
+              options: {
+                redirectTo: window.location.origin
+              }
+            });
+            
+            if (!retryError) {
+              console.log(`✅ ${provider} OAuth retry successful`);
+              return;
+            } else {
+              throw retryError;
+            }
+          } catch (retryError) {
+            console.error(`❌ ${provider} OAuth retry failed:`, retryError);
+            toast({ 
+              variant: "destructive",
+              title: "เข้าสู่ระบบไม่สำเร็จ", 
+              description: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่อีกครั้ง" 
+            });
+            return;
+          }
+        }
+        
         toast({ 
           variant: "destructive",
           title: "เข้าสู่ระบบไม่สำเร็จ", 
@@ -126,51 +171,36 @@ const AuthPage = () => {
         });
       } else {
         console.log(`✅ ${provider} OAuth initiated successfully`);
+        
+        // รอให้ session พร้อมก่อน redirect
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (error: any) {
       console.error(`❌ ${provider} OAuth Exception:`, error);
-      toast({ 
-        variant: "destructive",
-        title: "เกิดข้อผิดพลาด", 
-        description: "ไม่สามารถเชื่อมต่อกับผู้ให้บริการได้" 
-      });
+      
+      // ดักจับ AbortError
+      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        toast({ 
+          variant: "destructive",
+          title: "การเชื่อมต่อขัดข้อง", 
+          description: "การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่" 
+        });
+      } else {
+        toast({ 
+          variant: "destructive",
+          title: "เกิดข้อผิดพลาด", 
+          description: "ไม่สามารถเชื่อมต่อกับผู้ให้บริการได้" 
+        });
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   // ✅ เพิ่มฟังก์ชัน signInWithGoogle เฉพาะสำหรับ Google
   const signInWithGoogle = async () => {
-    try {
-      console.log("🔍 Starting Google OAuth...");
-      console.log("🔍 Current origin:", window.location.origin);
-      console.log("🔍 Redirect URL:", window.location.origin);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({ 
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin // ✅ ใช้ window.location.origin ชัดเจน
-        }
-      });
-      
-      console.log("🔍 OAuth Response:", { data, error });
-      
-      if (error) {
-        console.error("❌ Google OAuth Error:", error);
-        toast({ 
-          variant: "destructive",
-          title: "เข้าสู่ระบบด้วย Google ไม่สำเร็จ", 
-          description: error.message 
-        });
-      } else {
-        console.log("✅ Google OAuth initiated successfully");
-      }
-    } catch (error: any) {
-      console.error("❌ Google OAuth Exception:", error);
-      toast({ 
-        variant: "destructive",
-        title: "เกิดข้อผิดพลาด", 
-        description: "ไม่สามารถเชื่อมต่อกับ Google ได้" 
-      });
-    }
+    // ใช้ handleSocialLogin แทน
+    await handleSocialLogin('google');
   };
 
   return (

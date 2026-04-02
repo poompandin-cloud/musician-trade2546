@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Plus, Image, ArrowLeft, Trash2, Flag } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ReportModal, ImageUploadGuard, InputDisclaimer } from '@/components/ContentModeration';
+// import { ReportModal, ImageUploadGuard, InputDisclaimer } from '@/components/ContentModeration'; // ปิดชั่วคราวเพื่อแก้ไขปัญหา
 
 interface Message {
   id: string;
@@ -39,11 +39,11 @@ const PublicChat = () => {
     message: Message | null;
   }>({ visible: false, x: 0, y: 0, message: null });
   
-  // Content Moderation States
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [messageToReport, setMessageToReport] = useState<Message | null>(null);
-  const [showImageGuard, setShowImageGuard] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Content Moderation States - ปิดชั่วคราว
+  // const [showReportModal, setShowReportModal] = useState(false);
+  // const [messageToReport, setMessageToReport] = useState<Message | null>(null);
+  // const [showImageGuard, setShowImageGuard] = useState(false);
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,14 +86,16 @@ const PublicChat = () => {
         
         try {
           // ดึงข้อมูลแบบปลอดภัยก่อน - เฉพาะคอลัมน์มาตรฐาน
-          console.log('🔍 Safe query - fetching basic data first...');
           const result = await supabase
             .from('public_chats')
             .select(`
               *,
               profiles (
                 full_name,
-                avatar_url
+                avatar_url,
+                instrument,
+                instruments,
+                role
               )
             `)
             .order('created_at', { ascending: true })
@@ -102,87 +104,13 @@ const PublicChat = () => {
           data = result.data;
           error = result.error;
           
-          console.log('📊 Safe query completed');
-          console.log('📊 Safe query data:', data);
-          console.log('📊 Safe query error:', error);
-          
-          // ถ้า safe query สำเร็จ ลองดึงข้อมูล instrument เพิ่ม
-          if (!error && data && data.length > 0) {
-            console.log('🔍 Checking column names - fetching one profile with all data...');
-            
-            try {
-              // ดึงข้อมูล profile แบบ select('*') เพื่อดู column ทั้งหมด
-              const profileCheck = await supabase
-                .from('profiles')
-                .select('*')
-                .limit(1);
-              
-              console.log('🔍 Profile check result:', profileCheck.data);
-              console.log('🔍 Profile check error:', profileCheck.error);
-              
-              if (profileCheck.data && profileCheck.data.length > 0) {
-                const sampleProfile = profileCheck.data[0];
-                console.log('🔍 Sample profile keys:', Object.keys(sampleProfile));
-                console.log('🔍 Looking for instrument columns:');
-                console.log('  🔍 instruments (with s):', sampleProfile.instruments);
-                console.log('  🔍 instrument (without s):', sampleProfile.instrument);
-                
-                // ตรวจสอบว่ามี column ไหนบ้าง
-                const hasInstruments = sampleProfile.hasOwnProperty('instruments');
-                const hasInstrument = sampleProfile.hasOwnProperty('instrument');
-                
-                console.log('🔍 Column check results:');
-                console.log('  ✅ has instruments column:', hasInstruments);
-                console.log('  ✅ has instrument column:', hasInstrument);
-                
-                // อัปเดต query ให้ดึง column ที่มีอยู่จริง
-                if (hasInstruments || hasInstrument) {
-                  console.log('🔍 Updating query to include instrument columns...');
-                  
-                  const instrumentColumns = [];
-                  if (hasInstruments) instrumentColumns.push('instruments');
-                  if (hasInstrument) instrumentColumns.push('instrument');
-                  
-                  const enhancedResult = await supabase
-                    .from('public_chats')
-                    .select(`
-                      *,
-                      profiles (
-                        full_name,
-                        avatar_url,
-                        ${instrumentColumns.join(', ')},
-                        role
-                      )
-                    `)
-                    .order('created_at', { ascending: true })
-                    .limit(50);
-                  
-                  data = enhancedResult.data;
-                  error = enhancedResult.error;
-                  
-                  console.log('🔍 Enhanced query completed');
-                  console.log('🔍 Enhanced query data:', data);
-                  console.log('🔍 Enhanced query error:', error);
-                }
-              }
-            } catch (profileCheckError) {
-              console.error('❌ Error checking profile columns:', profileCheckError);
-              console.log('⚠️ Continuing with safe query data only');
-            }
-          }
-          
         } catch (queryError) {
           console.error('❌ Error executing Supabase query:', queryError);
           error = queryError;
           data = null;
         }
 
-        console.log('📊 Final Supabase query completed');
-        console.log('📊 Final data from Supabase:', data);
-        console.log('📊 Final data type:', typeof data);
-        console.log('📊 Final data length:', data?.length || 0);
-        console.log('📊 Final is array:', Array.isArray(data));
-        console.log('📊 Final error from query:', error);
+        console.log('📊 Query completed - Messages:', data?.length || 0, 'Error:', !!error);
         
         if (error) {
           console.error('❌ Error fetching messages:', error);
@@ -215,32 +143,17 @@ const PublicChat = () => {
         
         try {
           formattedMessages = data.map((msg: any) => {
-            console.log(`🔄 Processing message ${msg.id}:`, {
-              content: msg.content,
-              user_id: msg.user_id,
-              profile: msg.profiles?.full_name || 'No profile',
-              created_at: msg.created_at
-            });
-            
             // ตรวจสอบข้อมูล profile อย่างปลอดภัย
             let profileData = msg.profiles || {};
-            console.log('🔍 Profile Data from DB:', profileData);
-            console.log('🔍 All available keys in profiles:', Object.keys(profileData || {}));
             
             // ตรวจสอบ column ที่มีอยู่จริง
             let instrumentValue = null;
             let roleValue = null;
             
             if (profileData) {
-              console.log('🔍 Checking for instruments (with s):', profileData.instruments);
-              console.log('🔍 Checking for instrument (without s):', profileData.instrument);
-              
               // ตรวจสอบว่าใช้ instruments (มี s) หรือ instrument (ไม่มี s)
               instrumentValue = profileData.instruments || profileData.instrument || null;
               roleValue = profileData.role || null;
-              
-              console.log('🎸 Final instrument value:', instrumentValue);
-              console.log('🎭 Final role value:', roleValue);
             }
             
             return {
@@ -261,7 +174,6 @@ const PublicChat = () => {
           });
         } catch (processingError) {
           console.error('❌ Error processing messages:', processingError);
-          console.log('⚠️ Using fallback message processing');
           
           // Fallback processing - สร้างข้อความพื้นฐาน
           formattedMessages = data.map((msg: any) => ({
@@ -282,16 +194,11 @@ const PublicChat = () => {
         }
 
         console.log(`📝 Formatted ${formattedMessages.length} messages`);
-        console.log('📅 Message order: Oldest → Newest (ascending)');
-        console.log('💾 About to setMessages with:', formattedMessages.length, 'messages');
-        console.log('💾 Formatted messages sample:', formattedMessages.slice(0, 2));
         
         // สำคัญ: เรียก setMessages เพื่ออัปเดต UI
-        console.log('💾 Calling setMessages...');
         setMessages(formattedMessages);
         
-        console.log('✅ setMessages called successfully');
-        console.log('🎉 Initial load completed successfully');
+        console.log('✅ Messages loaded successfully');
         console.log('📊 Successfully fetched and displayed ' + data.length + ' messages');
         
         // Auto scroll ลงล่างหลังโหลด
@@ -525,12 +432,14 @@ const PublicChat = () => {
       console.log('🧹 Cleaning up Realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [currentUser, loading]);
+  }, [currentUser]); // ลบ loading ออกเพื่อป้องกัน loop
 
   // Scroll ลงไปล่างสุดอัตโนมัติ
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages.length]); // ใช้ messages.length แทน messages array
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -603,21 +512,15 @@ const PublicChat = () => {
 
         if (!profileError && currentProfile) {
           console.log('🎸 Current user profile found:', currentProfile);
-          console.log('🔍 All available keys in current profile:', Object.keys(currentProfile || {}));
-          console.log('🔍 Checking for instruments (with s) in current profile:', currentProfile?.instruments);
-          console.log('🔍 Checking for instrument (without s) in current profile:', currentProfile?.instrument);
           
-          // ตรวจสอบว่าใช้ instruments (มี s) หรือ instrument (ไม่มี s)
-          const currentInstrumentValue = currentProfile?.instruments || currentProfile?.instrument;
-          const currentRoleValue = currentProfile?.role;
+          // ตรวจสอบว่าใช้ instruments (มี s) หรือ instrument (ไม่มี s) พร้อม default value
+          const currentInstrumentValue = currentProfile?.instruments || currentProfile?.instrument || 'ไม่ระบุ';
+          const currentRoleValue = currentProfile?.role || 'สมาชิก';
           
-          console.log('🎸 Final current instrument value:', currentInstrumentValue);
-          console.log('🎭 Final current role value:', currentRoleValue);
-          
-          // สร้าง message object สำหรับตัวเองทันที
+          // สร้าง message object สำหรับตัวเองทันที พร้อม default values
           const instantMessage: Message = {
             id: data.id,
-            sender_name: currentProfile.full_name || 'ผู้ใช้ทั่วไป',
+            sender_name: currentProfile?.full_name || 'ผู้ใช้ทั่วไป',
             text: data.content,
             time: new Date(data.created_at).toLocaleTimeString("th-TH", { 
               hour: "2-digit", 
@@ -786,8 +689,7 @@ const PublicChat = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      setShowImageGuard(true);
+      handleImageUpload(file); // ใช้งานแบบปกติชั่วคราว
     }
   };
 
@@ -950,6 +852,8 @@ const PublicChat = () => {
     setContextMenu({ visible: false, x: 0, y: 0, message: null });
   };
 
+  // Content Moderation Functions - ปิดชั่วคราว
+  /*
   const handleReportMessage = (message: Message) => {
     setMessageToReport(message);
     setShowReportModal(true);
@@ -984,6 +888,7 @@ const PublicChat = () => {
       fileInputRef.current.value = '';
     }
   };
+  */
 
   const handleDeleteFromContextMenu = () => {
     if (contextMenu.message) {
@@ -1288,14 +1193,8 @@ const PublicChat = () => {
                 ยกเลิกข้อความ
               </button>
             ) : (
-              // Menu for others' messages - Report option
-              <button
-                onClick={() => handleReportMessage(contextMenu.message!)}
-                className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-2 transition-colors"
-              >
-                <Flag className="w-4 h-4" />
-                รายงานข้อความ
-              </button>
+              // Menu for others' messages - Report option (ปิดชั่วคราว)
+              null
             )}
           </div>
         )}
@@ -1309,8 +1208,8 @@ const PublicChat = () => {
         )}
 
         {/* Input Bar */}
-        {/* Input Disclaimer */}
-        <InputDisclaimer />
+        {/* Input Disclaimer - ปิดชั่วคราว */}
+        {/* <InputDisclaimer /> */}
         
         <div className="bg-white border-t border-gray-200 px-3 sm:px-4 py-3 sticky bottom-0 z-30">
           <div className="flex items-center gap-2 sm:gap-2">
@@ -1370,25 +1269,25 @@ const PublicChat = () => {
           </div>
         </div>
 
-        {/* Report Modal */}
-        {showReportModal && messageToReport && (
+        {/* Report Modal - ปิดชั่วคราว */}
+        {/* {showReportModal && messageToReport && (
           <ReportModal
             isOpen={showReportModal}
             onClose={closeReportModal}
             message={messageToReport}
             currentUser={currentUser}
           />
-        )}
+        )} */}
 
-        {/* Image Upload Guard */}
-        {showImageGuard && (
+        {/* Image Upload Guard - ปิดชั่วคราว */}
+        {/* {showImageGuard && (
           <ImageUploadGuard
             isOpen={showImageGuard}
             onClose={cancelImageUpload}
             onConfirm={confirmImageUpload}
             isUploading={uploadingImage}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

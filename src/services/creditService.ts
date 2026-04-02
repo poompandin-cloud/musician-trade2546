@@ -74,19 +74,47 @@ export class CreditService {
       }
 
       // หักเครดิต
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ credit_balance: credit_balance - amount })
-        .eq('id', userId)
-        .select('credit_balance')
-        .single();
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .update({ credit_balance: credit_balance - amount })
+            .eq('id', userId)
+            .select('credit_balance')
+            .single();
 
-      if (error) throw error;
+          if (error) {
+            // ดักจับ AbortError
+            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+              console.log(`⚠️ Credit update aborted, retry attempt ${retryCount + 1}/${maxRetries}`);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, 1000)); // รอ 1 วินาที
+                continue;
+              }
+            }
+            throw error;
+          }
 
-      return { 
-        success: true, 
-        newBalance: data.credit_balance 
-      };
+          return { 
+            success: true, 
+            newBalance: data.credit_balance 
+          };
+        } catch (updateError: any) {
+          if (retryCount < maxRetries && (updateError.name === 'AbortError' || updateError.message?.includes('aborted'))) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw updateError;
+        }
+      }
+
+      // This should never be reached due to return inside loop
+      throw new Error('Failed to update credits after retries');
     } catch (error) {
       console.error('Error deducting credits:', error);
       return { 

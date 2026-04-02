@@ -35,22 +35,42 @@ const App = () => {
   const [lastCreditReset, setLastCreditReset] = useState<any>(null);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Check for existing session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      // ✅ เรียก fetchJobs หลังจากมี session แล้ว
-      if (session) {
-        fetchJobs();
+      if (!mounted) return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        setSession(session);
+        setIsLoading(false); // ✅ ปิด loading หลังจากตรวจสอบ session
+        
+        // ✅ เรียก fetchJobs หลังจากมี session แล้ว
+        if (session) {
+          fetchJobs();
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      
       console.log("🔍 App.tsx: Auth state changed:", { event: _event, session });
       setSession(session);
+      setIsLoading(false); // ✅ ปิด loading หลังจาก auth state change
+      
       if (session) {
         console.log("🔍 App.tsx: User logged in, fetching jobs...");
         fetchJobs();
@@ -59,7 +79,10 @@ const App = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // ตรวจสอบการรีเซ็ตเครดิตล่าสุด
@@ -153,6 +176,7 @@ const App = () => {
         
         if (jobsError) {
           console.error("Error fetching jobs:", jobsError);
+          setJobs([]); // ✅ ให้ค่าว่างเปล่าแทนการ return
           return;
         }
         
@@ -169,51 +193,31 @@ const App = () => {
                 
                 return {
                   ...job,
-                  profiles: profile || {}
+                  profile: profile || { full_name: 'ไม่พบข้อมูล', avatar_url: null }
                 };
-              } catch {
+              } catch (profileError) {
+                console.error(`Error fetching profile for job ${job.id}:`, profileError);
                 return {
                   ...job,
-                  profiles: {}
+                  profile: { full_name: 'ไม่พบข้อมูล', avatar_url: null }
                 };
               }
             })
           );
+          
           setJobs(jobsWithProfiles);
         } else {
           setJobs([]);
         }
       } else {
-        if (data) setJobs(data);
+        setJobs(data || []);
       }
     } catch (err) {
       console.error("System Error:", err);
     }
   };
 
-  useEffect(() => {
-    console.log("🔍 App.tsx: Initializing session check...");
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("🔍 App.tsx: Initial session:", session);
-      setSession(session);
-      setIsLoading(false); 
-      
-      // ✅ เรียกเสมอ ไม่ว่าจะมี session หรือไม่
-      fetchJobs(); 
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("🔍 App.tsx: Auth state changed:", { event: _event, session });
-      setSession(session);
-      setIsLoading(false);
-      
-      // ✅ เรียกเสมอเมื่อมีการเปลี่ยนแปลงสถานะ
-      fetchJobs(); 
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  // ✅ ลบ useEffect ซ้ำซ้อนออกเนื่องจากมี useEffect หลักอยู่แล้ว (บรรทัด 37-86)
 
   // ฟังก์ชันเพิ่มประกาศงาน (ฉบับสะอาดและแม่นยำ)
   const addJob = async (newJob: any) => {
@@ -290,11 +294,44 @@ const App = () => {
    // 1. คำนวณยอดเครดิตใหม่ (หักออก 5)
       const newBalance = (profile?.credits || 0) - 5;
 
-      // 2. สั่ง Update ลงฐานข้อมูล Supabase ตรงๆ
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits: newBalance })
-        .eq('id', userId);
+      // 2. สั่ง Update ลงฐานข้อมูล Supabase ตรงๆ (พร้อม retry mechanism)
+      let retryCount = 0;
+      const maxRetries = 2;
+      let updateError = null;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ credits: newBalance })
+            .eq('id', userId);
+
+          if (error) {
+            // ดักจับ AbortError
+            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+              console.log(`⚠️ Credit update aborted, retry attempt ${retryCount + 1}/${maxRetries}`);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, 1000)); // รอ 1 วินาที
+                continue;
+              }
+            }
+            throw error;
+          }
+          
+          // สำเร็จ
+          updateError = null;
+          break;
+        } catch (error: any) {
+          if (retryCount < maxRetries && (error.name === 'AbortError' || error.message?.includes('aborted'))) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          updateError = error;
+          break;
+        }
+      }
 
       if (updateError) {
         console.error("❌ หักเครดิตล้มเหลว:", updateError);
