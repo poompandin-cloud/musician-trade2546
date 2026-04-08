@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook, Search, Copy, Check, Printer } from "lucide-react";
+import { ArrowLeft, User, Phone, MessageCircle, Camera, Trash2, MapPin, Timer, Share2, Video, Plus, X, Star, LogOut, CheckCircle, Upload, Heart, Facebook, Search, Copy, Check, Printer, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,7 @@ interface Profile {
   video_urls?: string[] | null;
   instruments?: string[] | null
   province?: string | null;
+  age?: number | null;
 }
 
 interface Job {
@@ -482,6 +483,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
     facebook_url: "",
     instruments: "",
     province: "",
+    age: "",
   });
 
   const [videoInput, setVideoInput] = useState("");
@@ -746,6 +748,7 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
             facebook_url: data.facebook_url || "",
             instruments: data.instruments || "",
             province: data.province || "",
+            age: data.age?.toString() || "",
           });
           // ✅ โหลดเครื่องดนตรีที่เลือกจาก DB
           const instrumentsArray = Array.isArray(data.instruments) 
@@ -1411,6 +1414,7 @@ console.log("New instruments after removal:", newInstruments);
         facebook_url: formData.facebook_url || null,
         instruments: instrumentsString, // ✅ แปลง array เป็น string คั่นด้วย comma
         province: formData.province || null,
+        age: formData.age ? parseInt(formData.age) : null, // ✅ แปลง string เป็น number
         updated_at: new Date().toISOString(),
       };
 
@@ -1875,6 +1879,26 @@ return (
                 />
               </div>
 
+              {/* ช่องอายุ */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  อายุ
+                </Label>
+                <select
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent h-12"
+                >
+                  <option value="">เลือกอายุ</option>
+                  {Array.from({ length: 51 }, (_, i) => i + 10).map(age => (
+                    <option key={age} value={age}>
+                      {age} ปี
+                    </option>
+                  ))}
+                </select>
+              </div>
+
                <div className="space-y-2">
   <Label className="flex items-center gap-2">
     🎸 เครื่องดนตรีที่เล่น
@@ -2064,6 +2088,15 @@ return (
                 ) : (
                   <p className="text-foreground">ไม่ได้ระบุเครื่องดนตรี</p>
                 )}
+              </div>
+
+              {/* อายุ */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  อายุ
+                </Label>
+                <p className="text-foreground">{profile?.age ? `${profile.age} ปี` : "-"}</p>
               </div>
 
               {/* จังหวัดที่อยู่ */}

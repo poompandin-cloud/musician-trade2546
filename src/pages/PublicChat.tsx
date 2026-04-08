@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Plus, Image, ArrowLeft, Trash2, Flag } from 'lucide-react';
+import { Send, Plus, Image, ArrowLeft, Trash2, Flag, RotateCcw } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 // import { ReportModal, ImageUploadGuard, InputDisclaimer } from '@/components/ContentModeration'; // ปิดชั่วคราวเพื่อแก้ไขปัญหา
 
@@ -78,6 +78,10 @@ const PublicChat = () => {
       console.log('🆔 Current user ID:', currentUser?.id);
       console.log('⏰ Fetch time:', new Date().toLocaleTimeString());
       
+      // ✅ ล้างข้อมูลเก่าก่อน fetch ใหม่ทุกครั้ง
+      console.log('🧹 Clearing old messages cache...');
+      setMessages([]);
+      
       try {
         // ดึงข้อมูลทั้งหมดโดยไม่มีการกรอง - ทำงานได้ทั้ง login และไม่ login
         console.log('📡 Executing Supabase query...');
@@ -85,12 +89,14 @@ const PublicChat = () => {
         let data, error;
         
         try {
-          // ดึงข้อมูลแบบปลอดภัยก่อน - เฉพาะคอลัมน์มาตรฐาน
+          // ดึงข้อมูลแบบ Left Join ที่ปลอดภัย - ใช้ profiles:user_id(*)
+          console.log('📡 Executing Supabase query with safe Left Join...');
+          
           const result = await supabase
             .from('public_chats')
             .select(`
               *,
-              profiles (
+              profiles:user_id (
                 full_name,
                 avatar_url,
                 instrument,
@@ -201,6 +207,9 @@ const PublicChat = () => {
         console.log('✅ Messages loaded successfully');
         console.log('📊 Successfully fetched and displayed ' + data.length + ' messages');
         
+        // ✅ ปิด loading state หลังจาก fetch เสร็จเสมอ
+        setLoading(false);
+        
         // Auto scroll ลงล่างหลังโหลด
         setTimeout(() => {
           console.log('📜 Auto-scrolling to bottom...');
@@ -212,6 +221,9 @@ const PublicChat = () => {
         console.error('❌ Error stack:', error.stack);
         console.log('🚫 fetchMessages failed due to exception');
         console.log('📊 Unexpected error: ' + error.message);
+        
+        // ✅ ปิด loading state แม้จะเกิด error
+        setLoading(false);
       }
     };
 
@@ -220,6 +232,8 @@ const PublicChat = () => {
     fetchMessages();
 
     // เปิด Realtime subscription - แก้ไขให้ทำงานอย่างถูกต้อง
+    console.log('🔌 Setting up Supabase Realtime connection...');
+    
     const channel = supabase
       .channel('public-chat')
       .on(
@@ -235,6 +249,7 @@ const PublicChat = () => {
           console.log('👤 Sender user_id:', payload.new.user_id);
           console.log('🆔 Current user_id:', currentUser?.id);
           console.log('🎯 Is this my message?:', payload.new.user_id === currentUser?.id);
+          console.log('📊 Total messages in state:', messages.length);
           
           // สำคัญ: ตรวจสอบว่ามี currentUser หรือไม่
           if (!currentUser) {
@@ -416,15 +431,18 @@ const PublicChat = () => {
       )
       .subscribe((status) => {
         console.log('🔄 Realtime subscription status:', status);
+        console.log('📊 Current online users count:', status === 'SUBSCRIBED' ? 'Connected' : 'Disconnected');
+        
         if (status === 'SUBSCRIBED') {
           console.log('✅ Realtime connection established successfully');
           console.log('🌐 Ready to receive messages from ALL users!');
+          console.log('📊 Online users should now see new messages');
         } else if (status === 'CHANNEL_ERROR') {
-          console.log('❌ Realtime connection error');
+          console.log('❌ Realtime connection error - will retry automatically');
         } else if (status === 'TIMED_OUT') {
-          console.log('⏰ Realtime connection timed out');
+          console.log('⏰ Realtime connection timed out - will retry automatically');
         } else if (status === 'CLOSED') {
-          console.log('🔌 Realtime connection closed');
+          console.log('🔌 Realtime connection closed - will reconnect automatically');
         }
       });
 
@@ -478,13 +496,16 @@ const PublicChat = () => {
         .single();
 
       if (error) {
-        console.error('❌ Database insert error:', error);
+        console.error('❌ Insert Error:', error);
         console.error('❌ Error details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
           code: error.code
         });
+        console.error('❌ RLS Policy Check - User ID:', currentUser.id);
+        console.error('❌ RLS Policy Check - Content:', inputText.trim());
+        console.error('❌ RLS Policy Check - Table: public_chats');
         
         toast({
           title: "ส่งข้อความไม่สำเร็จ",
@@ -1252,6 +1273,98 @@ const PublicChat = () => {
                 disabled={uploadingImage}
               />
             </div>
+
+            {/* Refresh Chat Button */}
+            <Button 
+              variant="outline"
+              onClick={() => {
+                console.log('🔄 Manual refresh triggered');
+                setMessages([]);
+                // รีเฟรชข้อมูลโดยเรียก fetchMessages ใหม่
+                const refreshMessages = async () => {
+                  console.log('🚀 refreshMessages function called');
+                  console.log('📥 Refreshing messages...');
+                  console.log('🆔 Current user ID:', currentUser?.id);
+                  console.log('⏰ Refresh time:', new Date().toLocaleTimeString());
+                  
+                  // ✅ ล้างข้อมูลเก่าก่อน refresh
+                  console.log('🧹 Clearing messages for refresh...');
+                  setMessages([]);
+                  
+                  try {
+                    // ดึงข้อมูลแบบ Left Join ที่ปลอดภัย
+                    console.log('📡 Executing refresh query with safe Left Join...');
+                    
+                    const result = await supabase
+                      .from('public_chats')
+                      .select(`
+                        *,
+                        profiles:user_id (
+                          full_name,
+                          avatar_url,
+                          instrument,
+                          instruments,
+                          role
+                        )
+                      `)
+                      .order('created_at', { ascending: true })
+                      .limit(50);
+                    
+                    if (result.error) {
+                      console.error('❌ Refresh query error:', result.error);
+                      toast({
+                        title: "รีเฟรชข้อความไม่สำเร็จ",
+                        description: result.error.message,
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    console.log('✅ Refresh query successful:', result.data?.length, 'messages');
+                    
+                    // แปลงข้อมูลให้ถูก format
+                    const formattedMessages = result.data.map((msg: any) => ({
+                      id: msg.id,
+                      sender_name: msg.profiles?.full_name || 'ผู้ใช้ทั่วไป',
+                      text: msg.content,
+                      time: new Date(msg.created_at).toLocaleTimeString("th-TH", { 
+                        hour: "2-digit", 
+                        minute: "2-digit" 
+                      }),
+                      is_me: msg.user_id === currentUser?.id,
+                      avatar_url: msg.profiles?.avatar_url,
+                      user_id: msg.user_id,
+                      image_url: msg.image_url,
+                      instrument: msg.profiles?.instruments || msg.profiles?.instrument || 'ไม่ระบุ',
+                      role: msg.profiles?.role || 'สมาชิก'
+                    }));
+                    
+                    console.log('📝 Formatted refresh messages:', formattedMessages.length);
+                    setMessages(formattedMessages);
+                    
+                    toast({
+                      title: "รีเฟรชข้อความสำเร็จ",
+                      description: `โหลดข้อความ ${formattedMessages.length} ข้อความ`,
+                    });
+                    
+                  } catch (error) {
+                    console.error('❌ Refresh error:', error);
+                    toast({
+                      title: "รีเฟรชข้อความไม่สำเร็จ",
+                      description: error.message,
+                      variant: "destructive"
+                    });
+                  }
+                };
+                
+                refreshMessages();
+              }}
+              size="sm"
+              className="p-2 min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px]"
+              title="รีเฟรชข้อความ"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
 
             {/* Send Button */}
             <Button 
