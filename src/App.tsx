@@ -551,13 +551,7 @@ const App = () => {
                 
                 <Route 
                   path="/customer-portal" 
-                  element={
-                    session ? (
-                      <CustomerPortal />
-                    ) : (
-                      <AuthPage />
-                    )
-                  } 
+                  element={<CustomerPortal />} 
                 />
                 
                                 

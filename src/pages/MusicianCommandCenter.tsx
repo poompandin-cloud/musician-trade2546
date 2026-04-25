@@ -518,8 +518,8 @@ const MusicianCommandCenter = () => {
 
           {/* QR Code Modal */}
           {showQR && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[85vh] overflow-y-auto">
+            <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black bg-opacity-50 pt-20">
+              <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4 relative">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code สำหรับแล้ว</h3>
                 
                 {/* QR Code Section */}
@@ -566,38 +566,51 @@ const MusicianCommandCenter = () => {
                         className="hidden"
                         id="promptpay-qr-upload"
                       />
-                      <label
-                        htmlFor="promptpay-qr-upload"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 cursor-pointer text-center"
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('promptpay-qr-upload')?.click()}
+                        disabled={uploadingQr}
+                        className="flex-1"
                       >
-                        {uploadingQr ? 'กำลังอัปโหลด...' : 'เลือกรูป QR Code'}
-                      </label>
+                        {uploadingQr ? 'กำลังอัปโหลด...' : 'เลือกรูปคิวอาร์โค้ด'}
+                      </Button>
                     </div>
                     
                     {/* QR Preview */}
                     {tipQrUrl && (
-                      <div className="mt-3 flex items-center gap-3">
-                        <img 
-                          src={tipQrUrl} 
-                          alt="PromptPay QR" 
-                          className="w-16 h-16 object-contain border border-gray-200 rounded"
-                        />
-                        <span className="text-sm text-green-600">✅ QR Code อัปโหลดแล้ว</span>
+                      <div className="mt-3">
+                        <img src={tipQrUrl} alt="Tip QR" className="w-32 h-32 object-contain" />
                       </div>
                     )}
                   </div>
-                    
-                  
-                </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3">
+                  {/* Bank Account Input */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      หมายเลขบัญชีธนาคาร
+                    </label>
+                    <input
+                      type="text"
+                      value={bankAccount}
+                      onChange={(e) => setBankAccount(e.target.value)}
+                      placeholder="กรอกหมายเลขบัญชีธนาคาร"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Save Button */}
                   <Button
                     onClick={handleSavePaymentInfo}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    disabled={uploadingQr}
+                    className="w-full"
                   >
-                    บันทึกข้อมูลการรับเงิน (Save Payment Info)
+                    บันทึกข้อมูลการรับเงิน
                   </Button>
+                </div>
+
+                {/* Close Button */}
+                <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setShowQR(false)}
