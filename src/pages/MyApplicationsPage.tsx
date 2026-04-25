@@ -314,7 +314,15 @@ const MyApplicationsPage = ({ currentUserId }: { currentUserId: string | null })
                       </div>
                       
                       {application.status === 'confirmed' && (
-                        <div className="text-right">
+                        <div className="text-right space-y-2">
+                          <Button
+                            onClick={() => navigate('/musician/scan')}
+                            variant="default"
+                            size="sm"
+                            className="text-xs bg-blue-500 hover:bg-blue-600"
+                          >
+                            Scan QR
+                          </Button>
                           <p className="text-xs text-green-600 font-medium">
                             สามารถติดต่อได้
                           </p>

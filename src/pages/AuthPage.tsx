@@ -9,6 +9,7 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [signupAccountType, setSignupAccountType] = useState<'musician' | 'venue' | 'customer'>('customer');
   const [showLineBrowserWarning, setShowLineBrowserWarning] = useState(false);
   const [showAndroidChromeButton, setShowAndroidChromeButton] = useState(false);
   
@@ -75,13 +76,26 @@ const AuthPage = () => {
     setLoading(true);
     try {
       if (type === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email, 
           password, 
-          options: { data: { full_name: fullName } },
+          options: { data: { full_name: fullName, account_type: signupAccountType } },
         });
 
         if (error) throw error;
+
+        const userId = signUpData.user?.id;
+        if (userId) {
+          const nextRole = signupAccountType === 'customer' ? null : signupAccountType;
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({ account_type: signupAccountType, role: nextRole })
+            .eq('id', userId);
+
+          if (profileUpdateError) {
+            console.error('Failed to update profile account type after signup:', profileUpdateError);
+          }
+        }
 
         toast({ title: "สมัครสมาชิกสำเร็จ!", description: "ยินดีต้อนรับ! บัญชีของคุณพร้อมใช้งานแล้ว" });
 
@@ -273,6 +287,16 @@ const AuthPage = () => {
             <input type="text" placeholder="Username" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <select
+              value={signupAccountType}
+              onChange={(e) => setSignupAccountType(e.target.value as 'musician' | 'venue' | 'customer')}
+              required
+              style={{ width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #ddd' }}
+            >
+              <option value="musician">นักดนตรี (Musician)</option>
+              <option value="venue">ร้านค้า (Venue)</option>
+              <option value="customer">ลูกค้า (Customer)</option>
+            </select>
             <button type="submit">สร้างบัญชี</button>
             <p className="social-text">หรือสมัครสมาชิกด้วยแพลตฟอร์มอื่น</p>
             <div className="social-icons">

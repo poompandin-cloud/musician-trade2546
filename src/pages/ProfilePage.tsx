@@ -112,7 +112,10 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
+  const [paymentForm, setPaymentForm] = useState({ tip_qr_url: '', bank_account: '' });
   const [myJobs, setMyJobs] = useState<Job[]>([]);
   const [confirmedApplications, setConfirmedApplications] = useState<Job[]>([]);
   const [receivedReviews, setReceivedReviews] = useState<Review[]>([]);
@@ -750,13 +753,17 @@ const ProfilePage = ({ currentUserId, onDeleteJob }: { currentUserId: string; on
             province: data.province || "",
             age: data.age?.toString() || "",
           });
-          // ✅ โหลดเครื่องดนตรีที่เลือกจาก DB
+          setPaymentForm({
+            tip_qr_url: data.tip_qr_url || '',
+            bank_account: data.bank_account || '',
+          });
+          // Load instruments from DB
           const instrumentsArray = Array.isArray(data.instruments) 
             ? data.instruments 
             : stringToInstruments(data.instruments || "");
           setSelectedInstruments(instrumentsArray);
         } else {
-          // ถ้ายังไม่มีโปรไฟล์ และเป็นเจ้าของ ให้สร้างใหม่
+          // If no profile yet and owner, create new one
           if (isOwner) {
             const { data: newProfile, error: insertError } = await (supabase as any)
               .from("profiles")
@@ -2441,6 +2448,88 @@ return (
           </CardContent>
         </Card>
 
+{/* Payment Information - only for musicians */}
+        {isOwner && profile?.role?.toLowerCase() === 'musician' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Upload PromptPay QR Code</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    if (!e.target.files?.[0]) return;
+                    const file = e.target.files[0];
+                    const fileName = `payment-qr-${profileUserId}-${Date.now()}`;
+                    const { error } = await supabase.storage
+                      .from('payment-qr')
+                      .upload(fileName, file, { contentType: file.type });
+                    if (error) {
+                      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+                      return;
+                    }
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('payment-qr')
+                      .getPublicUrl(fileName);
+                    setPaymentForm({ ...paymentForm, tip_qr_url: publicUrl });
+                    // Update profile
+                    const { error: updateError } = await supabase
+                      .from('profiles')
+                      .update({ tip_qr_url: publicUrl })
+                      .eq('id', profileUserId);
+                    if (updateError) {
+                      toast({ title: 'Failed to save QR', description: updateError.message, variant: 'destructive' });
+                    } else {
+                      toast({ title: 'QR saved!' });
+                      // Refresh profile data
+                      const { data: refreshed } = await (supabase as any)
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', profileUserId)
+                        .single();
+                      if (refreshed) {
+                        setProfile(refreshed);
+                        setPaymentForm({
+                          tip_qr_url: refreshed.tip_qr_url || '',
+                          bank_account: refreshed.bank_account || '',
+                        });
+                      }
+                    }
+                  }}
+                  className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {paymentForm.tip_qr_url && (
+                  <img src={paymentForm.tip_qr_url} alt="Payment QR" className="mt-2 w-32 h-32 rounded border" />
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">PromptPay Number / Bank Account</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 123-4-56789-0"
+                  value={paymentForm.bank_account}
+                  onChange={async (e) => {
+                    setPaymentForm({ ...paymentForm, bank_account: e.target.value });
+                    const { error } = await supabase
+                      .from('profiles')
+                      .update({ bank_account: e.target.value })
+                      .eq('id', profileUserId);
+                    if (error) {
+                      toast({ title: 'Failed to save bank account', description: error.message, variant: 'destructive' });
+                    } else {
+                      toast({ title: 'Bank account saved!' });
+                    }
+                  }}
+                  className="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
 {/* ส่วน My Jobs List - แสดงเฉพาะเจ้าของ */}
         {isOwner && (
         <Card>
@@ -2543,7 +2632,16 @@ return (
                           ได้รับการยืนยันเมื่อ {new Date(application.created_at).toLocaleDateString('th-TH')}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right space-y-2">
+                        <Button
+                          onClick={() => navigate('/musician/scan')}
+                          variant="default"
+                          size="sm"
+                          className="text-xs bg-blue-500 hover:bg-blue-600 text-white font-bold"
+                        >
+                          <Camera className="w-3 h-3 mr-1" />
+                          Scan QR
+                        </Button>
                         <Button
                           onClick={() => navigate(`/profile/${application.applicant_id}`)}
                           variant="outline"
@@ -2557,6 +2655,29 @@ return (
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Musician Scan QR Section - Always visible for musicians */}
+        {isOwner && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-blue-500" />
+                Scan QR
+              </CardTitle>
+              <p className="text-sm text-blue-600">Scan QR to check-in</p>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => navigate('/musician/scan')} 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
+                size="lg"
+              >
+                <Camera className="w-5 h-5 mr-2" />
+                Scan QR
+              </Button>
             </CardContent>
           </Card>
         )}

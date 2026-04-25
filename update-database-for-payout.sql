@@ -1,4 +1,4 @@
--- SQL Script สำหรับอัปเดตฐานข้อมูล Supabase สำหรับ 'โปรเจค ออกเงินให้ก่อนแล้วหัก 7%'
+-- SQL Script สำหรับอัปเดตฐานข้อมูล Supabase สำหรับ 'โปรเจค ออกเงินให้ก่อนแล้วหัก 5%'
 -- รันใน Supabase Dashboard → SQL Editor
 
 -- =====================================================
@@ -50,8 +50,8 @@ ALTER COLUMN payment_status TYPE payment_status USING payment_status::payment_st
 
 -- เพิ่ม comment สำหรับคอลัมน์การเงิน
 COMMENT ON COLUMN gigs.total_amount IS 'ราคาเต็มของงาน (ก่อนหักค่าธรรมเนียม)';
-COMMENT ON COLUMN gigs.fee_amount IS 'ค่าธรรมเนียม 7% ที่ร้านจ่ายให้ระบบ';
-COMMENT ON COLUMN gigs.musician_payout IS 'ยอดเงินที่นักดนตรีได้รับ (93% ของราคาเต็ม)';
+COMMENT ON COLUMN gigs.fee_amount IS 'ค่าธรรมเนียม 5% ที่ร้านจ่ายให้ระบบ';
+COMMENT ON COLUMN gigs.musician_payout IS 'ยอดเงินที่นักดนตรีได้รับ (95% ของราคาเต็ม)';
 COMMENT ON COLUMN gigs.payment_status IS 'สถานะการจ่ายเงิน: pending (รอจ่าย), advanced_by_admin (ออกเงินก่อน), repaid (ร้านจ่ายคืนแล้ว)';
 
 -- =====================================================
@@ -104,8 +104,8 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        amount * 0.07 as fee_amount,      -- 7% ค่าธรรมเนียม
-        amount * 0.93 as musician_payout; -- 93% ยอดจ่ายให้นักดนตรี
+        amount * 0.05 as fee_amount,      -- 5% ค่าธรรมเนียม
+        amount * 0.95 as musician_payout; -- 95% ยอดจ่ายให้นักดนตรี
 END;
 $$;
 
@@ -118,8 +118,8 @@ BEGIN
     UPDATE gigs 
     SET 
         total_amount = total_amount_param,
-        fee_amount = total_amount_param * 0.07,
-        musician_payout = total_amount_param * 0.93,
+        fee_amount = total_amount_param * 0.05,
+        musician_payout = total_amount_param * 0.95,
         updated_at = NOW()
     WHERE id = gig_id_param;
 END;
@@ -137,8 +137,8 @@ AS $$
 BEGIN
     -- ถ้ามีการเปลี่ยนแปลง total_amount ให้คำนวณ fee และ payout ใหม่
     IF NEW.total_amount IS DISTINCT FROM OLD.total_amount THEN
-        NEW.fee_amount = NEW.total_amount * 0.07;
-        NEW.musician_payout = NEW.total_amount * 0.93;
+        NEW.fee_amount = NEW.total_amount * 0.05;
+        NEW.musician_payout = NEW.total_amount * 0.95;
     END IF;
     
     RETURN NEW;
@@ -314,8 +314,8 @@ DROP TYPE IF EXISTS user_role;
 
 2. ตาราง gigs:
    - เพิ่มคอลัมน์ total_amount (ราคาเต็ม)
-   - เพิ่มคอลัมน์ fee_amount (7% ค่าธรรมเนียม)
-   - เพิ่มคอลัมน์ musician_payout (93% ยอดจ่าย)
+   - เพิ่มคอลัมน์ fee_amount (5% ค่าธรรมเนียม)
+   - เพิ่มคอลัมน์ musician_payout (95% ยอดจ่าย)
    - เพิ่มคอลัมน์ payment_status (ENUM: pending, advanced_by_admin, repaid)
    - มี trigger คำนวณอัตโนมัติ
    - มี indexes สำหรับประสิทธิภาพ
@@ -345,5 +345,5 @@ DROP TYPE IF EXISTS user_role;
    - Indexes สำหรับการค้นหาที่สำคัญ
    - Views สำหรับการ query ที่ซับซ้อน
 
-🎯 พร้อมใช้งานสำหรับระบบ 'ออกเงินให้ก่อนแล้วหัก 7%'!
+🎯 พร้อมใช้งานสำหรับระบบ 'ออกเงินให้ก่อนแล้วหัก 5%'!
 */

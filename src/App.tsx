@@ -22,9 +22,20 @@ import CreditDetailsPage from "./pages/CreditDetailsPage";
 import LineCallback from "./pages/LineCallback";
 import AuthPage from "@/pages/AuthPage";
 import FindMusiciansPage from "./pages/FindMusiciansPage";
+import PayoutManagementPage from "./pages/PayoutManagementPage";
+import VenueQRPage from "./pages/VenueQRPage";
+import VenueQRSelectPage from "./pages/VenueQRSelectPage";
+import VenueGigDetailsPage from "./pages/VenueGigDetailsPage";
+import VenuePayoutDashboard from "./pages/VenuePayoutDashboard";
+import VerificationRequest from "./pages/VerificationRequest";
+import AdminVerificationPanel from "./pages/AdminVerificationPanel";
+import AdminVerificationDashboard from "./pages/AdminVerificationDashboard";
+import MusicianScanPage from "./pages/MusicianScanPage";
+import CustomerPortal from "./pages/CustomerPortal";
+import MusicianQRPage from "./pages/MusicianQRPage";
+import MusicianCommandCenter from "./pages/MusicianCommandCenter";
+import WalletPage from "./pages/WalletPage";
 import NotFound from "./pages/NotFound";
-
-
 
 const queryClient = new QueryClient();
 
@@ -72,10 +83,10 @@ const App = () => {
       setIsLoading(false); // ✅ ปิด loading หลังจาก auth state change
       
       if (session) {
-        console.log("🔍 App.tsx: User logged in, fetching jobs...");
+        console.log("App.tsx: User logged in, fetching jobs...");
         fetchJobs();
       } else {
-        console.log("🔍 App.tsx: User logged out");
+        console.log("App.tsx: User logged out");
       }
     });
 
@@ -155,7 +166,7 @@ const App = () => {
         .from('jobs')
         .select(`
           *,
-          profiles (
+          profiles!jobs_user_id_fkey (
             full_name,
             avatar_url
           )
@@ -484,6 +495,95 @@ const App = () => {
                 />
                 
                 <Route 
+                  path="/payout-management" 
+                  element={
+                    session ? (
+                      <PayoutManagementPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/venue/qr/:gigId" 
+                  element={
+                    session ? (
+                      <VenueQRPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/venue/qr" 
+                  element={
+                    session ? (
+                      <VenueQRSelectPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/venue/gig/:gigId" 
+                  element={
+                    session ? (
+                      <VenueGigDetailsPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/musician/scan" 
+                  element={
+                    session ? (
+                      <MusicianScanPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/customer-portal" 
+                  element={
+                    session ? (
+                      <CustomerPortal />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                                
+                <Route 
+                  path="/musician/qr" 
+                  element={
+                    session ? (
+                      <MusicianQRPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/musician/command-center" 
+                  element={
+                    session ? (
+                      <MusicianCommandCenter />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
   path="/nearby-gigs" 
   element={
     <NearbyGigs 
@@ -494,6 +594,72 @@ const App = () => {
     />
   } 
 />
+                
+                <Route 
+                  path="/venue/payout-dashboard" 
+                  element={
+                    session ? (
+                      <VenuePayoutDashboard />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/verification-request" 
+                  element={
+                    session ? (
+                      <VerificationRequest />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/admin/verification-panel" 
+                  element={
+                    session ? (
+                      <AdminVerificationPanel />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/admin/dashboard" 
+                  element={
+                    session ? (
+                      <AdminVerificationPanel />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/admin/verifications" 
+                  element={
+                    session ? (
+                      <AdminVerificationDashboard />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
+                
+                <Route 
+                  path="/wallet" 
+                  element={
+                    session ? (
+                      <WalletPage />
+                    ) : (
+                      <AuthPage />
+                    )
+                  } 
+                />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

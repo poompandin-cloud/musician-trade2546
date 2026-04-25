@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music, Plus, MessageSquare } from "lucide-react";
+import { MapPin, Search, ClipboardList, LayoutList, FileText,Users,Info,UserSearch, Phone, Music, Plus, MessageSquare, QrCode, Camera, DollarSign, AlertCircle, Wallet, Music2, CreditCard } from "lucide-react";
 import MenuCard from "../components/MenuCard"; 
 import HuskyAnimation from '@/components/ui/HuskyAnimation';
 import { useEffect, useRef, useState } from 'react';
@@ -18,6 +18,10 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
   const [fetchedJob, setFetchedJob] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [accountType, setAccountType] = useState<string>('musician');
   const { toast } = useToast();
 
   // Get current user ID for accept button logic
@@ -25,6 +29,19 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
+      if (user?.id) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('role, is_verified, wallet_balance, account_type')
+          .eq('id', user.id)
+          .single();
+        setCurrentUserRole(profile?.role || null);
+        setIsVerified(profile?.is_verified || false);
+        setWalletBalance(profile?.wallet_balance || 0);
+        setAccountType(profile?.account_type || 'musician');
+      } else {
+        setCurrentUserRole(null);
+      }
     };
     getCurrentUser();
   }, []);
@@ -65,6 +82,12 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays} วัน`;
   };
+
+  const normalizedAccountType = (accountType || '').toLowerCase();
+  const normalizedRole = (currentUserRole || '').toLowerCase();
+
+  const isCustomer = normalizedAccountType === 'customer';
+  const isMusician = normalizedAccountType === 'musician' || normalizedRole === 'musician';
 
   // JobCard component inline
   const JobCard = ({ job, currentUserId }: { job: any; currentUserId?: string }) => {
@@ -365,7 +388,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
           {/* แสดงเฉพาะส่วนงานที่ค้นหา */}
           <div className="w-full max-w-4xl">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-              📍 งานที่คุณค้นหาอยู่ที่นี่
+              📍 งาบรรทัดไหนที่คุณค้นหาอยู่ที่นี่
             </h2>
             {loading ? (
               <div className="text-center py-12">
@@ -417,63 +440,107 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
             <p className="text-gray-500 mt-2">แบบด่วน ทันที 🎵</p>
           </div>
 
+          {!isVerified && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-1000">บัญชีของคุณยังไม่ได้รับการยืนยัน กรุณายืนยันตัวตนเพื่อเปิดใช้งาน</p>
+                      <Button size="sm" variant="outline" onClick={() => navigate('/verification-request')} className="mt-1">
+                        ยืนยันตัวตน
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
           {/* 2. ส่วนของเมนูต่างๆ */}
-          <div className="flex flex-col gap-4 w-full max-w-md">
-            <MenuCard 
-              title="หาคนแทนด่วน"
-              description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
-              icon={
-                <div className="p-2 bg-orange-100 rounded-xl">
-                  <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-                </div>
-              }
-              onClick={handleFindMusiciansClick}
-              variant="primary"
-            />
+          {isCustomer ? (
+            <div className="w-full max-w-md mx-auto">
+              <div className="flex flex-col gap-4 items-stretch justify-center mt-4">
+                <MenuCard 
+                  title="เพลงที่ได้รับจากลูกค้า"
+                  description="เพลงที่ได้รับและทิป"
+                  icon={
+                    <div className="p-2 bg-orange-100 rounded-xl">
+                      <Users className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                    </div>
+                  }
+                  onClick={() => navigate("/customer-portal")}
+                  variant="secondary"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 w-full max-w-md">
+              
+              <MenuCard 
+                title="จัดการคิวเพลงและทิป"
+                description="ดูคิวเพลงและทิปจากลูกค้า"
+                icon={
+                  <div className="p-2 bg-purple-100 rounded-xl">
+                      <Music2 className="w-6 h-6 text-purple-600" strokeWidth={2.5} />
+                    </div>
+                  }
+                  onClick={() => navigate("/musician/command-center")}
+                  variant="secondary"
+              />
 
-            <MenuCard 
-              title="งานที่ประกาศ"
-              description="ดูงานที่เปิดรับอยู่ตอนนี้"
-              icon={
-                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
-                  <ClipboardList className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-                </div>
-              }
-              onClick={() => navigate("/nearby-gigs")}
-              variant="primary"
-            />
+              
+              <MenuCard 
+                title="หาคนแทนด่วน"
+                description="ค้นหานักดนตรีที่พร้อมรับงานทันที"
+                icon={
+                  <div className="p-2 bg-orange-100 rounded-xl">
+                    <Search className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                  </div>
+                }
+                onClick={handleFindMusiciansClick}
+                variant="primary"
+              />
 
-            <MenuCard 
-              title="ค้นหานักดนตรีใกล้คุณ"
-              description="ค้นหาจากชื่อนักดนตรี"
-              icon={
-                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
-                  <UserSearch className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-                </div>
-              }
-              onClick={() => navigate("/musicians")}
-              variant="primary"
-            />
+              <MenuCard 
+                title="งานที่ประกาศ"
+                description="ดูงานที่เปิดรับอยู่ตอนนี้"
+                icon={
+                  <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                    <ClipboardList className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                  </div>
+                }
+                onClick={() => navigate("/nearby-gigs")}
+                variant="primary"
+              />
 
-            <MenuCard 
-              title="แชทสาธารณะ"
-              description="ห้องพูดคุย แลกเปลี่ยนประสบการณ์ดนตรี"
-              icon={
-                <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
-                  <MessageSquare className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-                </div>
-              }
-              onClick={() => navigate("/public-chat")}
-              variant="primary"
-            />
+              <MenuCard 
+                title="ค้นหานักดนตรีใกล้คุณ"
+                description="ค้นหาจากชื่อนักดนตรี"
+                icon={
+                  <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                    <UserSearch className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                  </div>
+                }
+                onClick={() => navigate("/musicians")}
+                variant="primary"
+              />
 
-            <MenuCard 
-              title="ติดต่อเรา"
-              description="เกี่ยวกับเว็บไซต์หาคนแทน"
-              icon={<Info className="w-6 h-6 text-orange-600" />}
-              onClick={() => navigate("/about")}
-            />
-          </div>
+              <MenuCard 
+                title="แชทสาธารณะ"
+                description="ห้องพูดคุย แลกเปลี่ยนประสบการณ์ดนตรี"
+                icon={
+                  <div className="p-2 bg-orange-100 rounded-xl shadow-inner">
+                    <MessageSquare className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
+                  </div>
+                }
+                onClick={() => navigate("/public-chat")}
+                variant="primary"
+              />
+
+              <MenuCard 
+                title="ติดต่อเรา"
+                description="เกี่ยวกับเว็บไซต์หาคนแทน"
+                icon={<Info className="w-6 h-6 text-orange-600" />}
+                onClick={() => navigate("/about")}
+              />
+            </div>
+          )}
 
           {/* 3. Husky Animation */}
           <div className="mt-12 opacity-90">

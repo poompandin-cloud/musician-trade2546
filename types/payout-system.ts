@@ -223,8 +223,8 @@ export type PayoutErrorCode =
 // 10. Constants
 // =====================================================
 
-export const FEE_RATE = 0.07;  // 7%
-export const PAYOUT_RATE = 0.93;  // 93%
+export const FEE_RATE = 0.05;  // 5%
+export const PAYOUT_RATE = 0.95;  // 95%
 
 export const USER_ROLES = {
   MUSICIAN: 'MUSICIAN' as const,
@@ -302,11 +302,11 @@ export const validateGigFinancialData = (data: Partial<GigFinancialData>): strin
     const expectedPayout = data.total_amount * PAYOUT_RATE;
     
     if (Math.abs(data.fee_amount - expectedFee) > 0.01) {
-      errors.push('ค่าธรรมเนียมไม่ถูกต้อง (ควรเป็น 7%)');
+      errors.push('ค่าธรรมเนียมไม่ถูกต้อง (ควรเป็น 5%)');
     }
     
     if (Math.abs(data.musician_payout - expectedPayout) > 0.01) {
-      errors.push('ยอดจ่ายไม่ถูกต้อง (ควรเป็น 93%)');
+      errors.push('ยอดจ่ายไม่ถูกต้อง (ควรเป็น 95%)');
     }
   }
   

@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, User, LogOut, ChevronDown } from "lucide-react";
+import { ArrowRight, User, LogOut, ChevronDown, DollarSign, Music, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -20,6 +20,8 @@ interface Profile {
 
 const Navbar = ({ userId }: { userId: string | null }) => {
   const [profile, setProfile] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [accountType, setAccountType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,12 +41,14 @@ const Navbar = ({ userId }: { userId: string | null }) => {
       try {
         const { data, error } = await (supabase as any)
           .from("profiles")
-          .select("full_name, avatar_url")
+          .select("full_name, avatar_url, role, account_type")
           .eq("id", userId)
           .single();
 
         if (!error && data) {
           setProfile(data);
+          setRole(data.role);
+          setAccountType(data.account_type || null);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -82,6 +86,32 @@ const Navbar = ({ userId }: { userId: string | null }) => {
     } catch (error) {
       console.error("Error logging out:", error);
     }
+  };
+
+  const setUserAccountType = async (nextAccountType: 'musician' | 'customer') => {
+    if (!userId) return;
+
+    const nextRole = nextAccountType === 'customer' ? null : nextAccountType;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ account_type: nextAccountType, role: nextRole })
+      .eq('id', userId);
+
+    if (error) {
+      toast({ title: 'Failed to switch role', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setAccountType(nextAccountType);
+    setRole(nextRole);
+    toast({
+      title:
+        nextAccountType === 'musician'
+          ? 'สลับเป็น นักดนตรี'
+          : 'สลับเป็น ลูกค้า',
+    });
+    window.location.reload();
   };
 
   return (
@@ -131,6 +161,10 @@ const Navbar = ({ userId }: { userId: string | null }) => {
                     <User className="w-4 h-4 mr-2" />
                     โปรไฟล์ของฉัน
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/payout-management")} className="cursor-pointer">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    จัดการเงิน
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -144,8 +178,88 @@ const Navbar = ({ userId }: { userId: string | null }) => {
                 onClick={() => navigate("/auth")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full shadow-sm transition-all hover:shadow-md"
               >
-                เข้าสู่ระบบ
+                Login
               </Button>
+            )}
+            {/* Role Switcher / Account type switcher */}
+            {userId && !loading && role !== 'admin' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="ml-2">
+                    <User className="w-4 h-4 mr-2" />
+                    {accountType === 'customer' ? 'โหมดลูกค้า' : 'โหมดนักดนตรี'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setUserAccountType('musician')}>
+                    <Music className="w-4 h-4 mr-2" />
+                    นักดนตรี
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setUserAccountType('customer')}>
+                    <Users className="w-4 h-4 mr-2" />
+                    ลูกค้า
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {/* Switch Account dropdown for users with a role */}
+            {userId && !loading && role === 'admin' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="ml-2">
+                    <User className="w-4 h-4 mr-2" />
+                    สลับบทบาท
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {/* Show current role */}
+                  <DropdownMenuItem disabled className="opacity-75">
+                    {role === 'admin' ? (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        โหมดผู้ดูแลระบบ
+                      </>
+                    ) : role === 'musician' ? (
+                      <>
+                        <Music className="w-4 h-4 mr-2" />
+                        นักดนตรี
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        เจ้าของร้าน
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {/* Admin menu */}
+                  {role === 'admin' && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                        <User className="w-4 h-4 mr-2" />
+                        โหมดผู้ดูแลระบบ
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {/* Role change options */}
+                  <DropdownMenuItem onClick={async () => {
+                    const { error } = await supabase
+                      .from('profiles')
+                      .update({ role: null })
+                      .eq('id', userId);
+                    if (!error) {
+                      toast({ title: 'Role cleared. Please choose your role again.' });
+                      setRole(null);
+                      window.location.reload();
+                    } else {
+                      toast({ title: 'Failed to clear role', variant: 'destructive' });
+                    }
+                  }}>
+                    <User className="w-4 h-4 mr-2" />
+                    เปลี่ยนบทบาท
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
