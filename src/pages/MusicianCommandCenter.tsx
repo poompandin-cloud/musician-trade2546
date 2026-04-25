@@ -434,8 +434,8 @@ const MusicianCommandCenter = () => {
                     onChange={(e) => setDateFilter(e.target.value as 'today' | 'yesterday')}
                     className="bg-white/90 text-slate-700 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[140px] backdrop-blur-sm shadow-sm"
                   >
-                    <option value="today" className="bg-white">Today</option>
-                    <option value="yesterday" className="bg-white">Yesterday</option>
+                    <option value="today" className="bg-white">วันนี้</option>
+                    <option value="yesterday" className="bg-white">เมื่อวานนี้</option>
                   </select>
                 </div>
               </div>
@@ -519,32 +519,32 @@ const MusicianCommandCenter = () => {
           {/* QR Code Modal */}
           {showQR && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[85vh] overflow-y-auto">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code สำหรับแล้ว</h3>
                 
                 {/* QR Code Section */}
-                <div className="mb-6">
-                  <p className="text-gray-600 mb-4">
-                    QR Code :
-                  </p>
-                  <div className="bg-gray-100 rounded p-3 mb-4">
-                    <p className="text-sm text-gray-700 break-all mb-2">
+                <div className="mb-4">
+                  <div className="bg-white p-4 rounded border-2 border-gray-300 flex justify-center mb-4">
+                    {qrCodeDataUrl ? (
+                      <img 
+                        src={qrCodeDataUrl} 
+                        alt="QR Code" 
+                        className="w-48 h-48 object-contain"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-6xl mb-2">🎵</div>
+                        <p className="text-sm text-gray-600">กำลังสร้าง QR Code...</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-gray-100 rounded p-3">
+                    <p className="text-gray-600 mb-2">
+                      QR Code :
+                    </p>
+                    <p className="text-sm text-gray-700 break-all">
                       {qrCodeUrl}
                     </p>
-                    <div className="bg-white p-4 rounded border-2 border-gray-300 flex justify-center">
-                      {qrCodeDataUrl ? (
-                        <img 
-                          src={qrCodeDataUrl} 
-                          alt="QR Code" 
-                          className="w-48 h-48 object-contain"
-                        />
-                      ) : (
-                        <div className="text-center">
-                          <div className="text-6xl mb-2">🎵</div>
-                          <p className="text-sm text-gray-600">กำลังสร้าง QR Code...</p>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
 
