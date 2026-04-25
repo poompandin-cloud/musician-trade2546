@@ -35,7 +35,7 @@ const MusicianCommandCenter = () => {
   const [tipQrUrl, setTipQrUrl] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [uploadingQr, setUploadingQr] = useState(false);
-  const [dateFilter, setDateFilter] = useState<'today' | 'yesterday'>('today');
+  const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | '2days' | '3days' | '4days' | '5days' | '6days' | '7days'>('today');
   const [todayDate, setTodayDate] = useState('');
   const [yesterdayDate, setYesterdayDate] = useState('');
 
@@ -107,7 +107,16 @@ const MusicianCommandCenter = () => {
       }
 
       // Determine which date to filter by
-      const targetDate = dateFilter === 'today' ? todayDate : yesterdayDate;
+      let targetDate = '';
+      if (dateFilter === 'today') targetDate = todayDate;
+      else if (dateFilter === 'yesterday') targetDate = yesterdayDate;
+      else {
+        // Calculate for 2-7 days
+        const days = parseInt(dateFilter.replace('days', ''));
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        targetDate = date.toISOString().split('T')[0];
+      }
       console.log(`Fetching ${dateFilter} requests for date:`, targetDate);
 
       const { data, error } = await supabase
@@ -326,17 +335,23 @@ const MusicianCommandCenter = () => {
   // Calculate today and yesterday dates
   const calculateDates = () => {
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const dates: { [key: string]: string } = {};
     
-    // Format as YYYY-MM-DD for database comparison
-    const todayStr = today.toISOString().split('T')[0];
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    // Calculate all 7 days
+    for (let i = 0; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      if (i === 0) dates['today'] = dateStr;
+      else if (i === 1) dates['yesterday'] = dateStr;
+      else dates[`${i}days`] = dateStr;
+    }
     
-    setTodayDate(todayStr);
-    setYesterdayDate(yesterdayStr);
+    setTodayDate(dates['today']);
+    setYesterdayDate(dates['yesterday']);
     
-    console.log('Date calculation:', { today: todayStr, yesterday: yesterdayStr });
+    console.log('Date calculation:', dates);
   };
 
   if (loading) {
@@ -431,11 +446,17 @@ const MusicianCommandCenter = () => {
                 <div className="relative">
                   <select
                     value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value as 'today' | 'yesterday')}
-                    className="bg-white/90 text-slate-700 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[140px] backdrop-blur-sm shadow-sm"
+                    onChange={(e) => setDateFilter(e.target.value as 'today' | 'yesterday' | '2days' | '3days' | '4days' | '5days' | '6days' | '7days')}
+                    className="bg-white/90 text-slate-700 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[120px] backdrop-blur-sm shadow-sm max-h-32 overflow-y-auto"
                   >
                     <option value="today" className="bg-white">วันนี้</option>
                     <option value="yesterday" className="bg-white">เมื่อวานนี้</option>
+                    <option value="2days" className="bg-white">เมื่อ 2 วันก่อน</option>
+                    <option value="3days" className="bg-white">เมื่อ 3 วันก่อน</option>
+                    <option value="4days" className="bg-white">เมื่อ 4 วันก่อน</option>
+                    <option value="5days" className="bg-white">เมื่อ 5 วันก่อน</option>
+                    <option value="6days" className="bg-white">เมื่อ 6 วันก่อน</option>
+                    <option value="7days" className="bg-white">เมื่อ 7 วันก่อน</option>
                   </select>
                 </div>
               </div>
@@ -443,11 +464,26 @@ const MusicianCommandCenter = () => {
               {/* Date Info */}
               <div className="text-slate-600 text-sm flex items-center gap-2">
                 <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                {dateFilter === 'today' ? (
-                  <span>วันนี้ ({todayDate})</span>
-                ) : (
-                  <span>Yesterday ({yesterdayDate})</span>
-                )}
+                {(() => {
+                let displayDate = '';
+                let displayText = '';
+                
+                if (dateFilter === 'today') {
+                  displayDate = todayDate;
+                  displayText = 'วันนี้';
+                } else if (dateFilter === 'yesterday') {
+                  displayDate = yesterdayDate;
+                  displayText = 'เมื่อวานนี้';
+                } else {
+                  const days = parseInt(dateFilter.replace('days', ''));
+                  const date = new Date();
+                  date.setDate(date.getDate() - days);
+                  displayDate = date.toISOString().split('T')[0];
+                  displayText = `เมื่อ ${days} วันก่อน`;
+                }
+                
+                return <span>{displayText} ({displayDate})</span>;
+              })()}
               </div>
             </CardHeader>
             <CardContent>
@@ -519,7 +555,7 @@ const MusicianCommandCenter = () => {
           {/* QR Code Modal */}
           {showQR && (
             <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black bg-opacity-50 pt-20">
-              <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full m-4 relative">
+              <div className="bg-white p-4 rounded-xl shadow-2xl max-w-xs w-full m-4 relative">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code สำหรับแล้ว</h3>
                 
                 {/* QR Code Section */}
@@ -529,7 +565,7 @@ const MusicianCommandCenter = () => {
                       <img 
                         src={qrCodeDataUrl} 
                         alt="QR Code" 
-                        className="w-48 h-48 object-contain"
+                        className="w-32 h-32 object-contain"
                       />
                     ) : (
                       <div className="text-center">
@@ -588,13 +624,13 @@ const MusicianCommandCenter = () => {
                   {/* Bank Account Input */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      หมายเลขบัญชีธนาคาร
+                      หมายเพิ่มเติม
                     </label>
                     <input
                       type="text"
                       value={bankAccount}
                       onChange={(e) => setBankAccount(e.target.value)}
-                      placeholder="กรอกหมายเลขบัญชีธนาคาร"
+                      placeholder="หมายเหตุเพิ่มเติมไม่จำเป็นต้องระบุ"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
