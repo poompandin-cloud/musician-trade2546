@@ -555,7 +555,7 @@ const MusicianCommandCenter = () => {
           {/* QR Code Modal */}
           {showQR && (
             <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black bg-opacity-50 pt-20">
-              <div className="bg-white p-4 rounded-xl shadow-2xl max-w-xs w-full m-4 relative">
+              <div className="bg-white p-3 rounded-xl shadow-2xl max-w-[780px] w-full m-4 relative">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code สำหรับแล้ว</h3>
                 
                 {/* QR Code Section */}
@@ -565,7 +565,7 @@ const MusicianCommandCenter = () => {
                       <img 
                         src={qrCodeDataUrl} 
                         alt="QR Code" 
-                        className="w-32 h-32 object-contain"
+                        className="w-20 h-20 object-contain"
                       />
                     ) : (
                       <div className="text-center">
@@ -583,6 +583,16 @@ const MusicianCommandCenter = () => {
                     </p>
                   </div>
                 </div>
+           {/* Bank Account Input */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      วิธีการนำคิวอาร์โค้ดไปใช้งาน    
+                      1.นำคิวอาร์โค้ดด้านบนไปปริ้นออกมา
+                      2.นำภาพคิวอาร์ที่คุณปริ้นออกมาไปแปะที่แสตนโน้ตของคุณ
+                    
+                    </label>
+                    
+                  </div>
 
                 {/* Payment Information Section */}
                 <div className="mb-6 border-t pt-4">
@@ -621,19 +631,7 @@ const MusicianCommandCenter = () => {
                     )}
                   </div>
 
-                  {/* Bank Account Input */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      หมายเพิ่มเติม
-                    </label>
-                    <input
-                      type="text"
-                      value={bankAccount}
-                      onChange={(e) => setBankAccount(e.target.value)}
-                      placeholder="หมายเหตุเพิ่มเติมไม่จำเป็นต้องระบุ"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  
 
                   {/* Save Button */}
                   <Button
