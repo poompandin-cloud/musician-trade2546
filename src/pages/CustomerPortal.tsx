@@ -26,8 +26,7 @@ const CustomerPortal = () => {
   const [tipAmount, setTipAmount] = useState('');
   const [songList, setSongList] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
-  
+    
   useEffect(() => {
     fetchUserProfile();
     
@@ -214,8 +213,9 @@ const CustomerPortal = () => {
             description: `ส่งคำขอเพลง "${songName}" ให้ ${selectedMusician.full_name} แล้ว`
           });
 
-          // Change to step 2
-          setCurrentStep(2);
+          // Reset form for next request
+          setSongName('');
+          setTipAmount('');
           setIsSubmitting(false);
           return;
         }
@@ -247,8 +247,7 @@ const CustomerPortal = () => {
         description: `ส่งคำขอเพลง "${songName}" ให้ ${selectedMusician.full_name} แล้ว`
       });
 
-      // Change to step 2
-      setCurrentStep(2);
+      // Reset form for next request
       setSongName('');
       setTipAmount('');
 
@@ -261,6 +260,17 @@ const CustomerPortal = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const downloadQRCode = () => {
+    if (selectedMusician?.tip_qr_url) {
+      const link = document.createElement('a');
+      link.href = selectedMusician.tip_qr_url;
+      link.download = `qr-code-${selectedMusician.full_name}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -363,48 +373,35 @@ const CustomerPortal = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Step 1: Request Song */}
-                {currentStep === 1 && (
-                  <div>
-                    <label className="block text-sm font-medium text-purple-900 mb-2">
-                      ชื่อเพลง
-                    </label>
-                    <input
-                      type="text"
-                      value={songName}
-                      onChange={(e) => setSongName(e.target.value)}
-                      className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="กรอกชื่อเพลงที่ต้องการขอ"
-                    />
-                  </div>
-                )}
-                {/* Step 2: Support Musician */}
-                {currentStep === 2 && (
-                  <>
-                    <div className="text-center py-4">
-                      <div className="text-6xl mb-4">🎵</div>
-                      <h3 className="text-xl font-semibold text-purple-900 mb-2">
-                        ขอบคุณสำหรับคำขอเพลง!
-                      </h3>
-                      <p className="text-purple-700 mb-6">
-                        คำขอเพลง "{songName}" ของคุณได้ถูกส่งให้ {selectedMusician.full_name} เรียบร้อยแล้ว
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-purple-900 mb-2">
-                        จำนวนทิป (บาท)
-                      </label>
-                      <input
-                        type="number"
-                        value={tipAmount}
-                        onChange={(e) => setTipAmount(e.target.value)}
-                        className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="0"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
+                {/* Song Name Input */}
+                <div>
+                  <label className="block text-sm font-medium text-purple-900 mb-2">
+                    ชื่อเพลง
+                  </label>
+                  <input
+                    type="text"
+                    value={songName}
+                    onChange={(e) => setSongName(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="กรอกชื่อเพลงที่ต้องการขอ"
+                  />
+                </div>
+
+                {/* Tip Amount Input */}
+                <div>
+                  <label className="block text-sm font-medium text-purple-900 mb-2">
+                    จำนวนทิป (บาท)
+                  </label>
+                  <input
+                    type="number"
+                    value={tipAmount}
+                    onChange={(e) => setTipAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
                     
                     {/* QR Code Display */}
                     {(() => {
@@ -417,44 +414,37 @@ const CustomerPortal = () => {
                         <p className="text-sm font-medium text-purple-900 mb-2">
                           สแกน QR Code สำหรับให้ทิป
                         </p>
-                        <div className="inline-block bg-white p-4 rounded-lg border-2 border-purple-200 shadow-sm">
+                        <div className="bg-white p-4 rounded-lg border-2 border-purple-200 shadow-sm w-full max-w-[300px] mx-auto">
                           <img 
                             src={selectedMusician.tip_qr_url} 
                             alt="QR Code สำหรับให้ทิป" 
-                            className="w-32 h-32 object-contain"
+                            className="w-full h-auto object-contain"
                             onLoad={() => console.log('QR Code image loaded successfully')}
                             onError={(e) => console.error('QR Code image failed to load:', e)}
                           />
                         </div>
-                        <p className="text-xs text-purple-600 mt-2">
-                          สแกนเพื่อให้ทิปสนับสนุนนักดนตรี
+                        
+                        {/* Download Button */}
+                        <Button
+                          onClick={downloadQRCode}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white mt-3 py-4"
+                        >
+                          ดาวน์โหลดรูป QR Code สำหรับปริ้นท์
+                        </Button>
+                        
+                        <p className="text-xs text-purple-600 mt-3">
+                          ขอบคุณสำหรับการซัพพอร์ตนักดนตรี ขอให้พบเจอแต่สิ่งดีๆ
                         </p>
                       </div>
                     )}
                     
                     <Button
-                      onClick={() => {
-                        setCurrentStep(1);
-                        setSongName('');
-                        setTipAmount('');
-                      }}
+                      onClick={handleSongRequest}
+                      disabled={isSubmitting}
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                     >
-                      กลับไปขอเพลงเพิ่ม
+                      {isSubmitting ? 'กำลังส่ง...' : 'ส่งคำขอเพลง'}
                     </Button>
-                  </>
-                )}
-                
-                {/* Step 1 Submit Button */}
-                {currentStep === 1 && (
-                  <Button
-                    onClick={handleSongRequest}
-                    disabled={isSubmitting}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    {isSubmitting ? 'กำลังส่ง...' : 'ส่งคำขอเพลง'}
-                  </Button>
-                )}
               </CardContent>
             </Card>
           </div>
