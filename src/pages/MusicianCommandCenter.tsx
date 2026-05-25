@@ -13,6 +13,8 @@ interface SongRequest {
   musician_id: string;
   customer_id?: string;
   song_name: string;
+  customer_name?: string;
+  table_number?: number;
   tip_amount: number;
   payment_status: string;
   created_at: string;
@@ -123,6 +125,8 @@ const MusicianCommandCenter = () => {
         .from('song_requests')
         .select(`
           *,
+          customer_name,
+          table_number,
           customer:profiles!song_requests_customer_id_fkey (
             full_name
           )
@@ -512,7 +516,8 @@ const MusicianCommandCenter = () => {
                         </div>
                         <div>
                           <p className="text-slate-600 text-xs mb-2 truncate">
-                            Requested by: {request.customer?.full_name || 'Anonymous'}
+                            Requested by: {request.customer_name || 'Anonymous'}
+                            {request.table_number && ` (โต๊ะที่ ${request.table_number})`}
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-slate-500 text-xs">

@@ -23,6 +23,8 @@ const CustomerPortal = () => {
   const [selectedMusician, setSelectedMusician] = useState<MusicianProfile | null>(null);
   const [showQRScannerModal, setShowQRScannerModal] = useState(false);
   const [songName, setSongName] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [tableNumber, setTableNumber] = useState('');
   const [tipAmount, setTipAmount] = useState('');
   const [songList, setSongList] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -186,17 +188,17 @@ const CustomerPortal = () => {
           console.log('Created new gig:', gigId);
         } catch (createError) {
           console.error('Failed to create gig:', createError);
-          
-          // If gig creation fails, try to insert song request without gig_id
-          // This requires modifying the database schema to make gig_id optional
           console.log('Attempting to insert song request without gig_id...');
           
+          // === ✅ จุดที่ 1: ปรับแก้ก้อน Fallback ให้จัดย่อหน้าถูกต้องและทำงานสมบูรณ์ ===
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('song_requests')
             .insert({
               musician_id: selectedMusician.id,
               customer_id: currentProfile?.id || null,
               song_name: songName.trim(),
+              customer_name: customerName.trim() || null,
+              table_number: tableNumber ? parseInt(tableNumber) : null,
               tip_amount: parseFloat(tipAmount) || 0,
               payment_status: 'pending'
             })
@@ -215,13 +217,15 @@ const CustomerPortal = () => {
 
           // Reset form for next request
           setSongName('');
+          setCustomerName('');
+          setTableNumber('');
           setTipAmount('');
           setIsSubmitting(false);
           return;
         }
       }
 
-      // Insert song request with gig_id
+      // === ✅ จุดที่ 2: ก้อนหลักส่งข้อมูลพร้อมชื่อและเลขโต๊ะเมื่อเชื่อมต่อกับกิจกรรมสำเร็จ ===
       const { data, error } = await supabase
         .from('song_requests')
         .insert({
@@ -229,8 +233,10 @@ const CustomerPortal = () => {
           musician_id: selectedMusician.id,
           customer_id: currentProfile?.id || null,
           song_name: songName.trim(),
+          customer_name: customerName.trim() || null,
+          table_number: tableNumber ? parseInt(tableNumber) : null,
           tip_amount: parseFloat(tipAmount) || 0,
-          payment_status: 'pending'
+          payment_status: 'pending',
         })
         .select()
         .single();
@@ -249,6 +255,8 @@ const CustomerPortal = () => {
 
       // Reset form for next request
       setSongName('');
+      setCustomerName('');
+      setTableNumber('');
       setTipAmount('');
 
     } catch (error) {
@@ -385,6 +393,39 @@ const CustomerPortal = () => {
                     className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="กรอกชื่อเพลงที่ต้องการขอ"
                   />
+                </div>
+
+                {/* Customer Name Input */}
+                <div>
+                  <label className="block text-sm font-medium text-purple-900 mb-2">
+                    ชื่อผู้ขอเพลง
+                  </label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="กรอกชื่อของคุณ"
+                  />
+                </div>
+
+                {/* Table Number Input */}
+                <div>
+                  <label className="block text-sm font-medium text-purple-900 mb-2">
+                    เลขโต๊ะลูกค้า
+                  </label>
+                  <select
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">เลือกเลขโต๊ะ</option>
+                    {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
+                      <option key={num} value={num}>
+                        โต๊ะที่ {num}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Tip Amount Input */}
