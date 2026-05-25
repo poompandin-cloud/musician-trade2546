@@ -566,19 +566,22 @@ const MusicianCommandCenter = () => {
                 {/* QR Code Section */}
                 <div className="mb-4">
                   <div className="bg-white p-4 rounded border-2 border-gray-300 flex justify-center mb-4">
+                    
                     {qrCodeDataUrl ? (
                       <img 
                         src={qrCodeDataUrl} 
                         alt="QR Code" 
-                        className="w-20 h-20 object-contain"
+                        className="w-64 h-64 mx-auto my-2 object-contain bg-white p-2 rounded border" // 👈 แก้ตรงนี้ครับพี่ป๊อปปี้
                       />
-                    ) : (
+                    ): (
                       <div className="text-center">
                         <div className="text-6xl mb-2">🎵</div>
                         <p className="text-sm text-gray-600">กำลังสร้าง QR Code...</p>
                       </div>
                     )}
                   </div>
+
+                  {/* 👈 พิมพ์เปิดตรงนี้
                   <div className="bg-gray-100 rounded p-3">
                     <p className="text-gray-600 mb-2">
                       QR Code :
@@ -587,6 +590,7 @@ const MusicianCommandCenter = () => {
                       {qrCodeUrl}
                     </p>
                   </div>
+                  */} {/* 👈 พิมพ์ปิดตรงนี้ */}
                 </div>
            {/* Bank Account Input */}
                   <div className="mb-4">
