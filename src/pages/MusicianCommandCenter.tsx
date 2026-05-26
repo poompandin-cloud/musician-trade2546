@@ -516,7 +516,7 @@ const MusicianCommandCenter = () => {
                         </div>
                         <div>
                           <p className="text-slate-600 text-xs mb-2 truncate">
-                            Requested by: {request.customer_name || 'Anonymous'}
+                            ขอเพลงโดย: {request.customer_name || 'Anonymous'}
                             {request.table_number && ` (โต๊ะที่ ${request.table_number})`}
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
@@ -571,7 +571,7 @@ const MusicianCommandCenter = () => {
                       <img 
                         src={qrCodeDataUrl} 
                         alt="QR Code" 
-                        className="w-64 h-64 mx-auto my-2 object-contain bg-white p-2 rounded border" // 👈 แก้ตรงนี้ครับพี่ป๊อปปี้
+                        className="w-54 h-54 mx-auto my-2 object-contain bg-white p-2 rounded border" // 👈 แก้ตรงนี้ครับพี่ป๊อปปี้
                       />
                     ): (
                       <div className="text-center">
@@ -595,7 +595,7 @@ const MusicianCommandCenter = () => {
            {/* Bank Account Input */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      วิธีการนำคิวอาร์โค้ดไปใช้งาน    
+                      🐧วิธีการนำคิวอาร์โค้ดไปใช้งาน    
                       1.นำคิวอาร์โค้ดด้านบนไปปริ้นออกมา
                       2.นำภาพคิวอาร์ที่คุณปริ้นออกมาไปแปะที่แสตนโน้ตของคุณ
                     
@@ -628,7 +628,7 @@ const MusicianCommandCenter = () => {
                         disabled={uploadingQr}
                         className="flex-1"
                       >
-                        {uploadingQr ? 'กำลังอัปโหลด...' : 'เลือกรูปคิวอาร์โค้ด'}
+                        {uploadingQr ? 'กำลังอัปโหลด...' : 'เลือกรูปคิวอาร์โค้ดรับเงินของคุณ'}
                       </Button>
                     </div>
                     
