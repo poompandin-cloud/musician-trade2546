@@ -521,7 +521,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
                 variant="primary"
               />
 
-              <MenuCard 
+              {/* <MenuCard
                 title="แชทสาธารณะ"
                 description="ห้องพูดคุย แลกเปลี่ยนประสบการณ์ดนตรี"
                 icon={
@@ -531,7 +531,7 @@ const Index = ({ jobs, onAddJob }: { jobs: any[], onAddJob: (job: any) => void }
                 }
                 onClick={() => navigate("/public-chat")}
                 variant="primary"
-              />
+              /> */}
 
               <MenuCard 
                 title="ติดต่อเรา"

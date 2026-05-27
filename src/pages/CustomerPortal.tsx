@@ -340,10 +340,10 @@ const CustomerPortal = () => {
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            รับชมการแสดงสดและสนับสนุนนักดนตรี
+            "Request a Song & Support the Artist! Tip to show some love."
           </h2>
           <p className="text-gray-600">
-            จองโต๊ะล่วงหน้า ขอเพลงเพลงโปรด และให้ทิปสนับสนุนความสามารถของนักดนตรี
+            ขอเพลงเพลงโปรด และให้ทิปสนับสนุนความสามารถของนักดนตรี
           </p>
         </div>
 
@@ -384,35 +384,35 @@ const CustomerPortal = () => {
                 {/* Song Name Input */}
                 <div>
                   <label className="block text-sm font-medium text-purple-900 mb-2">
-                    ชื่อเพลง
+                    ชื่อเพลง(Song Name)
                   </label>
                   <input
                     type="text"
                     value={songName}
                     onChange={(e) => setSongName(e.target.value)}
                     className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="กรอกชื่อเพลงที่ต้องการขอ"
+                    placeholder="Enter song title"
                   />
                 </div>
 
                 {/* Customer Name Input */}
                 <div>
                   <label className="block text-sm font-medium text-purple-900 mb-2">
-                    ชื่อผู้ขอเพลง
+                    ชื่อคุณ (Your name)
                   </label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="กรอกชื่อของคุณ"
+                    placeholder="Enter your name"
                   />
                 </div>
 
                 {/* Table Number Input */}
                 <div>
                   <label className="block text-sm font-medium text-purple-900 mb-2">
-                    เลขโต๊ะลูกค้า
+                    เลขโต๊ะลูกค้า (Select table number)
                   </label>
                   <select
                     value={tableNumber}
@@ -431,7 +431,7 @@ const CustomerPortal = () => {
                 {/* Tip Amount Input */}
                 <div>
                   <label className="block text-sm font-medium text-purple-900 mb-2">
-                    จำนวนทิป (บาท)
+                    จำนวนทิป Tip Amount (THB)
                   </label>
                   <input
                     type="number"
@@ -466,12 +466,7 @@ const CustomerPortal = () => {
                         </div>
                         
                         {/* Download Button */}
-                        <Button
-                          onClick={downloadQRCode}
-                          className="w-full bg-purple-600 hover:bg-purple-700 text-white mt-3 py-4"
-                        >
-                          ดาวน์โหลดรูป QR Code สำหรับปริ้นท์
-                        </Button>
+                        
                         
                         <p className="text-xs text-purple-600 mt-3">
                           ขอบคุณสำหรับการซัพพอร์ตนักดนตรี ขอให้พบเจอแต่สิ่งดีๆ
@@ -484,7 +479,7 @@ const CustomerPortal = () => {
                       disabled={isSubmitting}
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                     >
-                      {isSubmitting ? 'กำลังส่ง...' : 'ส่งคำขอเพลง'}
+                      {isSubmitting ? 'กำลังส่ง(waiting)...' : 'ส่งคำขอเพลง(Sent)'}
                     </Button>
               </CardContent>
             </Card>
